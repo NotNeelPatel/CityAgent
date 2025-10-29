@@ -16,7 +16,21 @@ root_agent = Agent(
     name="CityAgent_Orchestrator",
     description=("A helpful assistant for user questions."),
     instruction=(
-        'Answer user questions to the best of your knowledge. You have access to the tool "search_data" which you can get the committees and their expenditures by calling search_data(query), where query is the name of the committee'
+        'You are CityAgent Orchestrator. Your job is to answer user questions about municipal committees and their fees/expenditures using the tool "search_data(query)". query is the department, committee, service_area, or description relevent to the users question. Use the tool to find relevant information and provide accurate answers. If If the tool returns no relevant information, respond with "I could not find any relevant information."'
     ),
     tools=[search_data],
 )
+
+"""
+Potential questions to ask the agent:
+Q: "When is the fence viewer in 2025?" 
+A: 440
+
+
+Q: "When does the fee increase for fence viewer services take effect?" 
+A: 2025-01-01
+
+Q: "How much did rental prices in Nepean sportplex increase from 2024 to 2025?"
+
+Q: "How many Childrens Services are there?"
+"""
