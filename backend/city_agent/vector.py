@@ -4,11 +4,13 @@ from langchain_core.documents import Document
 import os
 import pandas as pd  # to read csv
 
-df = pd.read_csv(".city_agent/data/1_Operating_overview_expenditure.csv")
+df = pd.read_csv(
+    "./city_agent/data/1_Operating_overview_expenditure.csv", encoding="cp1252"
+)
 
-os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
-embeddings = OllamaEmbeddings(model="embeddinggemma:300m")
-
+embeddings = OllamaEmbeddings(
+    model="embeddinggemma:300m", base_url=os.getenv("OLLAMA_API_BASE")
+)
 db_location = "./chroma_langchain_db"
 add_documents = not os.path.exists(db_location)
 
@@ -18,8 +20,8 @@ if add_documents:
 
     for i, row in df.iterrows():
         document = Document(
-            page_content=row["Committee"] + " " + row["source de financement"],
-            metadata={"Total": row["Total"]},
+            page_content=row[0],
+            metadata={"Total": row[2]},
             id=str(i),
         )
         ids.append(str(i))
