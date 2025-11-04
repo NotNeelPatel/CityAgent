@@ -1,14 +1,25 @@
 from langchain_ollama import OllamaEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 import os
 import pandas as pd  # to read csv
 
-df = pd.read_csv("./city_agent/data/4_Rates_fees_and_charges.csv", encoding="cp1252")
+USE_AZURE = True
 
-embeddings = OllamaEmbeddings(
-    model="nomic-embed-text:v1.5", base_url=os.getenv("OLLAMA_API_BASE")
-)
+df = pd.read_csv("./city_agent/data/4_Rates_fees_and_charges.csv", encoding="cp1252")
+if (USE_AZURE):
+    embeddings = AzureOpenAIEmbeddings(
+        model="text-embedding-ada-002",
+        api_key=os.getenv("AZURE_API_KEY_EMBEDDING"),
+        azure_endpoint=os.getenv("AZURE_API_BASE_EMBEDDING"),
+        api_version=os.getenv("AZURE_API_VERSION_EMBEDDING"),
+    )
+else:
+    embeddings = OllamaEmbeddings(
+        model="nomic-embed-text:v1.5", base_url=os.getenv("OLLAMA_API_BASE")
+    )
+
 db_location = "./chroma_langchain_db"
 add_documents = not os.path.exists(db_location)
 
