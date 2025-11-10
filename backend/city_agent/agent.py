@@ -13,7 +13,7 @@ if (USE_AZURE):
     ai_api=LiteLlm(model="azure/gpt-oss-120b")
 else:
     os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
-    ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b"),
+    ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
 
 async def search_data(query: str) -> str:
     # Offload the (potentially) blocking retriever call to a thread so the
