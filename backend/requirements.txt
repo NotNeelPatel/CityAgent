@@ -1,0 +1,10 @@
+google-adk==1.17.0
+litellm==1.79.0
+python-dotenv==1.2.1
+
+chromadb
+langchain
+langchain_ollama
+langchain_openai
+langchain_chroma
+pandas
