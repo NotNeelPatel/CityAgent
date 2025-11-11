@@ -99,9 +99,12 @@ def ai_excel_helper(headers, rows):
     session_id = "excel_session"
 
     session_service = InMemorySessionService()
-    _ensure_session_sync(session_service, app_name, user_id, session_id)  # <-- IMPORTANT
+    session = session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+    runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
 
-    runner = Runner(agent=agent, app_name=app_name, session_service=session_service)
+    # _ensure_session_sync(session_service, app_name, user_id, session_id)  # <-- IMPORTANT
+
+    # runner = Runner(agent=agent, app_name=app_name, session_service=session_service)
 
     # Build user message
     payload = {"headers": headers, "sample_rows": rows, "format": {"page_content": [], "metadata": []}}
@@ -127,5 +130,5 @@ def vectorize_excel(filepath: str):
     return ai_excel_helper(headers, sample_rows)
   
 if __name__ == "__main__":
-    resp = vectorize_excel("./data/4_Rates_fees_and_charges.csv")
+    resp = asyncio.run(vectorize_excel("./data/4_Rates_fees_and_charges.csv"))
     print(resp)
