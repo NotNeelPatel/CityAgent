@@ -87,12 +87,10 @@ def ai_excel_helper(headers, rows):
       ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
 
     agent = LlmAgent(
-        
         name="Excel_helper",
         model=ai_api,
-        instruction=_INSTRUCTIONS,
         description="Classifies headers into page_content vs metadata",
-        tools=[],
+        instruction=_INSTRUCTIONS
     )
 
     # Session + runner
