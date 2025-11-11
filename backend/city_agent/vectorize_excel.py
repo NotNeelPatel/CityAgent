@@ -77,15 +77,19 @@ def _ensure_session_sync(session_service, app_name, user_id, session_id):
 def ai_excel_helper(headers, rows):
     USE_AZURE = False
 
-    if USE_AZURE:
-        ai_api = LiteLlm(model="azure/gpt-oss-120b", temperature=0)
+    if (USE_AZURE):
+      AZURE_API_KEY = os.getenv("AZURE_API_KEY")
+      AZURE_API_BASE= os.getenv("AZURE_API_BASE")
+      AZURE_API_VERSION = os.getenv("AZURE_API_VERSION")
+      ai_api=LiteLlm(model="azure/gpt-oss-120b")
     else:
-        os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
-        ai_api = LiteLlm(model="ollama_chat/gpt-oss:20b", temperature=0)
+      os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
+      ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
 
     agent = LlmAgent(
-        model=ai_api,
+        
         name="Excel_helper",
+        model=ai_api,
         instruction=_INSTRUCTIONS,
         description="Classifies headers into page_content vs metadata",
         tools=[],
