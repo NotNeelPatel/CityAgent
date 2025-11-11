@@ -4,7 +4,7 @@ import os
 import asyncio
 from city_agent.vector import query_retriever
 
-USE_AZURE = True
+USE_AZURE = False
 
 if (USE_AZURE):
     AZURE_API_KEY = os.getenv("AZURE_API_KEY")
