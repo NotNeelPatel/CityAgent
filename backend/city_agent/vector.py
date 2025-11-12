@@ -7,9 +7,12 @@ import asyncio
 import pandas as pd  # to read csv
 from vectorize_excel import vectorize_excel
 from dotenv import load_dotenv # amilesh needs this to load his env, TODO: figure out why
+from ai_api_selector import get_embedding_model
+
+
 load_dotenv()
 
-USE_AZURE = False
+
 DIRECTORY_PATH = "./city_agent/data/"
 DB_LOCATION = "./chroma_langchain_db"
 all_documents = []
@@ -37,24 +40,12 @@ async def load_data(all_documents, all_ids):
 def query_retriever(query: str):
     return retriever.invoke(query)
 
-if (USE_AZURE):
-    embeddings = AzureOpenAIEmbeddings(
-        model="text-embedding-ada-002",
-        api_key=os.getenv("AZURE_API_KEY_EMBEDDING"),
-        azure_endpoint=os.getenv("AZURE_API_BASE_EMBEDDING"),
-        api_version=os.getenv("AZURE_API_VERSION_EMBEDDING"),
-    )
-else:
-    embeddings = OllamaEmbeddings(
-        model="nomic-embed-text:v1.5", base_url=os.getenv("OLLAMA_API_BASE")
-    )
-    
+embeddings = get_embedding_model()
 vector_store = Chroma(
     collection_name="city_agent_collection",
     persist_directory=DB_LOCATION,
     embedding_function=embeddings,
 )
-print("OLLAMA_API_BASE =", os.getenv("OLLAMA_API_BASE"))
 all_documents, all_ids = asyncio.run(load_data(all_documents, all_ids))
 vector_store.add_documents(documents=all_documents, ids=all_ids)
 retriever = vector_store.as_retriever(search_kwargs={"k": 4})

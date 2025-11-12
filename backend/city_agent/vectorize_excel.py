@@ -4,6 +4,7 @@ from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types  # Content, Part
+from ai_api_selector import get_agent_model
 from dotenv import load_dotenv # amilesh needs this to load his env, TODO: figure out why
 load_dotenv()
 _INSTRUCTIONS = """
@@ -75,6 +76,7 @@ def _ensure_session_sync(session_service, app_name, user_id, session_id):
         asyncio.create_task(_create())
 
 def ai_excel_helper(headers, rows):
+    """
     USE_AZURE = False
 
     if (USE_AZURE):
@@ -85,6 +87,9 @@ def ai_excel_helper(headers, rows):
     else:
       os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
       ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
+    """
+    
+    ai_api = get_agent_model()
 
     agent = LlmAgent(
         name="Excel_helper",
