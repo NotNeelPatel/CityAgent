@@ -1,12 +1,10 @@
-import os, json, re, pandas as pd, asyncio
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from google.genai import types  # Content, Part
+from google.genai import types
 from ai_api_selector import get_agent_model
-from dotenv import load_dotenv # amilesh needs this to load his env, TODO: figure out why
-load_dotenv()
+from google.adk.sessions import InMemorySessionService
+import os, json, re, pandas as pd, asyncio
+
 _INSTRUCTIONS = """
 You classify tabular columns into two disjoint sets for a content page.
 
@@ -42,9 +40,9 @@ Rules
 Few-shot examples
 
 Example A
-headers: ["Title","Body","Slug","Created At","Author","Language","Word Count"]
+headers: ["Title","Body","Slug","Created At","Author","Language","Word Count", "ColSearch"]
 Decision:
-{"page_content":["Title","Body"],"metadata":["Slug","Created At","Author","Language","Word Count"]}
+{"page_content":["Title","Body", "ColSearch"],"metadata":["Slug","Created At","Author","Language","Word Count"]}
 
 Example B
 headers: ["Name","Description","Category","Image URL","SKU","In Stock","Price"]
@@ -59,81 +57,67 @@ Decision:
 Respond with JSON only.
 """
 
+APP_NAME = "Vectorize_Excel_App"
+USER_ID = "1234"
+SESSION_ID = "session1234"
+
+
 def _is_english_header(h: str) -> bool:
     return isinstance(h, str) and bool(re.search(r"[A-Za-z]", h)) and not re.search(r"[^\x00-\x7F]", h)
 
-def _ensure_session_sync(session_service, app_name, user_id, session_id):
-    async def _create():
-        # If your ADK exposes get_session, you can try it here and skip create if it exists.
-        await session_service.create_session(app_name=app_name, user_id=user_id, session_id=session_id)
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        # No running loop -> safe to run
-        asyncio.run(_create())
-    else:
-        # There is a running loop -> schedule it (use this branch if you embed in an async app)
-        asyncio.create_task(_create())
+ai_api = get_agent_model()
 
-def ai_excel_helper(headers, rows):
-    """
-    USE_AZURE = False
+# Step 3: Wrap the planner in an LlmAgent
+agent = LlmAgent(
+    model=ai_api,  # Set your model name
+    name= APP_NAME,
+    instruction=_INSTRUCTIONS,
+)
 
-    if (USE_AZURE):
-      AZURE_API_KEY = os.getenv("AZURE_API_KEY")
-      AZURE_API_BASE= os.getenv("AZURE_API_BASE")
-      AZURE_API_VERSION = os.getenv("AZURE_API_VERSION")
-      ai_api=LiteLlm(model="azure/gpt-oss-120b")
-    else:
-      os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
-      ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
-    """
+# Session and Runner
+session_service = InMemorySessionService()
+runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
+
+
+session = session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+
+
+# Agent Interaction
+async def call_agent(
+    runner_instance: Runner,
+    agent_instance: LlmAgent,
+    session_id: str,
+    query: str):
     
-    ai_api = get_agent_model()
+    """Sends a query to the specified agent/runner and prints results."""
+    print(f"\n>>> Calling Agent: '{agent_instance.name}' | Query: {query}")
 
-    agent = LlmAgent(
-        name="Excel_helper",
-        model=ai_api,
-        description="Classifies headers into page_content vs metadata",
-        instruction=_INSTRUCTIONS
-    )
-
-    # Session + runner
-    app_name = "excel_classifier"
-    user_id = "local_user"
-    session_id = "excel_session"
-
-    session_service = InMemorySessionService()
-    session = session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
-    runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
-
-    # _ensure_session_sync(session_service, app_name, user_id, session_id)  # <-- IMPORTANT
-
-    # runner = Runner(agent=agent, app_name=app_name, session_service=session_service)
-
-    # Build user message
-    payload = {"headers": headers, "sample_rows": rows, "format": {"page_content": [], "metadata": []}}
-    message = json.dumps(payload, ensure_ascii=False)
-    content = types.Content(role="user", parts=[types.Part(text=message)])
-
-    # Run and return final text only (no JSON parsing)
-    final_text = None
-    events = runner.run(user_id=user_id, session_id=session_id, new_message=content)
-    for event in events:
-        # print("DEBUG EVENT:", event)
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    
+    final_response_content = "No final response received."
+    async for event in runner_instance.run_async(user_id=USER_ID, session_id=session_id, new_message=content):
+        # print(f"Event: {event.type}, Author: {event.author}") # Uncomment for detailed logging
         if event.is_final_response() and event.content and event.content.parts:
-            part = event.content.parts[0]
-            if getattr(part, "text", None):
-                final_text = part.text.strip()
+            # For output_schema, the content is the JSON string itself
+            final_response_content = event.content.parts[0].text
+            
+    print(f"<<< Agent '{agent_instance.name}' Response: {final_response_content}")
+    
+    print("\n\n\n RESPONSE FROM THE AGENT -------------------------- \n"+ final_response_content)
+            
 
-    return final_text
-
-def vectorize_excel(filepath: str):
+async def vectorize_excel(filepath: str):
+    print("--- Creating Sessions ---")
+    await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+    
     df = pd.read_csv(filepath, encoding="cp1252")
     headers = [h for h in df.columns.tolist() if _is_english_header(h)]
     sample_rows = df.head(5).to_dict(orient="records")
-    return ai_excel_helper(headers, sample_rows)
-  
+    
+    query = "{headers:" + str(headers) + " sample_rows: " + str(sample_rows) + "}"
+    
+    await call_agent(runner, agent, SESSION_ID, query)
+    
+
 if __name__ == "__main__":
-    resp = asyncio.run(vectorize_excel("./data/4_Rates_fees_and_charges.csv"))
-    print(resp)
+    asyncio.run( vectorize_excel(r"C:\Users\aashn\OneDrive\Documents\Aashna\2 UNIVERSITY\4th year\Capstone\CityAgent\backend\city_agent\data\4_Rates_fees_and_charges.csv"))
