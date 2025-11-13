@@ -30,7 +30,6 @@ def get_agent_model() -> LiteLlm:
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_API_BASE"),
         )
-        print(ai_api.api_key)
     return ai_api
 
 

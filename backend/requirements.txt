@@ -9,3 +9,4 @@ langchain_ollama
 langchain_openai
 langchain_chroma
 pandas
+openpyxl

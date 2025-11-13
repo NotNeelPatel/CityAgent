@@ -6,55 +6,53 @@ from google.adk.sessions import InMemorySessionService
 import os, json, re, pandas as pd, asyncio
 
 _INSTRUCTIONS = """
-You classify tabular columns into two disjoint sets for a content page.
+Task: Classify tabular column names into two disjoint sets: 'page_content' and 'metadata'.
 
-Goal
-Return ONLY a minified JSON object with the exact shape:
+Output Format:
+Return only a valid minified JSON object:
 {"page_content":[...],"metadata":[...]}
 
-Inputs
-- headers: list of column names
-- sample_rows: a small list of row objects to infer column semantics
+Inputs:
+headers: list of column names
+sample_row: list of small row objects for context
 
 Definitions
-- page_content: columns whose values belong in the visible body of a page. Rich descriptive fields, long text, summaries, titles, body content, captions, bullet-like text, human-readable descriptions.
-- metadata: columns that annotate or organize content. IDs, slugs, URLs, file paths, timestamps, dates, language codes, authors, status, categories/tags, booleans, numeric codes, version, size, checksum, geocoords, counts, flags.
+
+page_content: Columns containing visible or descriptive text that belongs in a page's body (titles, summaries, paragraphs, captions, human-readable descriptions, bullet-like text).
+metadata: Columns describing or organizing content (IDs, slugs, URLs, timestamps, authors, categories, tags, booleans, numeric codes, languages, statuses, counts, etc.).
 
 Rules
-1) Consider ONLY headers written in English. Ignore any non-English or mixed-language headers. Do not include them in either list.
-2) Never invent headers. Choose only from the provided headers.
-3) No overlap. A header can appear in exactly one of page_content or metadata.
-4) Heuristics from sample_rows:
-   - Long free-form text, sentences or paragraphs → page_content.
-   - Titles, headlines, subheadings → page_content.
-   - IDs, GUIDs, numeric keys, booleans, enums, short codes, emails, phone numbers → metadata.
-   - URLs, slugs, file names, file types, image paths → metadata.
-   - Dates, times, timestamps, timezone, created_at, updated_at, published_on → metadata.
-   - Author, editor, owner, source, license → metadata.
-   - Category, tag, topic, language, locale → metadata.
-   - If unsure, prefer metadata for clearly structural or administrative fields.
-5) Keep original header text as-is.
-6) If a bucket would be empty, return an empty array. Do not force anything.
-7) Output must be exactly valid JSON with keys "page_content" and "metadata" and nothing else. No extra text.
 
-Few-shot examples
+1. Only include English headers. Ignore non-English or mixed-language ones entirely.
+2. Use only the provided headers; never invent new ones.
+3. Each header belongs to exactly one set (no overlap).
+4. Infer meaning from 'sample_rows':
 
-Example A
-headers: ["Title","Body","Slug","Created At","Author","Language","Word Count", "ColSearch"]
-Decision:
-{"page_content":["Title","Body", "ColSearch"],"metadata":["Slug","Created At","Author","Language","Word Count"]}
+   * Long free text → 'page_content'
+   * Titles, headlines → 'page_content'
+   * IDs, GUIDs, numeric keys, booleans, enums, short codes, emails, phones → 'metadata'
+   * URLs, slugs, filenames, file paths, image links → 'metadata'
+   * Dates, times, timestamps → 'metadata'
+   * Author, editor, owner, source, license → 'metadata'
+   * Category, tag, topic, language, locale → 'metadata'
+   * If uncertain, prefer 'metadata' for structural or administrative fields.
+5. Keep header text exactly as given.
+6. If a list would be empty, return an empty array.
+7. Output only valid JSON. No text, comments, or formatting beyond that.
+
+Examples
+
+Example A:
+headers: ["Title","Body","Slug","Created At","Author","Language","Word Count","ColSearch"]->
+{"page_content":["Title","Body","ColSearch"],"metadata":["Slug","Created At","Author","Language","Word Count"]}
 
 Example B
-headers: ["Name","Description","Category","Image URL","SKU","In Stock","Price"]
-Decision:
+headers: ["Name","Description","Category","Image URL","SKU","In Stock","Price"]->
 {"page_content":["Name","Description"],"metadata":["Category","Image URL","SKU","In Stock","Price"]}
 
 Example C
-headers: ["Resumo","Título","Link","Data","Notes"]   // only English headers count
-Decision:
-{"page_content":["Notes"],"metadata":["Link","Data"]}
-
-Respond with JSON only.
+headers: ["Résumé","Titre","Lien","Date","Notes"]->
+{"page_content":["Notes"],"metadata":["Lien","Date"]}
 """
 
 APP_NAME = "Vectorize_Excel_App"
@@ -110,7 +108,10 @@ async def vectorize_excel(filepath: str):
     print("--- Creating Sessions ---")
     await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
     
-    df = pd.read_csv(filepath, encoding="cp1252")
+    if(filepath.endswith('.csv')):
+        df = pd.read_csv(filepath, encoding="cp1252")
+    elif(filepath.endswith('.xlsx')):
+        df = pd.read_excel(filepath)
     headers = [h for h in df.columns.tolist() if _is_english_header(h)]
     sample_rows = df.head(5).to_dict(orient="records")
     
@@ -120,4 +121,4 @@ async def vectorize_excel(filepath: str):
     
 
 if __name__ == "__main__":
-    asyncio.run( vectorize_excel(r"C:\Users\aashn\OneDrive\Documents\Aashna\2 UNIVERSITY\4th year\Capstone\CityAgent\backend\city_agent\data\4_Rates_fees_and_charges.csv"))
+    asyncio.run( vectorize_excel("<path to data>") )
