@@ -6,11 +6,8 @@ import os
 import asyncio
 import pandas as pd  # to read csv
 from vectorize_excel import vectorize_excel
-from dotenv import load_dotenv # amilesh needs this to load his env, TODO: figure out why
 from ai_api_selector import get_embedding_model
 
-
-load_dotenv()
 
 
 DIRECTORY_PATH = "./city_agent/data/"
