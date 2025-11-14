@@ -1,16 +1,17 @@
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
 from google.genai import types
-from ai_api_selector import get_agent_model
+from city_agent.ai_api_selector import get_agent_model
 from google.adk.sessions import InMemorySessionService
-import os, json, re, pandas as pd, asyncio
+from langchain_core.documents import Document
+import json, re, pandas as pd, asyncio
 
 _INSTRUCTIONS = """
 Task: Classify tabular column names into two disjoint sets: 'page_content' and 'metadata'.
 
 Output Format:
 Return only a valid minified JSON object:
-{"page_content":[...],"metadata":[...]}
+{"page_content":{#:"header", ...},"metadata":{#:"header", ...}}
 
 Inputs:
 headers: list of column names
@@ -43,16 +44,16 @@ Rules
 Examples
 
 Example A:
-headers: ["Title","Body","Slug","Created At","Author","Language","Word Count","ColSearch"]->
-{"page_content":["Title","Body","ColSearch"],"metadata":["Slug","Created At","Author","Language","Word Count"]}
+headers: {0:"Title", 1:"Body", 2:"Slug",3:"Created At",4:"Author",5:"Language",6:"Word Count",7:"ColSearch"}->
+{"page_content":{0:"Title",1:"Body",7:"ColSearch"],"metadata":[2:"Slug",3:"Created At",4:"Author",5:"Language",6:"Word Count"}}
 
 Example B
-headers: ["Name","Description","Category","Image URL","SKU","In Stock","Price"]->
-{"page_content":["Name","Description"],"metadata":["Category","Image URL","SKU","In Stock","Price"]}
+headers: {0:"Name",1:"Description",2:"Category",3:"Image URL",4:"SKU",5:"In Stock",6:"Price"}->
+{"page_content":{0:"Name",1:"Description"],"metadata":[2:"Category",2:"Image URL",4:"SKU",5:"In Stock",6:"Price"}}
 
 Example C
-headers: ["Résumé","Titre","Lien","Date","Notes"]->
-{"page_content":["Notes"],"metadata":["Lien","Date"]}
+headers: {0:"Résumé",1:"Titre",2:"Lien",3:"Date",4:"Notes"}->
+{"page_content":{4:"Notes"],"metadata":[2:"Lien",3:"Date"}}
 """
 
 APP_NAME = "Vectorize_Excel_App"
@@ -61,64 +62,88 @@ SESSION_ID = "session1234"
 
 
 def _is_english_header(h: str) -> bool:
-    return isinstance(h, str) and bool(re.search(r"[A-Za-z]", h)) and not re.search(r"[^\x00-\x7F]", h)
+    return (
+        isinstance(h, str)
+        and bool(re.search(r"[A-Za-z]", h))
+        and not re.search(r"[^\x00-\x7F]", h)
+    )
+
 
 ai_api = get_agent_model()
 
-# Step 3: Wrap the planner in an LlmAgent
 agent = LlmAgent(
-    model=ai_api,  # Set your model name
-    name= APP_NAME,
+    model=ai_api,
+    name="Excel_Vectorization_Agent",
     instruction=_INSTRUCTIONS,
 )
 
-# Session and Runner
 session_service = InMemorySessionService()
 runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
 
 
-session = session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
-
-
-# Agent Interaction
 async def call_agent(
-    runner_instance: Runner,
-    agent_instance: LlmAgent,
-    session_id: str,
-    query: str):
-    
-    """Sends a query to the specified agent/runner and prints results."""
-    print(f"\n>>> Calling Agent: '{agent_instance.name}' | Query: {query}")
+    runner_instance: Runner, agent_instance: LlmAgent, session_id: str, query: str
+):
 
-    content = types.Content(role='user', parts=[types.Part(text=query)])
-    
+    content = types.Content(role="user", parts=[types.Part(text=query)])
+
     final_response_content = "No final response received."
-    async for event in runner_instance.run_async(user_id=USER_ID, session_id=session_id, new_message=content):
-        # print(f"Event: {event.type}, Author: {event.author}") # Uncomment for detailed logging
+    async for event in runner_instance.run_async(
+        user_id=USER_ID, session_id=session_id, new_message=content
+    ):
         if event.is_final_response() and event.content and event.content.parts:
-            # For output_schema, the content is the JSON string itself
             final_response_content = event.content.parts[0].text
-            
-    print(f"<<< Agent '{agent_instance.name}' Response: {final_response_content}")
-    
-    print("\n\n\n RESPONSE FROM THE AGENT -------------------------- \n"+ final_response_content)
-            
+
+    print(
+        f"\n\n<<< Agent '{agent_instance.name}' Response: {final_response_content}\n\n"
+    )
+
+    return final_response_content
+
 
 async def vectorize_excel(filepath: str):
-    print("--- Creating Sessions ---")
-    await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
-    
-    if(filepath.endswith('.csv')):
+    await session_service.create_session(
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
+    )
+
+    df = None
+    if filepath.endswith(".csv"):
         df = pd.read_csv(filepath, encoding="cp1252")
-    elif(filepath.endswith('.xlsx')):
+    elif filepath.endswith(".xlsx"):
         df = pd.read_excel(filepath)
-    headers = [h for h in df.columns.tolist() if _is_english_header(h)]
+
+    raw_headers = [h for h in df.columns.tolist() if _is_english_header(h)]
+    indexed_headers = dict(enumerate(raw_headers))
     sample_rows = df.head(5).to_dict(orient="records")
-    
-    query = "{headers:" + str(headers) + " sample_rows: " + str(sample_rows) + "}"
-    
-    await call_agent(runner, agent, SESSION_ID, query)
-    
+
+    query = (
+        "{headers:" + str(indexed_headers) + " sample_rows: " + str(sample_rows) + "}"
+    )
+    agent_response = await call_agent(runner, agent, SESSION_ID, query)
+
+    parsed = json.loads(agent_response)
+    parsed["page_content"] = {int(k): v for k, v in parsed["page_content"].items()}
+    parsed["metadata"] = {int(k): v for k, v in parsed["metadata"].items()}
+
+    documents = []
+    ids = []
+
+    for i, row in df.iterrows():
+        page_content = {v: row.iloc[k] for k, v in parsed["page_content"].items()}
+        metadata = {v: row.iloc[k] for k, v in parsed["metadata"].items()}
+
+        str_page_content = " ".join(
+            [str(v) for v in page_content.values() if pd.notna(v)]
+        )
+
+        doc = Document(page_content=str_page_content, metadata=metadata, id=str(i))
+        ids.append(str(i))
+        documents.append(doc)
+
+    # print(str_page_content)
+    # print(metadata)
+    return documents, ids
+
 
 if __name__ == "__main__":
-    asyncio.run( vectorize_excel("<path to data>") )
+    asyncio.run(vectorize_excel(r"path-to-your-file"))
