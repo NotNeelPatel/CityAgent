@@ -12,26 +12,29 @@ all_ids = []
 
 
 # load and vectorize data
-async def load_data(all_documents, all_ids):
+async def load_data():
+    documents = []
+    ids = []
+    
     if not os.path.exists(DIRECTORY_PATH):
-        return all_documents, all_ids
-
+        return documents, ids
+    
+    print("Number of files in data directory:", len(os.listdir(DIRECTORY_PATH)))
     for entry in os.scandir(DIRECTORY_PATH):
         print("Processing file:", entry.name)
         if (
             entry.name.endswith(".xlsx") or entry.name.endswith(".csv")
         ) and entry.is_file():
             # do excel things
-            documents, ids = await vectorize_excel(entry.path)
-            all_documents.extend(documents)
-            all_ids.extend(ids)
-            break
+            curr_documents, curr_ids = await vectorize_excel(entry.path)
+            documents.extend(curr_documents)
+            ids.extend(curr_ids)
         elif entry.name.endswith(".pdf") and entry.is_file():
             # TODO: do pdf things
-            return
+            continue
         else:
             print("Skipping non-supported file:", entry.name)
-    return all_documents, all_ids
+    return documents, ids
 
 
 def query_retriever(query: str):
@@ -44,7 +47,12 @@ vector_store = Chroma(
     persist_directory=DB_LOCATION,
     embedding_function=embeddings,
 )
-all_documents, all_ids = asyncio.run(load_data(all_documents, all_ids))
-
-vector_store.add_documents(documents=all_documents, ids=all_ids)
-retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+async def initialize_vector_store():
+    docs,ids = await load_data()
+    all_documents.extend(docs)
+    all_ids.extend(ids)
+    
+if __name__ == "__main__":
+    asyncio.run(initialize_vector_store())
+    vector_store.add_documents(documents=all_documents, ids=all_ids)
+    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
