@@ -39,6 +39,10 @@ async def load_data():
 def query_retriever(query: str):
     return retriever.invoke(query)
 
+async def initialize_vector_store():
+    docs,ids = await load_data()
+    all_documents.extend(docs)
+    all_ids.extend(ids)
 
 embeddings = get_embedding_model()
 vector_store = Chroma(
@@ -46,12 +50,17 @@ vector_store = Chroma(
     persist_directory=DB_LOCATION,
     embedding_function=embeddings,
 )
-async def initialize_vector_store():
-    docs,ids = await load_data()
-    all_documents.extend(docs)
-    all_ids.extend(ids)
-    
+retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+
+# temporary function to add chunked documents
+def chunked_add_documents(documents, ids, chunk_size=5000):
+        for i in range(0, len(documents), chunk_size):
+            chunk_docs = documents[i : i + chunk_size]
+            chunk_ids = ids[i : i + chunk_size] if ids else None
+            vector_store.add_documents(documents=chunk_docs, ids=chunk_ids)
+
 if __name__ == "__main__":
     asyncio.run(initialize_vector_store())
-    vector_store.add_documents(documents=all_documents, ids=all_ids)
+    #vector_store.add_documents(documents=all_documents, ids=all_ids)
+    chunked_add_documents(all_documents, all_ids, chunk_size=5000)
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})

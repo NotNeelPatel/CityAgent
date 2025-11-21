@@ -56,7 +56,7 @@ headers: {0:"Name",1:"Description",2:"Category",3:"Image URL",4:"SKU",5:"In Stoc
 
 Example C
 headers: {0:"Résumé",1:"Titre",2:"Lien",3:"Date",4:"Notes"}->
-{"page_content":{4:"Notes"],"metadata":[2:"Lien",3:"Date"}}
+{"page_content":{4:"Notes"],"metadata":[3:"Date"}}
 """
 
 APP_NAME = "Vectorize_Excel_App"
