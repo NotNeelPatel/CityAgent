@@ -12,6 +12,16 @@ all_ids = []
 
 # load and vectorize data
 async def load_data():
+    """Scan `DIRECTORY_PATH` for CSV/XLSX files, vectorize them and return lists.
+
+    This coroutine iterates over files in `DIRECTORY_PATH`, calls
+    `vectorize_excel` for CSV/XLSX files, and aggregates all returned
+    documents and ids into two lists which are returned.
+
+    Returns:
+        tuple[list, list]: (documents, ids) where `documents` is a list of
+            `Document` objects and `ids` is a list of their string ids.
+    """
     documents = []
     ids = []
     
@@ -37,9 +47,24 @@ async def load_data():
 
 
 def query_retriever(query: str):
+    """Run a query against the persisted vector store retriever.
+
+    Args:
+        query (str): The natural-language query to run.
+
+    Returns:
+        Any: The retriever's raw response (depends on configured retriever).
+    """
+
     return retriever.invoke(query)
 
 async def initialize_vector_store():
+    """Initialize module-level document lists by loading and aggregating data.
+
+    Awaits `load_data` and extends the module-level `all_documents` and
+    `all_ids` lists so they are available for subsequent upsert to the
+    vector store. This function does not perform the upsert itself.
+    """
     docs,ids = await load_data()
     all_documents.extend(docs)
     all_ids.extend(ids)

@@ -65,6 +65,20 @@ SESSION_ID = "session1234"
 
 
 def _is_english_header(h: str) -> bool:
+    """Return True if header string appears to be English ASCII text.
+
+    The heuristic checks that the header is a string, contains at least
+    one ASCII letter, and contains no non-ASCII characters. This is a
+    lightweight filter to skip non-English or binary-looking column
+    names before sending headers to the agent.
+
+    Args:
+        h (str): Header value to inspect.
+
+    Returns:
+        bool: True if `h` looks like an English header, False otherwise.
+    """
+
     return (
         isinstance(h, str)
         and bool(re.search(r"[A-Za-z]", h))
@@ -82,6 +96,21 @@ agent = LlmAgent(
 async def get_or_create_session(
     app_name: str, user_id: str, session_id: str
 ):
+    """Return an existing session or create a new in-memory session.
+
+    Uses the `session_service` (InMemorySessionService) to fetch a
+    session by `app_name`, `user_id`, and `session_id`. If no session
+    exists, a new one is created and returned.
+
+    Args:
+        app_name (str): Application name for session namespace.
+        user_id (str): User identifier.
+        session_id (str): Session identifier.
+
+    Returns:
+        Session: The retrieved or newly-created session object.
+    """
+
     existing_session = await session_service.get_session(
         app_name=app_name, user_id=user_id, session_id=session_id
     )
@@ -100,6 +129,23 @@ async def call_agent(
     runner_instance: Runner, agent_instance: LlmAgent, session_id: str, query: str
 ):
 
+    """Send a query to the LLM agent and return the final textual response.
+
+    The function builds a `types.Content` message from `query`, runs the
+    agent via `runner_instance.run_async`, iterates events until the
+    final response is received, and returns the textual content of that
+    final response. The raw response is printed for debugging.
+
+    Args:
+        runner_instance (Runner): ADK Runner used to execute the agent.
+        agent_instance (LlmAgent): The configured LLM agent instance.
+        session_id (str): Session identifier to use for the run.
+        query (str): The user message / instruction to send.
+
+    Returns:
+        str: The final textual response produced by the agent.
+    """
+
     content = types.Content(role="user", parts=[types.Part(text=query)])
 
     final_response_content = "No final response received."
@@ -117,6 +163,25 @@ async def call_agent(
 
 
 async def vectorize_excel(filepath: str):
+    """Vectorize a spreadsheet or CSV into Document objects and ids.
+
+    Steps:
+    1. Load the file into a pandas DataFrame (CSV or XLSX).
+    2. Filter headers to English-only with `_is_english_header`.
+    3. Send `indexed_headers` and a small set of `sample_rows` to the
+       configured agent to classify which columns are `page_content`
+       versus `metadata`.
+    4. Parse the agent response and build one `Document` per row using
+       the chosen page_content columns (concatenated) and metadata.
+
+    Args:
+        filepath (str): Path to the CSV or XLSX file to vectorize.
+
+    Returns:
+        tuple[list[Document], list[str]]: A tuple containing the list of
+            `Document` objects and a parallel list of their string ids.
+    """
+
     session_service = await get_or_create_session(APP_NAME, USER_ID, SESSION_ID)
 
     df = None
