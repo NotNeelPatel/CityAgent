@@ -10,7 +10,6 @@ DB_LOCATION = "./chroma_langchain_db"
 all_documents = []
 all_ids = []
 
-
 # load and vectorize data
 async def load_data():
     documents = []

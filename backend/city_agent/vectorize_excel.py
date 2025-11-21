@@ -5,6 +5,7 @@ from city_agent.ai_api_selector import get_agent_model
 from google.adk.sessions import InMemorySessionService
 from langchain_core.documents import Document
 import json, re, pandas as pd, asyncio
+import uuid
 
 _INSTRUCTIONS = """
 Task: Classify tabular column names into two disjoint sets: 'page_content' and 'metadata'.
@@ -40,6 +41,8 @@ Rules
 5. Keep header text exactly as given.
 6. If a list would be empty, return an empty array.
 7. Output only valid JSON. No text, comments, or formatting beyond that.
+8. Use double quotes for all strings and property names (JSON standard).
+9. Use string keys for indices. Example: "0" not 0.
 
 Examples
 
@@ -76,7 +79,19 @@ agent = LlmAgent(
     name="Excel_Vectorization_Agent",
     instruction=_INSTRUCTIONS,
 )
-
+async def get_or_create_session(
+    app_name: str, user_id: str, session_id: str
+):
+    existing_session = await session_service.get_session(
+        app_name=app_name, user_id=user_id, session_id=session_id
+    )
+    if existing_session:
+        return existing_session
+    else:
+        return await session_service.create_session(
+            app_name=app_name, user_id=user_id, session_id=session_id
+        )
+        
 session_service = InMemorySessionService()
 runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
 
@@ -102,9 +117,7 @@ async def call_agent(
 
 
 async def vectorize_excel(filepath: str):
-    await session_service.create_session(
-        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
-    )
+    session_service = await get_or_create_session(APP_NAME, USER_ID, SESSION_ID)
 
     df = None
     if filepath.endswith(".csv"):
@@ -135,15 +148,18 @@ async def vectorize_excel(filepath: str):
         str_page_content = " ".join(
             [str(v) for v in page_content.values() if pd.notna(v)]
         )
-
-        doc = Document(page_content=str_page_content, metadata=metadata, id=str(i))
-        ids.append(str(i))
+        id = str(uuid.uuid4())
+        doc = Document(page_content=str_page_content, metadata=metadata, id=id)
+        ids.append(id)
         documents.append(doc)
 
-    # print(str_page_content)
-    # print(metadata)
+    
     return documents, ids
 
 
 if __name__ == "__main__":
     asyncio.run(vectorize_excel(r"path-to-your-file"))
+    
+    # kill the session to free up memory since it's being stored in application memory currently 
+    # TODO: Maybe store in postgres to reuse sessions?
+    session_service.delete_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
