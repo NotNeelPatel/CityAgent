@@ -1,74 +1,91 @@
-from langchain_ollama import OllamaEmbeddings
-from langchain_openai import AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain_core.documents import Document
 import os
-import pandas as pd  # to read csv
+import asyncio
+from city_agent.vectorize_excel import vectorize_excel
+from city_agent.ai_api_selector import get_embedding_model
 
-USE_AZURE = True
 
-df = pd.read_csv("./city_agent/data/4_Rates_fees_and_charges.csv", encoding="cp1252")
-if (USE_AZURE):
-    embeddings = AzureOpenAIEmbeddings(
-        model="text-embedding-ada-002",
-        api_key=os.getenv("AZURE_API_KEY_EMBEDDING"),
-        azure_endpoint=os.getenv("AZURE_API_BASE_EMBEDDING"),
-        api_version=os.getenv("AZURE_API_VERSION_EMBEDDING"),
-    )
-else:
-    embeddings = OllamaEmbeddings(
-        model="nomic-embed-text:v1.5", base_url=os.getenv("OLLAMA_API_BASE")
-    )
+DIRECTORY_PATH = "./data/"
+DB_LOCATION = "./chroma_langchain_db"
+all_documents = []
+all_ids = []
 
-db_location = "./chroma_langchain_db"
-add_documents = not os.path.exists(db_location)
+# load and vectorize data
+async def load_data():
+    """Scan `DIRECTORY_PATH` for CSV/XLSX files, vectorize them and return lists.
 
-if add_documents:
+    This coroutine iterates over files in `DIRECTORY_PATH`, calls
+    `vectorize_excel` for CSV/XLSX files, and aggregates all returned
+    documents and ids into two lists which are returned.
+
+    Returns:
+        tuple[list, list]: (documents, ids) where `documents` is a list of
+            `Document` objects and `ids` is a list of their string ids.
+    """
     documents = []
     ids = []
-
-    for i, row in df.iterrows():
-        department = row[0]
-        committee = row[2]
-        service_area = row[4]
-        description = row[6]
-        fee_2024 = row[12]
-        fee_2025 = row[13]
-        increase = row[15]
-        effective_start = row[17]
-        colsearch = row[18]
-
-        # Build readable text for embedding/search
-        page_content = colsearch or " > ".join(
-            [p for p in [department, committee, service_area, description] if p]
-        )
-
-        metadata = {
-            "department": department,
-            "committee": committee,
-            "service_area": service_area,
-            "description": description,
-            "fee_2024": fee_2024,
-            "fee_2025": fee_2025,
-            "increase": increase,
-            "effective_starting": effective_start,
-        }
-        doc = Document(page_content=page_content, metadata=metadata, id=str(i))
-        ids.append(str(i))
-        documents.append(doc)
-
-vector_store = Chroma(
-    collection_name="Operating_overview_expenditure",
-    persist_directory=db_location,
-    embedding_function=embeddings,
-)
-
-if add_documents:
-    vector_store.add_documents(documents=documents, ids=ids)
-
-retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+    
+    if not os.path.exists(DIRECTORY_PATH):
+        return documents, ids
+    
+    print("Number of files in data directory:", len(os.listdir(DIRECTORY_PATH)))
+    for entry in os.scandir(DIRECTORY_PATH):
+        print("Processing file:", entry.name)
+        if (
+            entry.name.endswith(".xlsx") or entry.name.endswith(".csv")
+        ) and entry.is_file():
+            # do excel things
+            curr_documents, curr_ids = await vectorize_excel(entry.path)
+            documents.extend(curr_documents)
+            ids.extend(curr_ids)
+        elif entry.name.endswith(".pdf") and entry.is_file():
+            # TODO: do pdf things
+            continue
+        else:
+            print("Skipping non-supported file:", entry.name)
+    return documents, ids
 
 
 def query_retriever(query: str):
+    """Run a query against the persisted vector store retriever.
+
+    Args:
+        query (str): The natural-language query to run.
+
+    Returns:
+        Any: The retriever's raw response (depends on configured retriever).
+    """
+
     return retriever.invoke(query)
 
+async def initialize_vector_store():
+    """Initialize module-level document lists by loading and aggregating data.
+
+    Awaits `load_data` and extends the module-level `all_documents` and
+    `all_ids` lists so they are available for subsequent upsert to the
+    vector store. This function does not perform the upsert itself.
+    """
+    docs,ids = await load_data()
+    all_documents.extend(docs)
+    all_ids.extend(ids)
+
+embeddings = get_embedding_model()
+vector_store = Chroma(
+    collection_name="city_agent_collection",
+    persist_directory=DB_LOCATION,
+    embedding_function=embeddings,
+)
+retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+
+# temporary function to add chunked documents
+def chunked_add_documents(documents, ids, chunk_size=5000):
+        for i in range(0, len(documents), chunk_size):
+            chunk_docs = documents[i : i + chunk_size]
+            chunk_ids = ids[i : i + chunk_size] if ids else None
+            vector_store.add_documents(documents=chunk_docs, ids=chunk_ids)
+
+if __name__ == "__main__":
+    asyncio.run(initialize_vector_store())
+    #vector_store.add_documents(documents=all_documents, ids=all_ids)
+    chunked_add_documents(all_documents, all_ids, chunk_size=5000)
+    retriever = vector_store.as_retriever(search_kwargs={"k": 4})

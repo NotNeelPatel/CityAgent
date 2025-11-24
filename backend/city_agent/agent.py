@@ -3,17 +3,7 @@ from google.adk.agents import Agent
 import os
 import asyncio
 from city_agent.vector import query_retriever
-
-USE_AZURE = True
-
-if (USE_AZURE):
-    AZURE_API_KEY = os.getenv("AZURE_API_KEY")
-    AZURE_API_BASE= os.getenv("AZURE_API_BASE")
-    AZURE_API_VERSION = os.getenv("AZURE_API_VERSION")
-    ai_api=LiteLlm(model="azure/gpt-oss-120b")
-else:
-    os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
-    ai_api=LiteLlm(model="ollama_chat/gpt-oss:20b")
+from city_agent.ai_api_selector import get_agent_model
 
 async def search_data(query: str) -> str:
     # Offload the (potentially) blocking retriever call to a thread so the
@@ -21,6 +11,8 @@ async def search_data(query: str) -> str:
     # agent/runtime.
     relevant_data = await asyncio.to_thread(query_retriever, query)
     return relevant_data
+
+ai_api = get_agent_model()
 
 root_agent = Agent(
     name="CityAgent_Orchestrator",
