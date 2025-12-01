@@ -1,4 +1,3 @@
-from datetime import date
 import os
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
@@ -227,7 +226,7 @@ async def vectorize_excel(filepath: str):
         
         metadata = {v: row.iloc[k] for k, v in parsed["metadata"].items()}
         metadata["filename"] = os.path.basename(filepath)
-        metadata["last_updated"] = date.today().strftime("%Y-%m-%d")
+        metadata["last_updated"] = str(os.path.getmtime(filepath))
 
         id = str(uuid.uuid4())
         doc = Document(page_content=str_page_content, metadata=metadata, id=id)
