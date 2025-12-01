@@ -1,11 +1,14 @@
+from datetime import date
+import os
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
 from google.genai import types
-from city_agent.ai_api_selector import get_agent_model
 from google.adk.sessions import InMemorySessionService
 from langchain_core.documents import Document
 import json, re, pandas as pd, asyncio
 import uuid
+from city_agent.ai_api_selector import get_agent_model
+#from ai_api_selector import get_agent_model
 
 _INSTRUCTIONS = """
 Task: Classify tabular column names into two disjoint sets: 'page_content' and 'metadata'.
@@ -207,12 +210,25 @@ async def vectorize_excel(filepath: str):
     ids = []
 
     for i, row in df.iterrows():
-        page_content = {v: row.iloc[k] for k, v in parsed["page_content"].items()}
-        metadata = {v: row.iloc[k] for k, v in parsed["metadata"].items()}
+        page_content_values = []
+        for k, col_name in parsed["page_content"].items():
+            if col_name in row and pd.notna(row[col_name]):
+                page_content_values.append(str(row[col_name]))
 
-        str_page_content = " ".join(
-            [str(v) for v in page_content.values() if pd.notna(v)]
-        )
+        str_page_content = " ".join(page_content_values)
+        if not str_page_content.strip():
+            continue
+
+        metadata = {}
+
+        for k, col_name in parsed["metadata"].items():
+            if col_name in row and pd.notna(row[col_name]):
+                metadata[col_name] = str(row[col_name])
+        
+        metadata = {v: row.iloc[k] for k, v in parsed["metadata"].items()}
+        metadata["filename"] = os.path.basename(filepath)
+        metadata["last_updated"] = date.today().strftime("%Y-%m-%d")
+
         id = str(uuid.uuid4())
         doc = Document(page_content=str_page_content, metadata=metadata, id=id)
         ids.append(id)
