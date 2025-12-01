@@ -224,7 +224,6 @@ async def vectorize_excel(filepath: str):
             if col_name in row and pd.notna(row[col_name]):
                 metadata[col_name] = str(row[col_name])
         
-        metadata = {v: row.iloc[k] for k, v in parsed["metadata"].items()}
         metadata["filename"] = os.path.basename(filepath)
         metadata["last_updated"] = str(os.path.getmtime(filepath))
 
