@@ -3,7 +3,8 @@ import os
 import asyncio
 from city_agent.vectorize_excel import vectorize_excel
 from city_agent.ai_api_selector import get_embedding_model
-
+#from vectorize_excel import vectorize_excel
+#from ai_api_selector import get_embedding_model
 
 DIRECTORY_PATH = "./data/"
 DB_LOCATION = "./chroma_langchain_db"
@@ -77,15 +78,22 @@ vector_store = Chroma(
 )
 retriever = vector_store.as_retriever(search_kwargs={"k": 4})
 
-# temporary function to add chunked documents
-def chunked_add_documents(documents, ids, chunk_size=5000):
-        for i in range(0, len(documents), chunk_size):
-            chunk_docs = documents[i : i + chunk_size]
-            chunk_ids = ids[i : i + chunk_size] if ids else None
-            vector_store.add_documents(documents=chunk_docs, ids=chunk_ids)
+def add_documents_to_vector_store(documents, ids, chunk_size=5000):
+    """Add documents to the vector store.
+
+    Args:
+        documents (list[Document]): List of Document objects to add.
+        ids (list[str]): List of string ids corresponding to the documents.
+    """
+    for i in range(0, len(documents), chunk_size):
+        print(f"Adding Document ID: {ids[i]} with content length: {len(documents[i].page_content)}")
+        chunk_docs = documents[i : i + chunk_size]
+        chunk_ids = ids[i : i + chunk_size]
+        print(f"Processing batch {i} to {i + len(chunk_docs)}...")
+        vector_store.add_documents(documents=chunk_docs, ids=chunk_ids)
 
 if __name__ == "__main__":
     asyncio.run(initialize_vector_store())
+    add_documents_to_vector_store(all_documents, all_ids)
     #vector_store.add_documents(documents=all_documents, ids=all_ids)
-    chunked_add_documents(all_documents, all_ids, chunk_size=5000)
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})
