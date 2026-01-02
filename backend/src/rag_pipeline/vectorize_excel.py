@@ -6,8 +6,9 @@ from google.adk.sessions import InMemorySessionService
 from langchain_core.documents import Document
 import json, re, pandas as pd, asyncio
 import uuid
-from city_agent.ai_api_selector import get_agent_model
-#from ai_api_selector import get_agent_model
+from ai_api_selector import get_agent_model
+
+# from ai_api_selector import get_agent_model
 
 _INSTRUCTIONS = """
 Task: Classify tabular column names into two disjoint sets: 'page_content' and 'metadata'.
@@ -95,9 +96,9 @@ agent = LlmAgent(
     name="Excel_Vectorization_Agent",
     instruction=_INSTRUCTIONS,
 )
-async def get_or_create_session(
-    app_name: str, user_id: str, session_id: str
-):
+
+
+async def get_or_create_session(app_name: str, user_id: str, session_id: str):
     """Return an existing session or create a new in-memory session.
 
     Uses the `session_service` (InMemorySessionService) to fetch a
@@ -122,7 +123,8 @@ async def get_or_create_session(
         return await session_service.create_session(
             app_name=app_name, user_id=user_id, session_id=session_id
         )
-        
+
+
 session_service = InMemorySessionService()
 runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
 
@@ -130,7 +132,6 @@ runner = Runner(agent=agent, app_name=APP_NAME, session_service=session_service)
 async def call_agent(
     runner_instance: Runner, agent_instance: LlmAgent, session_id: str, query: str
 ):
-
     """Send a query to the LLM agent and return the final textual response.
 
     The function builds a `types.Content` message from `query`, runs the
@@ -223,7 +224,7 @@ async def vectorize_excel(filepath: str):
         for k, col_name in parsed["metadata"].items():
             if col_name in row and pd.notna(row[col_name]):
                 metadata[col_name] = str(row[col_name])
-        
+
         metadata["filename"] = os.path.basename(filepath)
         metadata["last_updated"] = str(os.path.getmtime(filepath))
 
@@ -232,13 +233,14 @@ async def vectorize_excel(filepath: str):
         ids.append(id)
         documents.append(doc)
 
-    
     return documents, ids
 
 
 if __name__ == "__main__":
     asyncio.run(vectorize_excel(r"path-to-your-file"))
-    
-    # kill the session to free up memory since it's being stored in application memory currently 
+
+    # kill the session to free up memory since it's being stored in application memory currently
     # TODO: Maybe store in postgres to reuse sessions?
-    session_service.delete_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+    session_service.delete_session(
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
+    )
