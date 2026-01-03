@@ -8,8 +8,9 @@ from ai_api_selector import get_embedding_model
 # from vectorize_excel import vectorize_excel
 # from ai_api_selector import get_embedding_model
 
-# [0]=rag_pipeline, [1]=src, [2]=backend
-BACKEND_DIR = str(Path(__file__).resolve().parents[2])
+BACKEND_DIR = str(
+    next(p for p in Path(__file__).resolve().parents if p.name == "backend")
+)
 DATA_DIR = f"{BACKEND_DIR}/data"
 DB_DIR = f"{BACKEND_DIR}/chroma_langchain_db"
 
