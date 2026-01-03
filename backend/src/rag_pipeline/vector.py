@@ -1,21 +1,28 @@
 from langchain_chroma import Chroma
+from pathlib import Path
 import os
 import asyncio
-from city_agent.vectorize_excel import vectorize_excel
-from city_agent.ai_api_selector import get_embedding_model
-#from vectorize_excel import vectorize_excel
-#from ai_api_selector import get_embedding_model
+from rag_pipeline.vectorize_excel import vectorize_excel
+from ai_api_selector import get_embedding_model
 
-DIRECTORY_PATH = "./data/"
-DB_LOCATION = "./chroma_langchain_db"
+# from vectorize_excel import vectorize_excel
+# from ai_api_selector import get_embedding_model
+
+BACKEND_DIR = str(
+    next(p for p in Path(__file__).resolve().parents if p.name == "backend")
+)
+DATA_DIR = f"{BACKEND_DIR}/data"
+DB_DIR = f"{BACKEND_DIR}/chroma_langchain_db"
+
 all_documents = []
 all_ids = []
 
+
 # load and vectorize data
 async def load_data():
-    """Scan `DIRECTORY_PATH` for CSV/XLSX files, vectorize them and return lists.
+    """Scan `DATA_DIR` for CSV/XLSX files, vectorize them and return lists.
 
-    This coroutine iterates over files in `DIRECTORY_PATH`, calls
+    This coroutine iterates over files in `DATA_DIR`, calls
     `vectorize_excel` for CSV/XLSX files, and aggregates all returned
     documents and ids into two lists which are returned.
 
@@ -25,12 +32,12 @@ async def load_data():
     """
     documents = []
     ids = []
-    
-    if not os.path.exists(DIRECTORY_PATH):
+
+    if not os.path.exists(DATA_DIR):
         return documents, ids
-    
-    print("Number of files in data directory:", len(os.listdir(DIRECTORY_PATH)))
-    for entry in os.scandir(DIRECTORY_PATH):
+
+    print("Number of files in data directory:", len(os.listdir(DATA_DIR)))
+    for entry in os.scandir(DATA_DIR):
         print("Processing file:", entry.name)
         if (
             entry.name.endswith(".xlsx") or entry.name.endswith(".csv")
@@ -59,6 +66,7 @@ def query_retriever(query: str):
 
     return retriever.invoke(query)
 
+
 async def initialize_vector_store():
     """Initialize module-level document lists by loading and aggregating data.
 
@@ -66,17 +74,19 @@ async def initialize_vector_store():
     `all_ids` lists so they are available for subsequent upsert to the
     vector store. This function does not perform the upsert itself.
     """
-    docs,ids = await load_data()
+    docs, ids = await load_data()
     all_documents.extend(docs)
     all_ids.extend(ids)
+
 
 embeddings = get_embedding_model()
 vector_store = Chroma(
     collection_name="city_agent_collection",
-    persist_directory=DB_LOCATION,
+    persist_directory=DB_DIR,
     embedding_function=embeddings,
 )
 retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+
 
 def add_documents_to_vector_store(documents, ids, chunk_size=5000):
     """Add documents to the vector store.
@@ -86,14 +96,17 @@ def add_documents_to_vector_store(documents, ids, chunk_size=5000):
         ids (list[str]): List of string ids corresponding to the documents.
     """
     for i in range(0, len(documents), chunk_size):
-        print(f"Adding Document ID: {ids[i]} with content length: {len(documents[i].page_content)}")
+        print(
+            f"Adding Document ID: {ids[i]} with content length: {len(documents[i].page_content)}"
+        )
         chunk_docs = documents[i : i + chunk_size]
         chunk_ids = ids[i : i + chunk_size]
         print(f"Processing batch {i} to {i + len(chunk_docs)}...")
         vector_store.add_documents(documents=chunk_docs, ids=chunk_ids)
 
+
 if __name__ == "__main__":
     asyncio.run(initialize_vector_store())
     add_documents_to_vector_store(all_documents, all_ids)
-    #vector_store.add_documents(documents=all_documents, ids=all_ids)
+    # vector_store.add_documents(documents=all_documents, ids=all_ids)
     retriever = vector_store.as_retriever(search_kwargs={"k": 4})

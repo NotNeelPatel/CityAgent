@@ -1,7 +1,8 @@
 from google.adk.agents import LlmAgent, SequentialAgent
 import asyncio
-from city_agent.vector import query_retriever
-from city_agent.ai_api_selector import get_agent_model
+from rag_pipeline.vector import query_retriever
+from ai_api_selector import get_agent_model
+
 
 async def search_data(query: str) -> str:
     # Offload the (potentially) blocking retriever call to a thread so the
@@ -10,9 +11,10 @@ async def search_data(query: str) -> str:
     relevant_data = await asyncio.to_thread(query_retriever, query)
     return relevant_data
 
+
 ai_api = get_agent_model()
 
-#TODO: Refine this prompt
+# TODO: Refine this prompt
 _ORCHESTRATOR_INSTRUCTIONS = """
 You are the CityAgent Orchestrator.
 Goal: Accurately route user inquiries regarding City of Ottawa Asset Management to the appropriate sub-agent and synthesize the results.
@@ -54,7 +56,7 @@ reasoner_agent = LlmAgent(
     model=ai_api,
     description=("The orchestrator's reasoning agent."),
     instruction=(_REASONER_INSTRUCTIONS),
-    tools=[search_data]
+    tools=[search_data],
 )
 
 
