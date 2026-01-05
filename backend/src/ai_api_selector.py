@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 AI_API_PROVIDER = os.getenv("AI_API_PROVIDER")
 
+# Almost all LLMS support at least 32k token sizes, with most supporting >128k token sizes
+# Default context window size is set to 32k for max compatibility. 
+AGENT_CTX_WINDOW_SIZE = os.getenv("AGENT_CTX_WINDOW_SIZE") or "32000"
 
 # Configuration for AI provider
 class AIProvider(Enum):
@@ -53,3 +56,7 @@ def get_embedding_model():
             base_url=os.getenv("OPENAI_API_BASE"),
         )
     return embeddings
+
+# Used to get the context window size of the agent (important for vectorization chunking)
+def get_agent_ctx_window_size():
+    return int(AGENT_CTX_WINDOW_SIZE)

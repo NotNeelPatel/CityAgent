@@ -1,0 +1,1582 @@
+{
+    "/home/neel/github/CityAgent/backend/data/2025.pdf": [
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "Recommendations",
+                "data_type": "Recommendation List"
+            },
+            "page_content": {
+                "context_header": "REPORT RECOMMENDATION(S)",
+                "content_body": "Approve the 2025 Asset Management Plans as attached in Documents 1 – 12 and as described in this report. Direct staff return to Committee and Council in 2028 with updated Asset Management Plans and continue to report every four years hereafter. Approve an update to the City of Ottawa’s Asset Management Policy as attached in Document 13 and as described in this report. Direct staff to update the asset management program and governance structure. Direct staff to include a mandatory asset management implications section in Committee and Council reports as a part of the consultations for the 2026-2030 Term of Council Governance Review.",
+                "key_metrics": []
+            }
+        },
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "Executive Summary",
+                "data_type": "Executive Summary"
+            },
+            "page_content": {
+                "context_header": "EXECUTIVE SUMMARY",
+                "content_body": "The 2025 Asset Management Plans (AMPs) mark a significant milestone for Ottawa, representing the first time comprehensive and standardized data on all municipal assets, worth approximately $90 billion, have been consolidated into a single, unified framework. The AMPs offer a clear view of the current state of Ottawa’s infrastructure: it is safe, in good to fair condition, and continues to serve residents. The 2025 AMPs fulfill the final phase of Ontario Regulation 588/17, building on the 2022 and 2024 Council-approved AMPs highlighting all asset classes across all City services, including roads, water and wastewater systems, transit, recreation, libraries, emergency services, and more.",
+                "key_metrics": [
+                    "$90 billion"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "Asset Classes",
+                "data_type": "Asset Overview"
+            },
+            "page_content": {
+                "context_header": "All Asset Classes Across City Services",
+                "content_body": "The 2025 AMPs highlight all asset classes across all City services, including roads, water and wastewater systems, transit, recreation, libraries, emergency services, and more.",
+                "key_metrics": []
+            }
+        },
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "AMP Summary",
+                "data_type": "AMP Summary"
+            },
+            "page_content": {
+                "context_header": "AMP Summary",
+                "content_body": "Each AMP presents a consistent summary of: The inventory and condition of City-owned assets. Service levels currently delivered and Council-approved targets for the next 10 years. Forecasted lifecycle costs for renewal, growth, and climate change adaptation.",
+                "key_metrics": []
+            }
+        },
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "Financial Gap Forecast",
+                "data_type": "Forecast"
+            },
+            "page_content": {
+                "context_header": "10-Year Financial Gap Forecast",
+                "content_body": "Over the next 10 years, a $10.8 billion gap is forecasted between projected infrastructure needs and planned funding. This gap reflects asset renewal, growth, service enhancements, and climate change adaptation and mitigation costs.",
+                "key_metrics": [
+                    "$10.8B",
+                    "10 years"
+                ]
+            }
+        },
+        {
+            "metadata": {
+                "source_file": "2025_Asset_Management_Plan.pdf",
+                "service_area": "Infrastructure and Water Services",
+                "topic": "AMP Purpose",
+                "data_type": "Explanation"
+            },
+            "page_content": {
+                "context_header": "AMP Purpose",
+                "content_body": "The 2025 Asset Management Plans are not a request for new capital funding; they are a strategic tool to help Council and staff understand the current state of infrastructure, forecast future needs, and make informed decisions that balance cost, risk, and service delivery.",
+                "key_metrics": []
+            }
+        }
+    ,
+    {
+        "metadata": {
+            "source_file": "2025_Asset_Management_Plan.pdf",
+            "service_area": "Infrastructure and Water Services",
+            "topic": "Funding Strategy",
+            "data_type": "Funding Strategy"
+        },
+        "page_content": {
+            "context_header": "Funding Strategy via LRFPs",
+            "content_body": "The financial analysis supporting the AMPs is based on the City’s 2024 financial strategy. Future AMPs will incorporate new funding strategies, such as the Long Range Financial Plans (LRFPs), as they are approved by Council. Upcoming updates to rate-supported and tax-supported LRFPs will serve as the key vehicle for identifying funding strategies to respond to priority funding requirements within affordable parameters.",
+            "key_metrics": []
+        }
+    }
+},
+{
+    "metadata": {
+        "source_file": "2025_Asset_Management_Plan.pdf",
+        "service_area": "Infrastructure and Water Services",
+        "topic": "Risk-Based Investment",
+        "data_type": "Investment Strategy"
+    },
+    "page_content": {
+        "context_header": "Risk-Based Investment Prioritization",
+        "content_body": "The City uses a risk-based approach to prioritize investments, focusing on safety, criticality, and service continuity. The 2025 AMPs offer the opportunity to highlight non-financial strategies to optimize asset use, adjust service levels and explore innovative delivery models.",
+        "key_metrics": []
+    }
+},
+{
+"metadata": {
+    "source_file": "2025_Asset_Management_Plan.pdf",
+    "service_area": "Infrastructure and Water Services",
+    "topic": "Strategic Alignment",
+    "data_type": "Strategic Alignment"
+},
+"page_content": {
+    "context_header": "Strategic Alignment with Master Plans",
+    "content_body": "The 2025 AMPs are aligned with the City’s Long-Range Financial Plans and other strategic documents, including the Climate Change Master Plan and Infrastructure Master Plan. Together, these plans provide a coordinated framework for managing infrastructure in a way that is sustainable, resilient, and responsive to community needs.",
+    "key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Valuation",
+"data_type": "Financial Value"
+},
+"page_content": {
+"context_header": "Total Asset Value",
+"content_body": "The 2025 Asset Management Plans consolidate data on all municipal assets, valued at approximately $90 billion.",
+"key_metrics": [
+    "$90B"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Current Condition",
+"data_type": "Condition Summary"
+},
+"page_content": {
+"context_header": "Asset Condition Overview",
+"content_body": "The City’s assets are currently safe, in good to fair condition, and continue to serve residents.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Levels",
+"data_type": "Service Delivery"
+},
+"page_content": {
+"context_header": "Service Levels and Targets",
+"content_body": "Current service levels are described alongside Council-approved targets for the next 10 years.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Lifecycle Costs",
+"data_type": "Cost Forecast"
+},
+"page_content": {
+"context_header": "Forecasted Lifecycle Costs",
+"content_body": "Lifecycle costs for renewal, growth, and service enhancements are projected for the next decade.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Mitigation",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Risk Mitigation Strategies",
+"content_body": "Strategies to manage risks related to service delivery when needs exceed funding are outlined.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Financial Gap Forecast",
+"data_type": "Forecast"
+},
+"page_content": {
+"context_header": "10-Year Financial Gap",
+"content_body": "A $10.8 billion gap is forecasted between projected infrastructure needs and planned funding over the next 10 years.",
+"key_metrics": [
+    "$10.8B",
+    "10 years"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Funding Strategy",
+"data_type": "Funding Plan"
+},
+"page_content": {
+"context_header": "Long-Range Funding Approach",
+"content_body": "Future AMPs will incorporate funding strategies such as Long-Range Financial Plans (LRFPs) and Property- and Tax- Supported LRFPs to meet priority funding needs within affordability constraints.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk-Based Investment",
+"data_type": "Investment Strategy"
+},
+"page_content": {
+"context_header": "Risk-Based Investment Prioritization",
+"content_body": "Investments are prioritized based on safety, criticality, and service continuity, with a focus on non-financial optimization and innovative delivery models.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Strategic Alignment",
+"data_type": "Strategic Alignment"
+},
+"page_content": {
+"context_header": "Alignment with Master Plans",
+"content_body": "The 2025 AMPs align with the City’s Long-Range Financial Plans, Climate Change Master Plan, and Infrastructure Master Plan to provide a coordinated framework for sustainable, resilient infrastructure management.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Purpose of AMPs",
+"data_type": "Strategic Purpose"
+},
+"page_content": {
+"context_header": "Asset Management Plans Purpose",
+"content_body": "The 2025 AMPs serve as a strategic tool for Council and staff to understand current infrastructure conditions, forecast future needs, and make informed decisions balancing cost, risk, and service delivery, without requesting new capital funding.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Management History Summary",
+"data_type": "Historical Overview"
+},
+"page_content": {
+"context_header": "Asset Management History Summary",
+"content_body": "The City of Ottawa’s asset management journey began in 2001 with the amalgamation of several municipalities into one unified city, consolidating diverse inventories, service standards, and operational approaches. Since then, Ottawa has progressively developed a structured approach to asset management, leading to the launch of the Comprehensive Asset Management Program in 2012.",
+"key_metrics": [
+    "2001",
+    "2012"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2001-2002 Unification",
+"data_type": "Milestone"
+},
+"page_content": {
+"context_header": "2001-2002 Unification Milestone",
+"content_body": "In 2001, the amalgamated City of Ottawa brought together a diverse inventory of assets, service standards, and operational approaches, laying the groundwork for a cohesive understanding of its asset base.",
+"key_metrics": [
+    "2001"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2002-2003 LRF Introduction",
+"data_type": "Milestone"
+},
+"page_content": {
+"context_header": "2002-2003 Long-Range Financial Plan Introduction",
+"content_body": "Between 2002 and 2003, the City introduced its first structured Long-Range Financial Plans (LRFPs), providing a framework for financial planning tied to asset priorities.",
+"key_metrics": [
+    "2002-2003"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2004-2007 Capital Standards Review",
+"data_type": "Milestone"
+},
+"page_content": {
+"context_header": "2004-2007 Capital Standards Review and Third LRF",
+"content_body": "From 2004 to 2007, Ottawa advanced its approach through a Capital Standards Review (ACS2004-TUP-INF-0009) and the development of a third Long-Range Financial Plan, strengthening investment standards and planning processes.",
+"key_metrics": [
+    "2004-2007"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2012 Comprehensive Asset Management Program Launch",
+"data_type": "Milestone"
+},
+"page_content": {
+"context_header": "2012 Comprehensive Asset Management Program Launch",
+"content_body": "In 2012, the City launched the Comprehensive Asset Management Program (ACS2012-PAI-INF-0007), establishing new structure, stability, and consistency in managing infrastructure, including the Program and State of the Asset report, Comprehensive Asset Management Policy, Strategy, and Canadian Infrastructure Report Card.",
+"key_metrics": [
+    "2012"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Governance and Training Enhancements",
+"data_type": "Policy Recommendation"
+},
+"page_content": {
+"context_header": "Governance and Training Enhancements",
+"content_body": "The report recommends updating the Asset Management Policy (Document 13) and implementing governance and training enhancements to strengthen asset management practices organization-wide.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Transparency and Public Engagement",
+"data_type": "Communication Strategy"
+},
+"page_content": {
+"context_header": "Transparency and Public Engagement",
+"content_body": "The AMPs promote transparency and public engagement by clearly communicating challenges and opportunities related to Ottawa’s infrastructure, fostering informed public discourse.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Alignment with Master Plans",
+"data_type": "Strategic Alignment"
+},
+"page_content": {
+"context_header": "Alignment with Master Plans",
+"content_body": "The 2025 AMPs align with the City’s Long-Range Financial Plans, Climate Change Master Plan, and Infrastructure Master Plan, providing a coordinated framework for sustainable, resilient infrastructure management.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Annual Reporting Requirement",
+"data_type": "Regulatory Compliance"
+},
+"page_content": {
+"context_header": "Annual Reporting Requirement",
+"content_body": "The City will continue to report annually on asset management progress as required by Ontario Regulation 588/17.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2028 Updated AMP Reporting",
+"data_type": "Future Action"
+},
+"page_content": {
+"context_header": "2028 Updated AMP Reporting",
+"content_body": "The report recommends that staff return to Council in 2028 with updated Asset Management Plans to ensure continuous improvement and alignment with evolving priorities.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2017 Program Update",
+"data_type": "Milestone"
+},
+"page_content": {
+"context_header": "2017 Comprehensive Asset Management Program Update",
+"content_body": "In 2017, the Comprehensive Asset Management Program was updated (ACS2017-PIE-IS-0002) along with the State of the Asset Report and Strategic Asset Management Plan. The update complemented the tax and rate Long Range Financial Plan V for tax-supported capital and the water, wastewater, and stormwater rate-supported capital (ACS2017-CSD-FIN-0017 and ACS2017-CSD-FIN-0023).",
+"key_metrics": [
+"2017"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2018 Asset Management Regulation",
+"data_type": "Regulation"
+},
+"page_content": {
+"context_header": "Ontario Regulation 588/17 (2018)",
+"content_body": "In 2018, the Province introduced the Asset Management Planning for Municipal Infrastructure Regulation, O. Reg. 588/17 (as amended by O. Reg. 193/21), strengthening municipal asset management practices, standardizing plans, and requiring consistent reporting.",
+"key_metrics": [
+"2018"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Regulation Requirements",
+"data_type": "Compliance Steps"
+},
+"page_content": {
+"context_header": "Regulation Requirements Steps",
+"content_body": "The regulation requires: 1) Approval of drinking water, wastewater, stormwater and transportation AMPs by July 1, 2022; 2) Approval of all remaining AMPs by July 1, 2024; 3) Approval of all AMPs updated to include target level of service, funding and risk mitigation by July 1, 2025; 4) Annual review on or before July 1 each year starting the year after the plan is completed; 5) Update of AMPs to reflect present conditions at least every five years after completion.",
+"key_metrics": [
+"Step1",
+"Step2",
+"Step3",
+"Step4",
+"Step5"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2022 Water AMP Approval",
+"data_type": "Policy Approval"
+},
+"page_content": {
+"context_header": "2022 Water, Wastewater, Stormwater & Transportation AMPs Approval",
+"content_body": "On April 13, 2022, City Council approved ACS2022-IWS-AM-0001, the drinking water, wastewater, stormwater and transportation Asset Management Plans, covering over 80% of Ottawa's owned asset value.",
+"key_metrics": [
+"April 13, 2022",
+"80%"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2024 Remaining AMPs Approval",
+"data_type": "Policy Approval"
+},
+"page_content": {
+"context_header": "2024 Remaining Asset Management Plans Approval",
+"content_body": "On May 15, 2024, City Council approved ACS2024-IWS-AM-0002, the remaining AMPs, covering the other 20% of Ottawa's owned asset value.",
+"key_metrics": [
+"May 15, 2024",
+"20%"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Annual Review Requirement",
+"data_type": "Regulatory Compliance"
+},
+"page_content": {
+"context_header": "Annual Review Requirement",
+"content_body": "Municipal asset management progress must be reviewed annually on or before July 1, starting the year after the asset management plan is completed, as required by O. Reg. 588/17.",
+"key_metrics": []
+}
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Five-Year Update Requirement",
+"data_type": "Regulatory Compliance"
+},
+"page_content": {
+"context_header": "Five-Year Update Requirement",
+"content_body": "Asset management plans must be updated to reflect present conditions at least every five years after completion, per O. Reg. 588/17.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "2025 AMP Phase 3 Completion",
+"data_type": "Regulatory Milestone"
+},
+"page_content": {
+"context_header": "2025 AMP Phase 3 Completion",
+"content_body": "The 2025 Asset Management Plans complete the third phase of the regulatory requirements by adding target levels of service, funding plan, and risks to service where forecasted service needs exceed planned funding. The AMPs are grouped by eight service areas and include information on buildings, fleet and special equipment assets that support these services.",
+"key_metrics": [
+"8 service areas"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Library AMP Approval",
+"data_type": "Policy Approval"
+},
+"page_content": {
+"context_header": "Library AMP Approval",
+"content_body": "On May 13, 2025, the Ottawa Public Library Board approved the Library Asset Management Plan, which is included in the 2025 AMP package for Committee and Council approval.",
+"key_metrics": [
+"May 13, 2025"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Purpose of AMPs",
+"data_type": "Strategic Purpose"
+},
+"page_content": {
+"context_header": "Purpose of Asset Management Plans",
+"content_body": "The 2025 AMPs serve as a strategic tool connecting asset data, service levels, risk management, and long-term financial planning. They are not a request for capital investment, nor do they propose changes to level of service or funding. Instead, they provide an overview of asset condition, service level performance, anticipated lifecycle needs, and associated risks over the coming decade, bridging technical asset information with service delivery expectations to support informed investment decisions.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Purpose of Asset Management Plans",
+"data_type": "Strategic Purpose"
+},
+"page_content": {
+"context_header": "Purpose of Asset Management Plans",
+"content_body": "The 2025 AMPs serve as a strategic tool connecting asset data, service levels, risk management, and long-term financial planning. They provide an overview of asset condition, service level performance, anticipated lifecycle needs, and associated risks over the coming decade, bridging technical asset information with service delivery expectations to support informed investment decisions.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Communication Tool",
+"data_type": "Communication"
+},
+"page_content": {
+"context_header": "Communication Tool",
+"content_body": "The AMPs act as a communications tool to support productive dialogue with the community about balancing service expectations, affordability, and risk of service disruption, and to share information on current conditions, service levels, projected funding versus forecasted need, and anticipated future risks.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Council Approval Request",
+"data_type": "Decision Request"
+},
+"page_content": {
+"context_header": "Council Approval Request",
+"content_body": "This report seeks Council’s approval of the 12 Service Area AMPs (Documents 1–12) as required under Ontario Regulation 588/17.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Considerations",
+"data_type": "Analysis"
+},
+"page_content": {
+"context_header": "Asset Considerations",
+"content_body": "Over the next 10 years, external drivers will increase challenges to operation, renewal, maintenance, acquisition and divestment of municipal assets. Key considerations include historic asset age, regulatory changes, accessibility, equity, inflationary pressures, and climate change.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Historic Asset Age",
+"data_type": "Risk Factor"
+},
+"page_content": {
+"context_header": "Historic Asset Age",
+"content_body": "Much of Ottawa’s infrastructure was built post-war with varied standards and funding models, requiring continued investment to maintain and renew assets to remain safe and functional.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Regulatory Impact",
+"data_type": "Policy Impact"
+},
+"page_content": {
+"context_header": "Regulatory Impact",
+"content_body": "Incremental regulatory and policy changes, including Ontario Regulation 588/17, increase financial pressures to modify or enhance existing municipal assets rather than simply renew them.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Accessibility and Inclusion",
+"data_type": "Equity Consideration"
+},
+"page_content": {
+"context_header": "Accessibility and Inclusion",
+"content_body": "Modern standards around accessibility, equity, diversity, and inclusion require increased investments to enhance assets to support current service delivery.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Inflation and Supply Chain",
+"data_type": "Cost Driver"
+},
+"page_content": {
+"context_header": "Inflation and Supply Chain",
+"content_body": "Current asset replacement values are rising due to inflationary pressures, supply chain issues, material and labour shortages, leading to higher forecasted renewal and enhancement costs.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Impact",
+"data_type": "Risk Factor"
+},
+"page_content": {
+"context_header": "Climate Change Impact",
+"content_body": "Climate change necessitates earlier asset replacement due to premature deterioration, mitigation of future impacts, reduction of GHG emissions, and recovery from extreme weather events.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Long-Term Stability Strategy",
+"data_type": "Strategic Plan"
+},
+"page_content": {
+"context_header": "Long-Term Stability Strategy",
+"content_body": "The 2025 AMPs provide a baseline to measure progress, prioritize investments, and support evidence-informed decision-making to maintain service stability as infrastructure ages, costs rise, and community expectations evolve.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Condition Ratings by Service Areas",
+"data_type": "Table"
+},
+"page_content": {
+"context_header": "Table 1.1: Condition Ratings by Service Areas",
+"content_body": "|Service|Overall Condition|% Poor to Very Poor|% Fair|% Good to Very Good| |---|---|---|---|---| |Transportation Services|Fair|15%|41%|44%| |Drinking Water Services|Good|5%|34%|61%| |Wastewater Services|Good to Fair|14%|30%|56%| |Stormwater Services|Good|9%|22%|69%| |Community and Social Services|Good|2%|15%|83%| |Emergency and Protective Services|Good to Fair|15%|47%|38%| |Government Services and Information Technology|Good to Fair|16%|45%|40%| |Greenspace and Forest Services|Fair|58%|10%|32%| |Recreation and Cultural Services|Good to Fair|15%|33%|52%| |Library Services|Good to Fair|8%|32%|60%| |Solid Waste Services|Good to Fair|14%|16%|70%| |Transit|Good to Fair|22%|20%|59%|",
+"key_metrics": [
+"Transportation:15% Poor",
+"Drinking Water:5% Poor",
+"Wastewater:14% Poor",
+"Stormwater:9% Poor",
+"Community:2% Poor",
+"Emergency:15% Poor",
+"Gov:16% Poor",
+"Greenspace:58% Poor",
+"Recreation:15% Poor",
+"Library:8% Poor",
+"Solid Waste:14% Poor",
+"Transit:22% Poor"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Overall Asset Condition Summary",
+"data_type": "Summary"
+},
+"page_content": {
+"context_header": "Overall Asset Condition Summary",
+"content_body": "The 2025 AMPs show that City-owned assets on average are in good to fair condition. The City’s assets are safe and support their respective services with no immediate service risk across the 12 service areas.",
+"key_metrics": [
+"good to fair"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Area Gap Overview",
+"data_type": "Gap Analysis"
+},
+"page_content": {
+"context_header": "Service Area Gap Overview",
+"content_body": "The service area gaps are a snapshot of 2024, reflecting past decisions on service level expectations and City investment patterns. The gaps represent the total needs if all projects were implemented today, not a prioritized list. They are based on the City’s 2024 financial strategy and will incorporate future funding strategies such as Long Range Financial Plans (LRFPs).",
+"key_metrics": [
+"snapshot 2024",
+"total needs",
+"future LRFPs"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Growth Needs Definition",
+"data_type": "Definition"
+},
+"page_content": {
+"context_header": "Growth Needs Definition",
+"content_body": "Growth (or expansion) refers to activities that introduce entirely new assets or expand the capacity of existing ones to accommodate the city’s development. Sources include development charges background studies, development plans, master plans, Infrastructure Master Plan, Water Purification Plant Comprehensive Development Plan, Wastewater Collection System and Pumping Station Master Plan, Design Guidelines, MECP permits and licenses, DWQMS risk assessments, theoretical capacity analyses, functional designs, project bundling requirements, and business case reviews.",
+"key_metrics": [
+"development charges",
+"master plans",
+"theoretical capacity"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Enhancement Needs Definition",
+"data_type": "Definition"
+},
+"page_content": {
+"context_header": "Enhancement Needs Definition",
+"content_body": "Enhancement (or upgrade) refers to modifying and improving existing assets to meet higher service levels, such as backup power supply, improved operational controls, public safety and security upgrades, new policy objectives, or regulatory compliance (e.g., Accessibility for Ontarians with Disabilities Act). Sources include accessibility audits, building condition assessments, service delivery leads input, watermain extensions for system looping, fire flow improvements, and targeted facility upgrades.",
+"key_metrics": [
+"accessibility audits",
+"building condition assessments",
+"regulatory compliance"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Renewal Needs Definition",
+"data_type": "Definition"
+},
+"page_content": {
+"context_header": "Renewal Needs Definition",
+"content_body": "Renewal involves rehabilitation of existing assets to restore original quality, capacity, or functionality, ensuring continued service. Includes like-for-like replacement and capital investment activities such as planning, condition assessment, inspections, and opportunistic renewal works. Calculations use building condition audits and lifecycle models reviewed by engineering staff for assets like bridges and culverts.",
+"key_metrics": [
+"like-for-like replacement",
+"engineering lifecycle models"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Area Gap Summary",
+"data_type": "Gap Analysis"
+},
+"page_content": {
+"context_header": "Service Area Gap Summary",
+"content_body": "The total calculated service area gap for 12 AMPs over the next 10 years is $10.8 billion. This reflects projected needs for growth, renewal, and enhancement at target service levels, including climate change impacts. The forecast is based on a 10-year extrapolation of the 2024 annual capital budget to 2034 and incorporates data from previous AMPs, development charge studies, master plans, Climate Change Master Plan, Transit LRP, and Solid Waste LRP.",
+"key_metrics": [
+"$10.8B",
+"10 years"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Area Gap Summary",
+"data_type": "Gap Analysis"
+},
+"page_content": {
+"context_header": "Service Area Gap Summary",
+"content_body": "The total calculated service area gap for 12 AMPs over the next 10 years is $10.8 billion. This reflects projected needs for growth, renewal, and enhancement at target service levels, including climate change impacts. The forecast is based on a 10-year extrapolation of the 2024 annual capital budget to 2034 and incorporates data from previous AMPs, development charge studies, master plans, Climate Change Master Plan, Transit LRP, and Solid Waste LRP.",
+"key_metrics": [
+"$10.8B",
+"10 years"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Expected and Target Level of Service",
+"data_type": "Service Level Definition"
+},
+"page_content": {
+"context_header": "Expected and Target Level of Service",
+"content_body": "The AMPs establish three service level measures: Current (existing data), Expected (projected under current funding), and Target (policy/strategy based, regardless of budget). Current and target legislated service levels are met; high-risk services are prioritized; lower scores don’t always mean worse user experience; investment needs differ by service; some gaps stem from low-risk, still-functional assets.",
+"key_metrics": [
+"Current",
+"Expected",
+"Target",
+"High-risk services prioritized"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Areas and Mitigation Strategies",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Risk Areas and Mitigation Strategies",
+"content_body": "Risks include underfunding across renewal, growth, and enhancement needs, leading to elevated long-term costs, deferred investment, and service reliability changes. Additional risks: inflationary pressures, delayed climate mitigation implementation, extended enhancement policy implementation, reliance on staff contingency plans. Mitigation uses a risk-based asset management framework aligned with Enterprise Risk Management, prioritizing investments based on condition, service impact, criticality, safety, and affordability.",
+"key_metrics": [
+"Underfunding",
+"Inflation",
+"Climate mitigation delay",
+"Risk-based framework"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Portfolio Renewal Updates",
+"data_type": "Renewal Estimate"
+},
+"page_content": {
+"context_header": "Asset Portfolio Renewal Updates",
+"content_body": "Transportation, drinking water, wastewater, and stormwater asset portfolios have updated renewal estimates reflecting higher replacement costs driven by construction inflation, supply chain pressures, and integration of climate change adaptation and resilience investments based on updated modelling.",
+"key_metrics": [
+"Construction inflation",
+"Supply chain pressures",
+"Climate change adaptation"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Funding Strategy Integration",
+"data_type": "Financial Planning"
+},
+"page_content": {
+"context_header": "Funding Strategy Integration",
+"content_body": "Service area gaps are based on the 2024 financial strategy and will incorporate future funding strategies such as Long Range Financial Plans (LRFPs) once approved by Council, ensuring alignment with fiscal planning.",
+"key_metrics": [
+"2024 financial strategy",
+"LRFPs"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Mitigation Strategies",
+"data_type": "Mitigation Plan"
+},
+"page_content": {
+"context_header": "Risk Mitigation Strategies",
+"content_body": "Coordinated maintenance, capital planning, and long-term financial strategies; regular updates to master plans, Development Charges By-law, and Climate Change Master Plan; prioritization frameworks to identify highest risk assets, essential services, adapt to changing needs, and incorporate public input.",
+"key_metrics": [
+"Maintenance",
+"Capital Planning",
+"Long-Term Financial Strategies"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Prioritization Criteria",
+"data_type": "Prioritization"
+},
+"page_content": {
+"context_header": "Prioritization Criteria",
+"content_body": "Assets prioritized based on likelihood of failure and potential consequences if failure occurs; technical inputs include asset condition assessment, regulatory codes, industry practices, criticality or high occupant loads, mission-critical functions, and other asset-specific factors. Asset-level data support safety assessment and system impact analysis.",
+"key_metrics": [
+"Likelihood of Failure",
+"Consequence of Failure",
+"Criticality"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Residual Risk Concept",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Residual Risk Concept",
+"content_body": "Even with proactive investment, some infrastructure risks cannot be fully eliminated. Residual risk refers to the remaining level of service or asset risk of failure after planned investments, which is managed within practical tolerances.",
+"key_metrics": [
+"Residual Risk"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Impact",
+"data_type": "Climate Change"
+},
+"page_content": {
+"context_header": "Climate Change Impact",
+"content_body": "Municipal services and supporting assets are on the front lines of climate change. Asset management must adapt to mitigate contribution to climate change and respond to accelerated deterioration, increased operational costs, more frequent maintenance, renewal schedules, and changes in service level expectations, such as disaster planning and contingency funding.",
+"key_metrics": [
+"Increased O&M Costs",
+"Renewal Schedules",
+"Disaster Planning"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Cost Forecast",
+"data_type": "Cost Forecast"
+},
+"page_content": {
+"context_header": "Climate Change Cost Forecast",
+"content_body": "The 2025 AMPs forecast capital and operating costs related to climate change, including increased operations and maintenance costs and capital renewal costs for buildings based on the Financial Accountability Office of Ontario’s Costing Climate Change Impacts to Public Infrastructure (CIPI) Report. Ottawa-specific data and municipality-wide data inform these projections.",
+"key_metrics": [
+"Capital Renewal Costs",
+"O&M Costs",
+"CIPI Report"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Area Gap Summary",
+"data_type": "Gap Analysis"
+},
+"page_content": {
+"context_header": "Service Area Gap Summary",
+"content_body": "The total calculated service area gap for 12 AMPs over the next 10 years is $10.8 billion. This reflects projected needs for growth, renewal, and enhancement at target service levels, including climate change impacts. The forecast is based on a 10-year extrapolation of the 2024 annual capital budget to 2034 and incorporates data from previous AMPs, development charge studies, master plans, Climate Change Master Plan, Transit LRP, and Solid Waste LRP.",
+"key_metrics": [
+"$10.8B",
+"10 years"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Expected and Target Level of Service",
+"data_type": "Service Level Definition"
+},
+"page_content": {
+"context_header": "Expected and Target Level of Service",
+"content_body": "The AMPs establish three service level measures: Current (existing data), Expected (projected under current funding), and Target (policy/strategy based, regardless of budget). Current and target legislated service levels are met; high-risk services are prioritized; lower scores don’t always mean worse user experience; investment needs differ by service; some gaps stem from low-risk, still-functional assets.",
+"key_metrics": [
+"Current",
+"Expected",
+"Target",
+"High-risk services prioritized"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Areas and Mitigation Strategies",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Risk Areas and Mitigation Strategies",
+"content_body": "Risks include underfunding across renewal, growth, and enhancement needs, leading to elevated long-term costs, deferred investment, and service reliability changes. Additional risks: inflationary pressures, delayed climate mitigation implementation, extended enhancement policy implementation, reliance on staff contingency plans. Mitigation uses a risk-based asset management framework aligned with Enterprise Risk Management, prioritizing investments based on condition, service impact, criticality, safety, and affordability.",
+"key_metrics": [
+"Underfunding",
+"Inflation",
+"Climate mitigation delay",
+"Risk-based framework"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Portfolio Renewal Updates",
+"data_type": "Renewal Estimate"
+},
+"page_content": {
+"context_header": "Asset Portfolio Renewal Updates",
+"content_body": "Transportation, drinking water, wastewater, and stormwater asset portfolios have updated renewal estimates reflecting higher replacement costs driven by construction inflation, supply chain pressures, and integration of climate change adaptation and resilience investments based on updated modelling.",
+"key_metrics": [
+"Construction inflation",
+"Supply chain pressures",
+"Climate change adaptation"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Funding Strategy Integration",
+"data_type": "Financial Planning"
+},
+"page_content": {
+"context_header": "Funding Strategy Integration",
+"content_body": "Service area gaps are based on the 2024 financial strategy and will incorporate future funding strategies such as Long Range Financial Plans (LRFPs) once approved by Council, ensuring alignment with fiscal planning.",
+"key_metrics": [
+"2024 financial strategy",
+"LRFPs"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Mitigation Strategies",
+"data_type": "Mitigation Plan"
+},
+"page_content": {
+"context_header": "Risk Mitigation Strategies",
+"content_body": "Coordinated maintenance, capital planning, and long-term financial strategies; regular updates to master plans, Development Charges By-law, and Climate Change Master Plan; prioritization frameworks to identify highest risk assets, essential services, adapt to changing needs, and incorporate public input.",
+"key_metrics": [
+"Maintenance",
+"Capital Planning",
+"Long-Term Financial Strategies"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Prioritization Criteria",
+"data_type": "Prioritization"
+},
+"page_content": {
+"context_header": "Prioritization Criteria",
+"content_body": "Assets prioritized based on likelihood of failure and potential consequences if failure occurs; technical inputs include asset condition assessment, regulatory codes, industry practices, criticality or high occupant loads, mission-critical functions, and other asset-specific factors. Asset-level data support safety assessment and system impact analysis.",
+"key_metrics": [
+"Likelihood of Failure",
+"Consequence of Failure",
+"Criticality"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Residual Risk Concept",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Residual Risk Concept",
+"content_body": "Even with proactive investment, some infrastructure risks cannot be fully eliminated. Residual risk refers to the remaining level of service or asset risk of failure after planned investments, which is managed within practical tolerances.",
+"key_metrics": [
+"Residual Risk"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Impact",
+"data_type": "Climate Change"
+},
+"page_content": {
+"context_header": "Climate Change Impact",
+"content_body": "Municipal services and supporting assets are on the front lines of climate change. Asset management must adapt to mitigate contribution to climate change and respond to accelerated deterioration, increased operational costs, more frequent maintenance, renewal schedules, and changes in service level expectations, such as disaster planning and contingency funding.",
+"key_metrics": [
+"Increased O&M Costs",
+"Renewal Schedules",
+"Disaster Planning"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Cost Forecast",
+"data_type": "Cost Forecast"
+},
+"page_content": {
+"context_header": "Climate Change Cost Forecast",
+"content_body": "Over the next 10 years, climate change will increase the need for expenditure on existing assets by an additional $1.86 billion in capital and operating costs. This includes $681 million in adaptation costs and $1.18 billion in mitigation costs. Of these, $163 million is forecasted operating costs and $1.70 billion is forecasted capital costs. The 2024 10-year capital budget includes $246 million dedicated to climate change, resulting in a gap of $1.45 billion.",
+"key_metrics": [
+"$1.86B",
+"$681M adaptation",
+"$1.18B mitigation",
+"$1.70B capital",
+"$163M operating"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Alignment Between AMPs and LRFPs",
+"data_type": "Strategic Alignment"
+},
+"page_content": {
+"context_header": "Alignment Between AMPs and LRFPs",
+"content_body": "Ottawa’s approach to infrastructure planning is supported by strong alignment between Asset Management Plans (AMPs) and Long-Range Financial Plans (LRFPs). The AMPs provide input into the updated Rate LRFP and Tax LRFP, helping develop a ten-year funding strategy that addresses essential needs where risk cannot be mitigated without investment.",
+"key_metrics": [
+"AMPs",
+"LRFPs",
+"Ten-year funding"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "LRFP Funding Strategy",
+"data_type": "Financial Planning"
+},
+"page_content": {
+"context_header": "LRFP Funding Strategy",
+"content_body": "Upcoming updates to the rate-supported and tax-supported Long Range Financial Plans (LRFPs) will serve as the key vehicle for identifying funding strategies to respond to priority funding requirements within affordable parameters, incorporating data and needs identified in the AMPs.",
+"key_metrics": [
+"LRFPs",
+"Funding strategies",
+"Affordability"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Non-Financial Strategies Overview",
+"data_type": "Strategic Summary"
+},
+"page_content": {
+"context_header": "Non-Financial Strategies Overview",
+"content_body": "The 2025 Asset Management Plans support non-financial strategies to modify service delivery, reduce asset dependency, repurpose existing assets, and deliver reliable services affordably, reliably, and sustainably.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Non-Financial Strategy Details",
+"data_type": "Strategic Details"
+},
+"page_content": {
+"context_header": "Non-Financial Strategy Details",
+"content_body": "Rationalization and optimization of existing assets; changing service provisions; service delivery review initiatives; public outreach and education; innovative delivery approaches.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Level Adjustments",
+"data_type": "Operational Change"
+},
+"page_content": {
+"context_header": "Service Level Adjustments",
+"content_body": "Service-level adjustments should be considered practical changes following LRFP updates to address service area gaps and reduce long-term infrastructure risk.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Management in Action",
+"data_type": "Implementation Actions"
+},
+"page_content": {
+"context_header": "Asset Management in Action",
+"content_body": "2025 draft budget proposes $1.68B capital investment with targeted funding for critical infrastructure; $346M capital funding over ten years from provincial New Deal; staff actively review stimulus programs and secure ~80M in infrastructure funding since 2020 for 200 projects.",
+"key_metrics": [
+"$1.68B",
+"$346M",
+"80M",
+"200 projects"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Funding Sources and Programs",
+"data_type": "Funding Strategy"
+},
+"page_content": {
+"context_header": "Funding Sources and Programs",
+"content_body": "Programs such as Housing-Enabling Water Systems Fund, Canada Housing Infrastructure Fund, Community Sport and Recreation Infrastructure Fund support renewal of key infrastructure assets.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Annual Asset Management Progress Reports",
+"data_type": "Progress Report"
+},
+"page_content": {
+"context_header": "Annual Asset Management Progress Reports",
+"content_body": "Beginning in 2026, Council will receive an annual progress report assessing implementation actions, impediments, and strategies to improve trends in asset management. The report ensures ongoing evaluation, transparency, and integration into corporate decision-making.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Improvement and Monitoring Plan",
+"data_type": "Monitoring Plan"
+},
+"page_content": {
+"context_header": "Improvement and Monitoring Plan",
+"content_body": "Section 6.0 outlines specific improvement areas to be reflected in future AMPs, demonstrating commitment to continuous improvement and appropriate practices per Ontario Regulation 588/17. Updates are planned every five years, with a 2028 update and subsequent four-year updates aligned with Council terms.",
+"key_metrics": [
+"2028",
+"4 years"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Service Area Gap Options",
+"data_type": "Gap Analysis"
+},
+"page_content": {
+"context_header": "Service Area Gap Options",
+"content_body": "Staff will assess options to address service area gaps, including mix of assets, service levels, cost recovery, and non-financial delivery strategies. Options involve optimizing existing processes, managing demand, extending asset life, and divesting assets that no longer meet service or affordability thresholds.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Corporate Asset Management Policy Update",
+"data_type": "Policy Update"
+},
+"page_content": {
+"context_header": "Corporate Asset Management Policy Update",
+"content_body": "Recommendation to approve an update to the Corporate Asset Management (CAM) Policy (Document 13), aligning governance, accountability, and strategic asset management practices with current needs and regulatory requirements.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Program, Policy and Education Updates",
+"data_type": "Program Update"
+},
+"page_content": {
+"context_header": "Program, Policy and Education Updates",
+"content_body": "Plan to enhance asset management practices by updating the City’s comprehensive programs, policies, and education initiatives, ensuring continuous improvement, stakeholder engagement, and alignment with broader strategic priorities.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Management Implications Section",
+"data_type": "Policy Recommendation"
+},
+"page_content": {
+"context_header": "Mandatory Asset Management Implications Section",
+"content_body": "Recommendation to mandate an asset management implications section in all Council and Committee reports for the 2026–2030 Term of Council Governance Review, providing visibility into long-term impacts, supporting regulation compliance, and strengthening informed decision-making.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Policy Consistency with Regulation",
+"data_type": "Policy Update"
+},
+"page_content": {
+"context_header": "Policy Consistency with Ontario Regulation 588/17",
+"content_body": "Updates to the Comprehensive Asset Management Policy ensure consistency with Ontario Regulation 588/17 and streamline policy for clearer understanding and interpretation.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "AMP Training in Council Orientation",
+"data_type": "Training Initiative"
+},
+"page_content": {
+"context_header": "AMP Training in 2026 Term of Council Orientation",
+"content_body": "Inclusion of AMPs training in the 2026 Term of Council councillor orientation to enhance understanding of asset management principles, legislative requirements, policy, and decision-making roles.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "New Municipal Growth Framework",
+"data_type": "Strategic Plan"
+},
+"page_content": {
+"context_header": "New Municipal Growth Framework",
+"content_body": "Proposed framework to modernize municipal revenue, address a projected $52B infrastructure investment shortfall over the next decade, and provide sustainable, predictable, and equitable funding tools aligned with 21st-century growth demands.",
+"key_metrics": [
+"$52B shortfall"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Municipal Infrastructure Shortfall",
+"data_type": "Financial Forecast"
+},
+"page_content": {
+"context_header": "Municipal Infrastructure Shortfall",
+"content_body": "Ontario municipalities face a $52B infrastructure investment shortfall over the next decade, with $21B required for roads and an additional $5.3B annually until at least 2030 for climate mitigation and adaptation.",
+"key_metrics": [
+"$52B shortfall",
+"$21B roads",
+"$5.3B annual climate costs"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Funding Reform Need",
+"data_type": "Policy Recommendation"
+},
+"page_content": {
+"context_header": "Funding Reform Need",
+"content_body": "Municipal revenue framework is outdated and cannot meet modern infrastructure demands; reform is necessary to avoid deferring critical projects, hinder housing and economic development, and ensure delivery of essential services.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Financial Implications",
+"data_type": "Financial Analysis"
+},
+"page_content": {
+"context_header": "Financial Implications",
+"content_body": "No financial implications to this report. Council approved Long Range Financial Plan for Tax Supported Capital and Transit remain in effect. LRFP for Rate will be presented to Committee and Council alongside 2025 Asset Management Plans. Transit and Tax LRFP will be updated in Q3 2025.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Legal Implications",
+"data_type": "Legal Analysis"
+},
+"page_content": {
+"context_header": "Legal Implications",
+"content_body": "No legal impediments to adopting the recommendations. Adoption allows City to meet continuing legal obligations under Ontario Regulation 588/17 and Infrastructure for Jobs and Prosperity Act, 2015.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Ward Councilor Comments",
+"data_type": "Comments"
+},
+"page_content": {
+"context_header": "Ward Councilor Comments",
+"content_body": "This is a citywide report.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Consultation",
+"data_type": "Stakeholder Engagement"
+},
+"page_content": {
+"context_header": "Consultation",
+"content_body": "No public consultations associated with this report as it is administrative in nature. The 12 AMPs were developed through collaboration of over 100 staff, 40 directors, all General Managers, and service-specific teams.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Accessibility Impacts",
+"data_type": "Accessibility"
+},
+"page_content": {
+"context_header": "Accessibility Impacts",
+"content_body": "Consulting with the public and the Accessibility Advisory Committee per Integrated Accessibility Standards Regulation 191/11 and Accessibility with Ontarians with Disabilities Act, 2005. Includes Provincial Design of Public Spaces Standard, Ontario Building Code, Canadian Standards Association requirements to ensure accessibility of City facilities and infrastructure.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Asset Management Implications",
+"data_type": "Strategic Implications"
+},
+"page_content": {
+"context_header": "Asset Management Implications",
+"content_body": "Implementation of asset management principles leads to timely decisions that minimize lifecycle costs and support long-term affordability of service delivery. Supports compliance with mandatory provincial regulation and eligibility for provincial and federal funding.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Implications",
+"data_type": "Climate Strategy"
+},
+"page_content": {
+"context_header": "Climate Implications",
+"content_body": "Ontario Regulation 588/17 requires climate change considerations in AMPs. Climate change needs were compared with 2024 10-year capital budget forecast; 2025 budget forecast allocated $155M less than 2024 budget over 10 years, indicating a shift in trends.",
+"key_metrics": [
+"$155M less"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Climate Change Summary",
+"data_type": "Summary"
+},
+"page_content": {
+"context_header": "Climate Change Summary",
+"content_body": "The report includes a summary of climate change considerations, comparing climate change needs with the 2024 10-year capital budget forecast. The 2025 budget forecast allocated $155 million less than the 2024 budget over 10 years, indicating a shift in trends.",
+"key_metrics": [
+"$155M less"
+]
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Risk Management Implications",
+"data_type": "Risk Management"
+},
+"page_content": {
+"context_header": "Risk Management Implications",
+"content_body": "Risk management implications are contained in the report. The City’s asset management planning uses a risk-based approach in decision-making for infrastructure assets.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Rural Implications",
+"data_type": "Rural Impact"
+},
+"page_content": {
+"context_header": "Rural Implications",
+"content_body": "Asset management planning provides a holistic approach to managing the City’s infrastructure, including services delivered to rural residents and businesses.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Term of Council Priorities",
+"data_type": "Policy Priorities"
+},
+"page_content": {
+"context_header": "Term of Council Priorities",
+"content_body": "The report supports the 2023-2026 Term of Council Priorities: 1) Affordable housing and livable city; 2) Connected, reliable, safe and accessible mobility; 3) Green and resilient city; 4) Diversified and prosperous economy.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Supporting Documentation",
+"data_type": "Documentation"
+},
+"page_content": {
+"context_header": "Supporting Documentation",
+"content_body": "Document 1 Drinking Water Services; Document 2 Stormwater Services; Document 3 Transportation Services; Document 4 Wastewater Services; Document 5 Community and Social Services; Document 6 Emergency and Protective Services; Document 7 Government Services and Information Technology; Document 8 Greenspace and Forest Services; Document 9 Recreation and Culture Services; Document 10 Solid Waste Services; Document 11 Transit Services; Document 12 Library Services; Document 13 Comprehensive Asset Management Policy.",
+"key_metrics": []
+}
+},
+{
+"metadata": {
+"source_file": "2025_Asset_Management_Plan.pdf",
+"service_area": "Infrastructure and Water Services",
+"topic": "Disposition",
+"data_type": "Implementation"
+},
+"page_content": {
+"context_header": "Disposition",
+"content_body": "Following Council’s approval, staff will implement any direction received by Council as a result of approving the Asset Management Plans in accordance with provincial regulations. A minor correction was made to this report by the City Clerk’s Delegated Authority, correcting typos in the report and Document 13.",
+"key_metrics": []
+}
+}
+]
+}
