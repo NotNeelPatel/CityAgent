@@ -44,7 +44,6 @@ async def load_data():
             curr_documents, curr_ids = await vectorize_excel(entry.path)
             documents.extend(curr_documents)
             ids.extend(curr_ids)
-            print("Skipping excel vectorization for now.")
         elif entry.name.endswith(".pdf") and entry.is_file():
             # Vectorize pdfs
             # TODO: This might have to extend to pptx, and docx as well...
