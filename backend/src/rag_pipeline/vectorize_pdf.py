@@ -11,42 +11,57 @@ import uuid
 from ai_api_selector import get_agent_model
 from ai_api_selector import get_agent_ctx_window_size
 import pymupdf4llm
-from pydantic import BaseModel, Field
 
 _INSTRUCTIONS = """
-You are an expert data extraction agent specialized in Municipal Asset Management reports. 
-Your task is to analyze the provided document text and extract structured information for a vector database.
+You are a document processing assistant for asset management reports. 
+Your goal is to transform provided text into a structured JSON format.
 
-CORE EXTRACTION RULES:
-1. Language Filtering: Many of these documents are bilingual. Extract ONLY English content. Completely ignore and discard all French translations.
-2. Table Conversion: Locate all data tables. Reconstruct them accurately using Markdown table syntax within the 'content_body' field.
-3. Metric Identification: Search for specific financial figures, percentages, condition ratings (e.g., "Good", "Poor", "1-10"), and dates. Populate the 'key_metrics' array with these findings.
-4. Context Preservation: The 'context_header' should summarize the specific section or sub-section being processed so the vector search has localized context.
+### Tasks:
+- Translate all visible data tables into standard Markdown syntax.
+- Extract only English text content.
+- Identify and list specific figures, percentages, and dates in the metrics field.
+- Provide a summary of the current section in the context header.
+- Use the following classifications:
+    - Service Area: (e.g., Transportation, Water, Facilities)
+    - Data Type: (e.g., Financial, Condition, Inventory)
+    - Topic: A brief subject label.
 
-DATA CLASSIFICATION GUIDELINES:
-- Service Area: Identify the infrastructure group (e.g., "Transportation", "Water & Sewer", "Facilities", "Parks"). If generic, use "Citywide".
-- Data Type: Classify the section type (e.g., "Financial Strategy", "Condition Assessment", "Level of Service", "Inventory").
-- Topic: Provide a brief 2-4 word description of the specific subject (e.g., "Bridge Lifecycle Costs").
-
-OUTPUT REQUIREMENT:
-Extract the data and populate the fields exactly as defined in the provided schema. Ensure the 'content_body' is comprehensive enough for semantic retrieval.
+### Schema Requirements:
+Ensure the output follows the keys and structure provided in the JSON schema section.
 """
 
-# Define Pydantic models for structured output
-class Metadata(BaseModel):
-    source_file: str = Field(description="The name of the source PDF file.")
-    service_area: str = Field(description="Specific name like 'Transportation' or 'Citywide'.")
-    topic: str = Field(description="The primary topic discussed in this section.")
-    data_type: str = Field(description="Category like 'Financial Analysis' or 'Condition Report'.")
-
-class PageContent(BaseModel):
-    context_header: str = Field(description="The heading or context for this specific chunk.")
-    content_body: str = Field(description="The main text content, with tables converted to Markdown.")
-    key_metrics: list[str] = Field(description="List of numerical figures, percentages, and date ranges.")
-
-class OutputSchema(BaseModel):
-    metadata: Metadata
-    page_content: PageContent
+OUTPUT_SCHEMA_DICT = {
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "source_file": {"type": "string", "description": "The name of the source PDF file."},
+                "service_area": {"type": "string", "description": "Specific name like 'Transportation' or 'Citywide'."},
+                "topic": {"type": "string", "description": "The primary topic discussed in this section."},
+                "data_type": {"type": "string", "description": "Category like 'Financial Analysis' or 'Condition Report'."}
+            },
+            "required": ["source_file", "service_area", "topic", "data_type"],
+            "additionalProperties": False
+        },
+        "page_content": {
+            "type": "object",
+            "properties": {
+                "context_header": {"type": "string", "description": "The heading or context for this specific chunk."},
+                "content_body": {"type": "string", "description": "The main text content, with tables converted to Markdown."},
+                "key_metrics": {
+                    "type": "array", 
+                    "items": {"type": "string"},
+                    "description": "List of numerical figures, percentages, and date ranges."
+                }
+            },
+            "required": ["context_header", "content_body", "key_metrics"],
+            "additionalProperties": False
+        }
+    },
+    "required": ["metadata", "page_content"],
+    "additionalProperties": False
+}
 
 APP_NAME = "Vectorize_PDF_App"
 USER_ID = "2468"
@@ -57,9 +72,11 @@ ai_api = get_agent_model()
 agent = LlmAgent(
     model=ai_api,
     name="PDF_Vectorization_Agent",
-    instruction=_INSTRUCTIONS,
+    instruction=f"{_INSTRUCTIONS}\n\nSTRICT REQUIREMENT: Return ONLY a valid JSON object matching this schema:\n{json.dumps(OUTPUT_SCHEMA_DICT, indent=2)}",
     include_contents= "none",
-    output_schema = OutputSchema,
+    generate_content_config={
+        "response_mime_type": "application/json",
+    }
 )
 
 async def get_or_create_session(app_name: str, user_id: str, session_id: str):
@@ -172,15 +189,22 @@ async def vectorize_pdf(filepath: str):
     num_chunks = doc_length // chunk_size + 1
     knowledge_objects = []
 
-    for i in range(num_chunks):
-        start = min(chunk_size * i, abs(chunk_size * i - overlap_size)) 
-        end = min(doc_length, chunk_size * (i+1))
+    attempts = 0
+    chunk_number = 0
+    while (chunk_number < num_chunks):
+        attempts += 1
+        start = min(chunk_size * chunk_number, abs(chunk_size * chunk_number - overlap_size)) 
+        end = min(doc_length, chunk_size * (chunk_number+1))
         response = await call_agent(runner, agent, SESSION_ID, query[start:end])
         try:
             chunk = json.loads(response)
             knowledge_objects.append(chunk)
+            attempts = 0
         except json.JSONDecodeError as e:
-            print(f"JSON decode error for chunk {i}: {e}")
+            print(f"JSON decode error for chunk {chunk}: {e}")
+            if attempts < 2:
+                chunk_number -= 1  # Retry the same chunk
+        chunk_number += 1
     
     documents = []
     ids = []
