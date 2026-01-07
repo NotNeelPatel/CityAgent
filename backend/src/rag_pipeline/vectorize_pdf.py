@@ -32,6 +32,7 @@ OUTPUT REQUIREMENT:
 Extract the data and populate the fields exactly as defined in the provided schema. Ensure the 'content_body' is comprehensive enough for semantic retrieval.
 """
 
+# Define Pydantic models for structured output
 class Metadata(BaseModel):
     source_file: str = Field(description="The name of the source PDF file.")
     service_area: str = Field(description="Specific name like 'Transportation' or 'Citywide'.")
@@ -60,7 +61,6 @@ agent = LlmAgent(
     include_contents= "none",
     output_schema = OutputSchema,
 )
-
 
 async def get_or_create_session(app_name: str, user_id: str, session_id: str):
     """Return an existing session or create a new in-memory session.
@@ -171,6 +171,7 @@ async def vectorize_pdf(filepath: str):
     doc_length = len(query)
     num_chunks = doc_length // chunk_size + 1
     knowledge_objects = []
+
     for i in range(num_chunks):
         start = min(chunk_size * i, abs(chunk_size * i - overlap_size)) 
         end = min(doc_length, chunk_size * (i+1))
@@ -181,10 +182,10 @@ async def vectorize_pdf(filepath: str):
         except json.JSONDecodeError as e:
             print(f"JSON decode error for chunk {i}: {e}")
     
-
     documents = []
     ids = []
 
+    # Convert knowledge objects to Langchain Documents
     for item in knowledge_objects:
         content = item["page_content"]["content_body"]
         meta = item["metadata"]
