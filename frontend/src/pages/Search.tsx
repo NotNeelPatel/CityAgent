@@ -18,7 +18,6 @@ export function Search() {
   const [selectedSourceIndex, setSelectedSourceIndex] = React.useState<number>(0);
 
   const runIdRef = React.useRef(0);
-  const selectedSource = sources[selectedSourceIndex];
 
   const startMockRun = React.useCallback((q: string) => {
     runIdRef.current += 1;

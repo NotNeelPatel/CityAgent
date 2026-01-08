@@ -11,9 +11,13 @@ import {
 } from "@tabler/icons-react";
 import CityAgentWordmark from "@/assets/cityagent_wordmark.svg";
 import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
+import { useAuth } from "@/context/AuthContext";
 
 
 export function CityAgentSidebar() {
+  const [open, setOpen] = useState(false);
+  const { signOut } = useAuth();
+
   const links_top = [
     {
       label: "New Search",
@@ -47,15 +51,15 @@ export function CityAgentSidebar() {
       ),
     },
     {
-      label: "Logout",
-      href: "/login",
+      label: "Sign Out",
+      onClick: () => signOut(),
       icon: (
         <IconArrowLeft className="h-5 w-5 shrink-0 " />
       ),
     },
   ];
 
-  const [open, setOpen] = useState(false);
+
 
   return (
     <Sidebar open={open} setOpen={setOpen}>
