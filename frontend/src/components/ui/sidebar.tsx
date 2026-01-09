@@ -1,14 +1,24 @@
-"use client";
 import { cn } from "@/lib/utils";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
+import { Link } from "react-router-dom";
 
-interface Links {
+type BaseLink = {
   label: string;
-  href: string;
-  icon: React.JSX.Element | React.ReactNode;
-}
+  icon: React.ReactNode;
+  className?: string;
+};
+
+export type Links =
+  | (BaseLink & {
+    kind: "link";
+    href: string; // internal route like "/search" or external "https://..."
+  })
+  | (BaseLink & {
+    kind: "action";
+    onClick: () => void;
+  });
 
 interface SidebarContextProps {
   open: boolean;
@@ -163,17 +173,10 @@ export const SidebarLink = ({
   className?: string;
 }) => {
   const { open, animate } = useSidebar();
-  return (
-    <a
-      href={link.href}
-      className={cn(
-        "flex items-center justify-start gap-2  group/sidebar py-2",
-        className
-      )}
-      {...props}
-    >
-      {link.icon}
 
+  const content = (
+    <>
+      {link.icon}
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
@@ -183,6 +186,58 @@ export const SidebarLink = ({
       >
         {link.label}
       </motion.span>
-    </a>
+    </>
+  );
+
+  // Action item (ex: Logout)
+  if (link.kind === "action") {
+    return (
+      <button
+        type="button"
+        onClick={link.onClick}
+        className={cn(
+          "flex w-full items-center justify-start gap-2 group/sidebar py-2 text-left cursor-pointer",
+          className
+        )}
+        {...(props as any)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  // Link item
+  const isExternal = /^https?:\/\//.test(link.href);
+
+  if (isExternal) {
+    return (
+      <a
+        href={link.href}
+        className={cn(
+          "flex items-center justify-start gap-2 group/sidebar py-2",
+          className
+        )}
+        target="_blank"
+        rel="noreferrer"
+        {...(props as any)}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  // Internal route
+  return (
+    <Link
+      to={link.href}
+      className={cn(
+        "flex items-center justify-start gap-2 group/sidebar py-2",
+        className
+      )}
+      {...(props as any)}
+    >
+      {content}
+    </Link>
   );
 };
+
