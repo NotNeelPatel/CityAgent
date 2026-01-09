@@ -5,7 +5,6 @@ import { supabase } from "@/lib/client";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithGitHub: () => void;
   signInWithGoogle: () => void;
   signInWithAzure: () => void;
   signOut: () => void;
@@ -33,24 +32,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signInWithGitHub = () => {
-    supabase.auth.signInWithOAuth({ provider: "github" });
-  };
-
-  const signInWithGoogle = () => {
+  const signInWithGoogle = async () => {
     supabase.auth.signInWithOAuth({ provider: "google" });
   }
 
-  const signInWithAzure = () => {
+  const signInWithAzure = async () => {
     supabase.auth.signInWithOAuth({ provider: "azure" });
   }
 
-  const signOut = () => {
-    supabase.auth.signOut();
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    await supabase.auth.refreshSession();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signInWithGoogle, signInWithAzure, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithAzure, signOut }}>
       {children}
     </AuthContext.Provider>
   );
