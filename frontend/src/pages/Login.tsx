@@ -6,7 +6,7 @@ import { IconBrandGithubFilled, IconBrandGoogleFilled, IconBrandWindowsFilled } 
 import { Card, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 
 export function Login() {
-  const { signInWithGitHub, user, loading } = useAuth();
+  const { signInWithGitHub, signInWithGoogle, signInWithAzure, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,11 +34,11 @@ export function Login() {
           <Button size="lg" className="flex-1" onClick={signInWithGitHub} disabled={loading}>
             <IconBrandGithubFilled className="size-6" />
           </Button>
-          <Button size="lg" className="flex-1" disabled>
-            <IconBrandWindowsFilled className="size-6" />
-          </Button>
-          <Button size="lg" className="flex-1" disabled>
+          <Button size="lg" className="flex-1" onClick={signInWithGoogle} disabled={loading}>
             <IconBrandGoogleFilled className="size-6" />
+          </Button>
+          <Button size="lg" className="flex-1" onClick={signInWithAzure} disabled>
+            <IconBrandWindowsFilled className="size-6" />
           </Button>
         </CardFooter>
       </Card>
