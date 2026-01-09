@@ -1,4 +1,5 @@
 import os
+from time import ctime
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.runners import Runner
 from google.genai import types
@@ -226,7 +227,7 @@ async def vectorize_excel(filepath: str):
                 metadata[col_name] = str(row[col_name])
 
         metadata["filename"] = os.path.basename(filepath)
-        metadata["last_updated"] = str(os.path.getmtime(filepath))
+        metadata["last_updated"] = str(ctime(os.path.getmtime(filepath))) 
 
         id = str(uuid.uuid4())
         doc = Document(page_content=str_page_content, metadata=metadata, id=id)

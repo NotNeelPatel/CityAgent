@@ -3,10 +3,8 @@ from pathlib import Path
 import os
 import asyncio
 from rag_pipeline.vectorize_excel import vectorize_excel
+from rag_pipeline.vectorize_pdf import vectorize_pdf
 from ai_api_selector import get_embedding_model
-
-# from vectorize_excel import vectorize_excel
-# from ai_api_selector import get_embedding_model
 
 BACKEND_DIR = str(
     next(p for p in Path(__file__).resolve().parents if p.name == "backend")
@@ -42,12 +40,16 @@ async def load_data():
         if (
             entry.name.endswith(".xlsx") or entry.name.endswith(".csv")
         ) and entry.is_file():
-            # do excel things
+            # Vectorize spreadsheets
             curr_documents, curr_ids = await vectorize_excel(entry.path)
             documents.extend(curr_documents)
             ids.extend(curr_ids)
         elif entry.name.endswith(".pdf") and entry.is_file():
-            # TODO: do pdf things
+            # Vectorize pdfs
+            # TODO: This might have to extend to pptx, and docx as well...
+            curr_documents, curr_ids = await vectorize_pdf(entry.path) 
+            documents.extend(curr_documents)
+            ids.extend(curr_ids)
             continue
         else:
             print("Skipping non-supported file:", entry.name)

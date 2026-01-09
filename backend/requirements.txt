@@ -1,6 +1,7 @@
 google-adk==1.17.0 # change to 1.5.0, for adk/docs rendering
 litellm==1.79.0
 python-dotenv==1.2.1
+pymupdf4llm
 
 google.genai
 chromadb
