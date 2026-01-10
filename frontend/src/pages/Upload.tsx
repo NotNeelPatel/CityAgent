@@ -1,8 +1,21 @@
+import { Layout } from "@/components/layout";
+import { useState } from "react";
+import { FileUpload } from "@/components/ui/aceternity/file-upload";
+
 export function Upload() {
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleFileUpload = (files: File[]) => {
+    setFiles(files);
+  };
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Upload Page</h1>
-      <p>This is where users can upload their files.</p>
-    </div>
+    <Layout>
+      <div className="flex justify-center items-center h-full p-10">
+        <div className="flex justify-center items-center h-full w-full max-w-4xl border border-dashed rounded-lg">
+          <FileUpload onChange={handleFileUpload} allowedFileTypes={["csv", "pdf", "xls", "xlsx"]} />
+        </div>
+      </div>
+    </Layout>
   );
 }

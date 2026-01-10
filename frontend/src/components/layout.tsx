@@ -11,7 +11,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     >
       <CityAgentSidebar />
       <div className="flex flex-1">
-        <div className="flex h-full w-full flex-1 flex-col gap-2 rounded-tl-2xl border border-neutral-200 bg-white p-2 md:p-10 dark:border-neutral-700 dark:bg-neutral-900">
+        <div className="flex h-full w-full flex-1 flex-col gap-2 rounded-tl-2xl rounded-tr-2xl md:rounded-tr-none md:rounded-bl-2xl border border-neutral-200 bg-white p-2 md:p-10 dark:border-neutral-700 dark:bg-neutral-900">
           {children}
         </div>
       </div>
