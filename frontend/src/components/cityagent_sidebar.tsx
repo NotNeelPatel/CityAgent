@@ -27,7 +27,7 @@ export function CityAgentSidebar() {
     {
       kind: "link",
       label: "History",
-      href: "/history", // change when you create the page
+      href: "/history", // TODO: implement the history view
       icon: <IconHistory className="h-5 w-5 shrink-0" />,
     },
   ];
@@ -37,14 +37,14 @@ export function CityAgentSidebar() {
       kind: "action",
       label: "Dark/Light Mode",
       onClick: () => {
-        // TODO: hook into your theme toggle later
+        // TODO: hook into theme toggle
       },
       icon: <IconSunMoon className="h-5 w-5 shrink-0" />,
     },
     {
       kind: "link",
       label: "Upload",
-      href: "/upload", // change when you create the page
+      href: "/upload",
       icon: <IconFileUpload className="h-5 w-5 shrink-0" />,
     },
     {
