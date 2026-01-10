@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import type { Links } from "@/components/ui/sidebar";
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/aceternity/sidebar";
+import type { Links } from "@/components/ui/aceternity/sidebar";
 import {
   IconArrowLeft,
   IconPlus,
@@ -26,8 +26,9 @@ export function CityAgentSidebar() {
     },
     {
       kind: "link",
+      disabled: true,
       label: "History",
-      href: "/history", // change when you create the page
+      href: "/history", // TODO: implement the history view
       icon: <IconHistory className="h-5 w-5 shrink-0" />,
     },
   ];
@@ -35,16 +36,17 @@ export function CityAgentSidebar() {
   const links_bottom: Links[] = [
     {
       kind: "action",
+      disabled: true,
       label: "Dark/Light Mode",
       onClick: () => {
-        // TODO: hook into your theme toggle later
+        // TODO: hook into theme toggle
       },
       icon: <IconSunMoon className="h-5 w-5 shrink-0" />,
     },
     {
       kind: "link",
       label: "Upload",
-      href: "/upload", // change when you create the page
+      href: "/upload",
       icon: <IconFileUpload className="h-5 w-5 shrink-0" />,
     },
     {

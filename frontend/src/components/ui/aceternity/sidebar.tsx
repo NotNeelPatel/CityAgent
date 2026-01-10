@@ -8,6 +8,7 @@ type BaseLink = {
   label: string;
   icon: React.ReactNode;
   className?: string;
+  disabled?: boolean;
 };
 
 export type Links =
@@ -173,6 +174,7 @@ export const SidebarLink = ({
   className?: string;
 }) => {
   const { open, animate } = useSidebar();
+  const isDisabled = link.disabled;
 
   const content = (
     <>
@@ -189,6 +191,9 @@ export const SidebarLink = ({
     </>
   );
 
+  const disabledClasses =
+    "opacity-40 cursor-not-allowed pointer-events-none";
+
   // Action item (ex: Logout)
   if (link.kind === "action") {
     return (
@@ -196,7 +201,8 @@ export const SidebarLink = ({
         type="button"
         onClick={link.onClick}
         className={cn(
-          "flex w-full items-center justify-start gap-2 group/sidebar py-2 text-left cursor-pointer",
+          "flex w-full items-center justify-start gap-2 group/sidebar py-2 text-left",
+          isDisabled ? disabledClasses : "cursor-pointer",
           className
         )}
         {...(props as any)}
@@ -215,6 +221,7 @@ export const SidebarLink = ({
         href={link.href}
         className={cn(
           "flex items-center justify-start gap-2 group/sidebar py-2",
+          isDisabled && disabledClasses,
           className
         )}
         target="_blank"
@@ -232,6 +239,7 @@ export const SidebarLink = ({
       to={link.href}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
+        isDisabled && disabledClasses,
         className
       )}
       {...(props as any)}
