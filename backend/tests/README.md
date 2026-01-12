@@ -2,7 +2,13 @@
 
 To run in backend do `pytest tests/` to run all tests. What follows is how this all works. 
 
-## 🏗 Core Architecture
+ADK tests are new as of writing this, so there are multiple warnings about features being experimental. These do not affect the test
+and can be safely ignored. Using the command `pytest tests --disable-warnings` can suppress those messages.
+
+Note that it is assumed that the "Roads Data for LLM" excel file data is present in the vector database. See the README in the backend
+folder for more information on vectorizing files.
+
+## Core Architecture
 
 The evaluation system is built on three pillars:
 ### 1. AgentEvaluator (The Engine)
