@@ -1,2 +1,34 @@
-"what is the presto smartcard department"
+Baseline Questions to ask:
+1. Describe the road segment FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).
+    - Road Segment: FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S) ......long answer containing the whole entry 
 
+2. What does a PQI of 15.2 mean for COMMISSIONER ST (OR 76)?
+    - A Pavement Quality Index (PQI) of 15.2 indicates that the pavement is in a very poor condition.......
+
+3. Is AGES DR generally in better or worse condition than WELLINGTON ST?
+    - WELLINGTON is better.....
+
+4. Compare MANN AV (OR 64) eastbound vs westbound segments.
+    - comparison of both 
+
+5. Why might an arterial road in Fair condition still be a concern?
+    -Even though a “Fair” rating (3.Fair) indicates that the pavement.....
+
+6. Do you have data for Ward 99?
+    - I could not...
+
+
+
+
+Questions that it might be getting wrong(maybe my understanding of the question is wrong idk): 
+
+- Which road segments are in Ward 12
+    - only lists 1 but i see at least 4 
+- Which arterial road here is in the best condition?
+    - says industrial av of with a pqi of 56 but i see roads with pqi's of 100
+- How much would it cost to replace all Poor roads shown here?
+    -$645,594.32 (rounded), gotta be more 
+- Which streets are in really bad shape?
+    - only lists darly st and that one is poor, not even very poor 
+- List roads with PQI below 20.
+    - lists one with a pqi of 35.4
