@@ -19,6 +19,51 @@ export function Search() {
 
   const runIdRef = React.useRef(0);
 
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [answer, setAnswer] = React.useState("");
+
+  const handleSearch = async (q: string) => {
+    setIsLoading(true);
+    setSubmittedQuery(q);
+    setHasResults(false);
+    setActiveTab("steps");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/adk/run/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appName: "city_agent",
+          user_id: "dev", // change later
+          session_id: "test", // change later
+          new_message: {
+            parts: [{ text: q }],
+            role: "user",
+          },
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Search response data:", data);
+
+    } catch (error) {
+      console.error("Error during search:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return; 
+    startMockRun(trimmed);
+    //handleSearch(trimmed);
+  };
+
   const startMockRun = React.useCallback((q: string) => {
     runIdRef.current += 1;
     const runId = runIdRef.current;
@@ -74,11 +119,13 @@ export function Search() {
     stepsRef.current = steps;
   }, [steps]);
 
+  /*
   const onSubmit = (q: string) => {
     const trimmed = q.trim();
     if (!trimmed) return;
     startMockRun(trimmed);
   };
+  */
 
   const hasSearch = submittedQuery === null;
 
