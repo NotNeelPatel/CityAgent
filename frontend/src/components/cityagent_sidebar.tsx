@@ -6,7 +6,7 @@ import {
   IconPlus,
   IconSunMoon,
   IconHistory,
-  IconFileUpload,
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 import CityAgentWordmark from "@/assets/cityagent_wordmark.svg";
 import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
@@ -45,9 +45,9 @@ export function CityAgentSidebar() {
     },
     {
       kind: "link",
-      label: "Upload",
-      href: "/upload",
-      icon: <IconFileUpload className="h-5 w-5 shrink-0" />,
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
     },
     {
       kind: "action",
