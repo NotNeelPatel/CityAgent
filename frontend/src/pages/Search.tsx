@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { IconSearch, IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { BACKEND_URL } from "@/lib/client";
 
 export function Search() {
   const [query, setQuery] = React.useState("");
@@ -15,20 +16,89 @@ export function Search() {
   const [steps, setSteps] = React.useState<Step[]>([]);
   const [hasResults, setHasResults] = React.useState(false);
 
+  const [adkResponse, setAdkResponse] = React.useState<string>("");
+
   const [selectedSourceIndex, setSelectedSourceIndex] = React.useState<number>(0);
 
   const runIdRef = React.useRef(0);
 
   const [isLoading, setIsLoading] = React.useState(false);
-  const [answer, setAnswer] = React.useState("");
+
+  const processADKEvent = (rawData: any) => {  
+    const author = rawData.author;
+    const parts = rawData.content?.parts || [];
+
+    parts.forEach((part: any) => {
+      console.log("Processing part:", part);
+
+      // Check for agent handoffs or tool calls
+      if (part.functionCall) {
+        const taskName = parts.functionCall.name === "transfer_to_agent"
+        ? `Transferring to ${parts.functionCall.args.agent_name}`
+        : `Agent ${author} is running tool ${parts.functionCall.name}`;
+        setSteps((prev) => [
+          ...prev.map(s => ({...s, status: "done" as const})),
+          { id: rawData.id, title: taskName, status: "running" as const }
+        ]);
+      }
+
+      // Check for final text response
+      if (part.text) {
+        setAdkResponse((part.text));
+        setHasResults(true);
+        setActiveTab("overview");
+      }
+
+      console.log("Updated ADK response:", adkResponse);
+    });
+  };
+
+  const setSessionId= async () => {
+    setIsLoading(true);
+    try {
+      // TODO: replace with actual user/session management
+      // This can be done by using a randomized userID or one associated with the auth of the user
+      // and then for sessionID either we fetch from history or we create a new one. 
+      // This is NOT something that will be done with this current PR though (issue #107)
+      const response = await fetch(`${BACKEND_URL}/adk/apps/city_agent/users/dev/sessions/test`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        if((await response.json()).detail.startsWith("Session already exists")) {
+          console.log("Session already exists, proceeding...");
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      // Use these for future requests
+      const sessionId = data.session_id;
+      const userId = data.user_id;
+
+      console.log("Set session ID response data:", data);
+
+    } catch (error) {
+      console.error("Error setting session ID:", error)
+
+    } finally { 
+      setIsLoading(false);
+    }
+  };
 
   const handleSearch = async (q: string) => {
     setIsLoading(true);
     setSubmittedQuery(q);
     setHasResults(false);
     setActiveTab("steps");
+    setSteps([]);
+    setAdkResponse("");
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/adk/run/", {
+      const response = await fetch(`${BACKEND_URL}/adk/run_sse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,21 +117,48 @@ export function Search() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log("Search response data:", data);
+      if (!response.body) {
+        throw new Error("ReadableStream not supported in this browser.");
+      }
 
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true){
+        const { value, done } = await reader.read();
+        if(done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";  // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+
+          try {
+            const data = JSON.parse(trimmed.replace("data: ", ""));
+            processADKEvent(data);
+          } catch (error) {
+            console.error("Error parsing SSE JSON line:", error);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error during search:", error);
     } finally {
       setIsLoading(false);
+      setSteps((prev) => prev.map(s => ({...s, status: "done" })));
     }
   };
 
   const onSubmit = (q: string) => {
     const trimmed = q.trim();
     if (!trimmed) return; 
-    startMockRun(trimmed);
-    //handleSearch(trimmed);
+    //startMockRun(trimmed);
+    setSessionId();
+    handleSearch(trimmed);
   };
 
   const startMockRun = React.useCallback((q: string) => {
@@ -141,7 +238,7 @@ export function Search() {
 
         </div>
 
-        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex })}
+        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse })}
       </div>
     </Layout>
   );
@@ -289,6 +386,7 @@ type ResultsAreaProps = {
   hasResults: boolean;
   selectedSourceIndex: number;
   setSelectedSourceIndex: React.Dispatch<React.SetStateAction<number>>;
+  adkResponse: string;
 };
 
 type Source = {
@@ -297,6 +395,7 @@ type Source = {
   href: string;
 };
 
+// TODO: remove
 const overviewAnswer = `
 ## Overview
 
@@ -324,7 +423,7 @@ const sources: Source[] = [
     href: '#',
   },
 ];
-const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex }: ResultsAreaProps) => {
+const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse }: ResultsAreaProps) => {
   const selectedSource = sources[selectedSourceIndex];
 
   return (
@@ -341,7 +440,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
             <div className="flex flex-col md:flex-row gap-4 justify-between">
 
               <div className="prose flex-1">
-                <ReactMarkdown>{overviewAnswer}</ReactMarkdown>
+                <ReactMarkdown>{adkResponse}</ReactMarkdown>
               </div>
 
               <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
