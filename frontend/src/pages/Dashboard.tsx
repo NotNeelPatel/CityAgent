@@ -161,13 +161,12 @@ function FileUploadDialog({
 }: {
   onUpload: (files: File[]) => void
 }) {
+  const [open, setOpen] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
   const hasPending = pendingFiles.length > 0
 
   const handleSelect = (incoming: File[]) => {
-    // If your FileUpload returns the full list each time, this is fine.
-    // If it returns deltas, switch to setPendingFiles(prev => [...prev, ...incoming])
     setPendingFiles(incoming)
   }
 
@@ -176,16 +175,24 @@ function FileUploadDialog({
   const handleUploadClick = () => {
     if (!hasPending) return
     onUpload(pendingFiles)
-    clearPending()
+    setOpen(false) // close dialog
+  }
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      // dialog is closing (any reason)
+      clearPending()
+    }
+    setOpen(nextOpen)
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>Upload files</Button>
       </DialogTrigger>
 
-      <DialogContent className="flex max-h-[80vh] w-full max-w-lg flex-col">
+      <DialogContent className="flex max-h-[80vh]  w-[calc(100%-1rem)] max-w-lg flex-col">
         <DialogHeader>
           <DialogTitle>Upload new files</DialogTitle>
           <DialogDescription>
@@ -204,17 +211,19 @@ function FileUploadDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" onClick={clearPending}>
-              Cancel
-            </Button>
-          </DialogClose>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
 
-          <DialogClose asChild>
-            <Button onClick={handleUploadClick} disabled={!hasPending}>
-              Upload{hasPending ? ` (${pendingFiles.length})` : ""}
-            </Button>
-          </DialogClose>
+          <Button
+            onClick={handleUploadClick}
+            disabled={!hasPending}
+          >
+            Upload{hasPending ? ` (${pendingFiles.length})` : ""}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
