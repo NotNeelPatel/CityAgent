@@ -1,0 +1,25 @@
+[
+  {
+    "name": "scope_check_fail",
+    "query": "What is the capital of France?",
+    "reference": "I'm sorry, but I can't help with that.",
+    "expected_tool_use": [],
+    "description": "Orchestrator should decline non-Ottawa topics."
+  },
+  {
+    "name": "valid_asset_query",
+    "query": "Describe the road segment FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).",
+    "reference": "FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).FERGUS CR between COBBLE HILL DR (N) and COBBLE HILL DR (S) is a short local-road segment in the Barrhaven West area (Ward 3). According to the city's road inventory it is 0.884 km in length, classified as a **Local** functional class within a **Suburban** transect.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "Should route to Reasoner and call search_data."
+  }
+]
