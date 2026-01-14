@@ -84,8 +84,8 @@ export function Search() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-5xl px-10">
-        <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "pt-6")} >
+      <div className="mx-auto w-full max-w-5xl md:px-10">
+        <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "md:pt-6")} >
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
           {SearchBar({ query, setQuery, onSubmit })}
