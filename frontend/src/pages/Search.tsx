@@ -16,11 +16,11 @@ export function Search() {
   const [steps, setSteps] = React.useState<Step[]>([]);
   const [hasResults, setHasResults] = React.useState(false);
 
+  const [sessionId, setSessionIdState] = React.useState<string | null>(null);
+  const [userId, setUserIdState] = React.useState<string | null>(null);
+
   const [adkResponse, setAdkResponse] = React.useState<string>("");
-
   const [selectedSourceIndex, setSelectedSourceIndex] = React.useState<number>(0);
-
-  const runIdRef = React.useRef(0);
 
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -29,13 +29,11 @@ export function Search() {
     const parts = rawData.content?.parts || [];
 
     parts.forEach((part: any) => {
-      console.log("Processing part:", part);
-
       // Check for agent handoffs or tool calls
       if (part.functionCall) {
-        const taskName = parts.functionCall.name === "transfer_to_agent"
-        ? `Transferring to ${parts.functionCall.args.agent_name}`
-        : `Agent ${author} is running tool ${parts.functionCall.name}`;
+        const taskName = part.functionCall.name === "transfer_to_agent"
+        ? `Transferring to ${part.functionCall.args.agent_name}`
+        : `Agent ${author} is running tool ${part.functionCall.name}`;
         setSteps((prev) => [
           ...prev.map(s => ({...s, status: "done" as const})),
           { id: rawData.id, title: taskName, status: "running" as const }
@@ -49,40 +47,50 @@ export function Search() {
         setActiveTab("overview");
       }
 
-      console.log("Updated ADK response:", adkResponse);
     });
   };
 
-  const setSessionId= async () => {
+  const setSessionId= async (): Promise<{session_id: string; user_id: string} | null> => {
     setIsLoading(true);
     try {
       // TODO: replace with actual user/session management
       // This can be done by using a randomized userID or one associated with the auth of the user
       // and then for sessionID either we fetch from history or we create a new one. 
       // This is NOT something that will be done with this current PR though (issue #107)
-      const response = await fetch(`${BACKEND_URL}/adk/apps/city_agent/users/dev/sessions/test`, {
+      // At the moment this just creates a new session for a hardcoded "dev" user every time
+      // and you can refresh to reset history.
+
+      // For now generate a random UUID for session ID
+      let random_session_id = crypto.randomUUID();
+
+      // We should eventually make a system where we have a dedicated user and not just use dev
+      // And also something that is not handled client side only
+
+      const response = await fetch(`${BACKEND_URL}/adk/apps/city_agent/users/dev/sessions/${random_session_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
       });
       if (!response.ok) {
-        if((await response.json()).detail.startsWith("Session already exists")) {
-          console.log("Session already exists, proceeding...");
-          return;
+        const errBody = await response.json().catch(() => ({}));
+        if (errBody && typeof errBody.detail === "string" && errBody.detail.startsWith("Session already exists")) {
+          setSessionIdState(random_session_id);
+          setUserIdState("dev");
+          return { session_id: random_session_id, user_id: "dev" };
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
 
-      // Use these for future requests
-      const sessionId = data.session_id;
-      const userId = data.user_id;
+      setSessionIdState(data.id);
+      setUserIdState(data.userId);
 
-      console.log("Set session ID response data:", data);
+      return { session_id: data.id, user_id: data.userId };
 
     } catch (error) {
       console.error("Error setting session ID:", error)
+      return null;
 
     } finally { 
       setIsLoading(false);
@@ -98,6 +106,14 @@ export function Search() {
     setAdkResponse("");
 
     try {
+      let sid = sessionId;
+      let uid = userId;
+      if (!sid || !uid) {
+        const res = await setSessionId();
+        sid = res?.session_id ?? sid;
+        uid = res?.user_id ?? uid;
+      }
+      
       const response = await fetch(`${BACKEND_URL}/adk/run_sse`, {
         method: "POST",
         headers: {
@@ -105,8 +121,8 @@ export function Search() {
         },
         body: JSON.stringify({
           appName: "city_agent",
-          user_id: "dev", // change later
-          session_id: "test", // change later
+          user_id: uid,
+          session_id: sid,
           new_message: {
             parts: [{ text: q }],
             role: "user",
@@ -156,73 +172,8 @@ export function Search() {
   const onSubmit = (q: string) => {
     const trimmed = q.trim();
     if (!trimmed) return; 
-    //startMockRun(trimmed);
-    setSessionId();
     handleSearch(trimmed);
   };
-
-  const startMockRun = React.useCallback((q: string) => {
-    runIdRef.current += 1;
-    const runId = runIdRef.current;
-
-    setSubmittedQuery(q);
-    setHasResults(false);
-    setActiveTab("steps");
-
-    setSteps([]);
-
-    const plan = makeStepPlan(q);
-
-    const emitNext = (index: number) => {
-      if (runIdRef.current !== runId) return;
-
-      // done, reveal other tabs and jump to overview
-      if (index >= plan.length) {
-        setHasResults(true);
-        setActiveTab("overview");
-        return;
-      }
-
-      const incoming = plan[index];
-
-      // Step arrives as running
-      setSteps((prev) => [
-        ...prev,
-        { ...incoming, status: "running" as const },
-      ]);
-
-      // After a moment, mark it done, then emit the next
-      const runTime = 900 + Math.random() * 700;
-
-      setTimeout(() => {
-        if (runIdRef.current !== runId) return;
-
-        setSteps((prev) =>
-          prev.map((s) =>
-            s.id === incoming.id ? { ...s, status: "done" } : s
-          )
-        );
-
-        setTimeout(() => emitNext(index + 1), 250);
-      }, runTime);
-    };
-
-    emitNext(0);
-  }, []);
-
-  // live ref of steps to avoid stale closure in timeouts
-  const stepsRef = React.useRef<Step[]>([]);
-  React.useEffect(() => {
-    stepsRef.current = steps;
-  }, [steps]);
-
-  /*
-  const onSubmit = (q: string) => {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    startMockRun(trimmed);
-  };
-  */
 
   const hasSearch = submittedQuery === null;
 
@@ -327,25 +278,6 @@ type Step = {
   detail?: string;
 };
 
-function makeStepPlan(query: string): Array<Omit<Step, "status">> {
-  const plans = [
-    [
-      { id: "s1", title: "Orchestrator: selecting agents", detail: `Query: "${query}"` },
-      { id: "s2", title: "RAG agent: retrieving sources" },
-      { id: "s3", title: "Math agent: computing metrics" },
-      { id: "s4", title: "Answer agent: compiling response" },
-    ],
-    [
-      { id: "s1", title: "Orchestrator: asking agents", detail: `Query: "${query}"` },
-      { id: "s2", title: "Geo agent: resolving locations" },
-      { id: "s3", title: "Validator: checking consistency" },
-      { id: "s4", title: "Answer agent: formatting output" },
-    ],
-  ];
-
-  return plans[Math.floor(Math.random() * plans.length)];
-}
-
 const statusLabel: Record<StepStatus, string> = {
   queued: "Queued",
   running: "Running",
@@ -395,17 +327,7 @@ type Source = {
   href: string;
 };
 
-// TODO: remove
-const overviewAnswer = `
-## Overview
-
-This is a **placeholder response** for now.
-
-- Once wired up  
-- This will show agent outputs  
-- Including citations, lists, and formatting
-`.trim();
-
+// TODO: Replace with sources. ADK needs to respond with a list of sources that can be parsed easier.
 const sources: Source[] = [
   {
     filename: "roads_data.xlsx (Longfields Rd segment)",
