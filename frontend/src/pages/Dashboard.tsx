@@ -5,7 +5,6 @@ import { SearchBar } from "@/components/searchbar"
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -13,7 +12,6 @@ import {
 } from "@/components/ui/table"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -156,34 +154,25 @@ function FilesTable({
   )
 }
 
-function FileUploadDialog({
-  onUpload,
-}: {
-  onUpload: (files: File[]) => void
-}) {
+function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => void }) {
   const [open, setOpen] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
   const hasPending = pendingFiles.length > 0
 
-  const handleSelect = (incoming: File[]) => {
-    setPendingFiles(incoming)
-  }
-
+  const closeDialog = () => setOpen(false)
   const clearPending = () => setPendingFiles([])
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) clearPending()
+    setOpen(nextOpen)
+  }
 
   const handleUploadClick = () => {
     if (!hasPending) return
     onUpload(pendingFiles)
-    setOpen(false) // close dialog
-  }
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      // dialog is closing (any reason)
-      clearPending()
-    }
-    setOpen(nextOpen)
+    clearPending()
+    closeDialog()
   }
 
   return (
@@ -192,7 +181,7 @@ function FileUploadDialog({
         <Button>Upload files</Button>
       </DialogTrigger>
 
-      <DialogContent className="flex max-h-[80vh]  w-[calc(100%-1rem)] max-w-lg flex-col">
+      <DialogContent className="flex max-h-[80vh] w-[calc(100%-1rem)] max-w-lg flex-col">
         <DialogHeader>
           <DialogTitle>Upload new files</DialogTitle>
           <DialogDescription>
@@ -200,28 +189,21 @@ function FileUploadDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Scrollable middle section */}
         <div className="overflow-auto">
           <div className="py-2">
             <FileUpload
-              onChange={handleSelect}
+              onChange={setPendingFiles}
               allowedFileTypes={["csv", "pdf", "xls", "xlsx"]}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-          >
+          <Button variant="outline" onClick={closeDialog}>
             Cancel
           </Button>
 
-          <Button
-            onClick={handleUploadClick}
-            disabled={!hasPending}
-          >
+          <Button onClick={handleUploadClick} disabled={!hasPending}>
             Upload{hasPending ? ` (${pendingFiles.length})` : ""}
           </Button>
         </DialogFooter>
