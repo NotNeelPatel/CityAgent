@@ -2,8 +2,8 @@ import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { IconSearch, IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
+import { SearchBar } from "@/components/searchbar";
+import { IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -84,8 +84,8 @@ export function Search() {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-5xl px-10">
-        <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "pt-6")} >
+      <div className="mx-auto w-full max-w-5xl md:px-10">
+        <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "md:pt-6")} >
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
           {SearchBar({ query, setQuery, onSubmit })}
@@ -99,37 +99,6 @@ export function Search() {
     </Layout>
   );
 };
-
-/******************** Search Bar Component ********************/
-type SearchBarProps = {
-  query: string;
-  setQuery: (q: string) => void;
-  onSubmit: (q: string) => void;
-};
-
-const SearchBar = ({ query, setQuery, onSubmit }: SearchBarProps) => {
-  return (
-    <div className="relative w-full">
-      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 text-muted-foreground">
-        <IconSearch className="size-4" />
-        <span className="sr-only">Search</span>
-      </div>
-
-      <Input
-        id="search-input"
-        type="search"
-        placeholder="Ask us anything..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") onSubmit(query);
-        }}
-        className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
-      />
-    </div>
-  );
-};
-
 
 /******************** Mock quick search items ********************/
 const QuickSearchs = [
