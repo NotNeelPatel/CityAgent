@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import ReactMarkdown from "react-markdown";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -6,78 +6,166 @@ import { SearchBar } from "@/components/searchbar";
 import { IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { BACKEND_URL } from "@/lib/client";
 
 export function Search() {
-  const [query, setQuery] = React.useState("");
-  const [submittedQuery, setSubmittedQuery] = React.useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = React.useState<"steps" | "overview" | "sources">("steps");
-  const [steps, setSteps] = React.useState<Step[]>([]);
-  const [hasResults, setHasResults] = React.useState(false);
+  const [activeTab, setActiveTab] = useState<"steps" | "overview" | "sources">("steps");
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [hasResults, setHasResults] = useState(false);
 
-  const [selectedSourceIndex, setSelectedSourceIndex] = React.useState<number>(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const runIdRef = React.useRef(0);
+  const [adkResponse, setAdkResponse] = useState<string>("");
+  const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0);
 
-  const startMockRun = React.useCallback((q: string) => {
-    runIdRef.current += 1;
-    const runId = runIdRef.current;
+  const processADKEvent = (rawData: any) => {  
+    const author = rawData.author;
+    const parts = rawData.content?.parts || [];
 
+    parts.forEach((part: any) => {
+      // Check for agent handoffs or tool calls
+      if (part.functionCall) {
+        const taskName = part.functionCall.name === "transfer_to_agent"
+        ? `Transferring to ${part.functionCall.args.agent_name}`
+        : `Agent ${author} is running tool ${part.functionCall.name}`;
+        setSteps((prev) => [
+          ...prev.map(s => ({...s, status: "done" as const})),
+          { id: rawData.id, title: taskName, status: "running" as const }
+        ]);
+      }
+
+      // Check for final text response
+      if (part.text) {
+        setAdkResponse((part.text));
+        setHasResults(true);
+        setActiveTab("overview");
+      }
+
+    });
+  };
+
+  const initializeSession = async (): Promise<{session_id: string; user_id: string} | null> => {
+    try {
+      // TODO: replace with actual user/session management
+      // This can be done by using a randomized userID or one associated with the auth of the user
+      // and then for sessionID either we fetch from history or we create a new one. 
+      // This is NOT something that will be done with this current PR though (issue #107)
+      // At the moment this just creates a new session for a hardcoded "dev" user every time
+      // and you can refresh to reset history.
+
+      // For now generate a random UUID for session ID
+      let random_session_id = crypto.randomUUID();
+
+      // We should eventually make a system where we have a dedicated user and not just use dev
+      // And also something that is not handled client side only
+
+      const response = await fetch(`${BACKEND_URL}/adk/apps/city_agent/users/dev/sessions/${random_session_id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        // Check if session already exists and reuse
+        if (errBody && typeof errBody.detail === "string" && errBody.detail.startsWith("Session already exists")) {
+          setSessionId(random_session_id);
+          setUserId("dev");
+          return { session_id: random_session_id, user_id: "dev" };
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      setSessionId(data.id);
+      setUserId(data.userId);
+
+      return { session_id: data.id, user_id: data.userId };
+
+    } catch (error) {
+      console.error("Error initializing session:", error)
+      return null;
+    }
+  };
+
+  const handleSearch = async (q: string) => {
     setSubmittedQuery(q);
     setHasResults(false);
     setActiveTab("steps");
-
     setSteps([]);
+    setAdkResponse("");
 
-    const plan = makeStepPlan(q);
-
-    const emitNext = (index: number) => {
-      if (runIdRef.current !== runId) return;
-
-      // done, reveal other tabs and jump to overview
-      if (index >= plan.length) {
-        setHasResults(true);
-        setActiveTab("overview");
-        return;
+    try {
+      let sid = sessionId;
+      let uid = userId;
+      if (!sid || !uid) {
+        const res = await initializeSession();
+        sid = res?.session_id ?? sid;
+        uid = res?.user_id ?? uid;
+      }
+      
+      const response = await fetch(`${BACKEND_URL}/adk/run_sse`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appName: "city_agent",
+          user_id: uid,
+          session_id: sid,
+          new_message: {
+            parts: [{ text: q }],
+            role: "user",
+          },
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const incoming = plan[index];
+      if (!response.body) {
+        throw new Error("ReadableStream not supported in this browser.");
+      }
 
-      // Step arrives as running
-      setSteps((prev) => [
-        ...prev,
-        { ...incoming, status: "running" as const },
-      ]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
 
-      // After a moment, mark it done, then emit the next
-      const runTime = 900 + Math.random() * 700;
+      while (true){
+        const { value, done } = await reader.read();
+        if(done) break;
 
-      setTimeout(() => {
-        if (runIdRef.current !== runId) return;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";  // Keep incomplete line in buffer
 
-        setSteps((prev) =>
-          prev.map((s) =>
-            s.id === incoming.id ? { ...s, status: "done" } : s
-          )
-        );
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
 
-        setTimeout(() => emitNext(index + 1), 250);
-      }, runTime);
-    };
-
-    emitNext(0);
-  }, []);
-
-  // live ref of steps to avoid stale closure in timeouts
-  const stepsRef = React.useRef<Step[]>([]);
-  React.useEffect(() => {
-    stepsRef.current = steps;
-  }, [steps]);
+          try {
+            const data = JSON.parse(trimmed.replace("data: ", ""));
+            processADKEvent(data);
+          } catch (error) {
+            console.error("Error parsing SSE JSON line:", error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error during search:", error);
+    } finally {
+      setSteps((prev) => prev.map(s => ({...s, status: "done" })));
+    }
+  };
 
   const onSubmit = (q: string) => {
     const trimmed = q.trim();
-    if (!trimmed) return;
-    startMockRun(trimmed);
+    if (!trimmed) return; 
+    handleSearch(trimmed);
   };
 
   const hasSearch = submittedQuery === null;
@@ -94,7 +182,7 @@ export function Search() {
 
         </div>
 
-        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex })}
+        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse })}
       </div>
     </Layout>
   );
@@ -152,25 +240,6 @@ type Step = {
   detail?: string;
 };
 
-function makeStepPlan(query: string): Array<Omit<Step, "status">> {
-  const plans = [
-    [
-      { id: "s1", title: "Orchestrator: selecting agents", detail: `Query: "${query}"` },
-      { id: "s2", title: "RAG agent: retrieving sources" },
-      { id: "s3", title: "Math agent: computing metrics" },
-      { id: "s4", title: "Answer agent: compiling response" },
-    ],
-    [
-      { id: "s1", title: "Orchestrator: asking agents", detail: `Query: "${query}"` },
-      { id: "s2", title: "Geo agent: resolving locations" },
-      { id: "s3", title: "Validator: checking consistency" },
-      { id: "s4", title: "Answer agent: formatting output" },
-    ],
-  ];
-
-  return plans[Math.floor(Math.random() * plans.length)];
-}
-
 const statusLabel: Record<StepStatus, string> = {
   queued: "Queued",
   running: "Running",
@@ -207,10 +276,11 @@ function StatusPill({ status }: { status: StepStatus }) {
 type ResultsAreaProps = {
   steps: Step[];
   activeTab: "steps" | "overview" | "sources";
-  setActiveTab: React.Dispatch<React.SetStateAction<"steps" | "overview" | "sources">>;
+  setActiveTab: Dispatch<SetStateAction<"steps" | "overview" | "sources">>;
   hasResults: boolean;
   selectedSourceIndex: number;
-  setSelectedSourceIndex: React.Dispatch<React.SetStateAction<number>>;
+  setSelectedSourceIndex: Dispatch<SetStateAction<number>>;
+  adkResponse: string;
 };
 
 type Source = {
@@ -219,16 +289,7 @@ type Source = {
   href: string;
 };
 
-const overviewAnswer = `
-## Overview
-
-This is a **placeholder response** for now.
-
-- Once wired up  
-- This will show agent outputs  
-- Including citations, lists, and formatting
-`.trim();
-
+// TODO: Replace with sources. ADK needs to respond with a list of sources that can be parsed easier.
 const sources: Source[] = [
   {
     filename: "roads_data.xlsx (Longfields Rd segment)",
@@ -246,7 +307,7 @@ const sources: Source[] = [
     href: '#',
   },
 ];
-const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex }: ResultsAreaProps) => {
+const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse }: ResultsAreaProps) => {
   const selectedSource = sources[selectedSourceIndex];
 
   return (
@@ -263,7 +324,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
             <div className="flex flex-col md:flex-row gap-4 justify-between">
 
               <div className="prose flex-1">
-                <ReactMarkdown>{overviewAnswer}</ReactMarkdown>
+                <ReactMarkdown>{adkResponse}</ReactMarkdown>
               </div>
 
               <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
@@ -347,19 +408,23 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
 
         <TabsContent value="steps" className="mt-6">
           <div className="mt-6 space-y-8">
-            {steps.map((s) => (
-              <div key={s.id} className="flex items-start gap-4">
-                <StatusPill status={s.status} />
-                <div className="min-w-0">
-                  <div className="font-medium">{s.title}</div>
-                  {s.detail && (
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {s.detail}
-                    </div>
-                  )}
+            {steps.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Processing query...</div>
+            ) : (
+              steps.map((s) => (
+                <div key={s.id} className="flex items-start gap-4">
+                  <StatusPill status={s.status} />
+                  <div className="min-w-0">
+                    <div className="font-medium">{s.title}</div>
+                    {s.detail && (
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {s.detail}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </TabsContent>
 
