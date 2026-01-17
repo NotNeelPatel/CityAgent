@@ -21,12 +21,20 @@ import {
 } from "@/components/ui/dialog"
 import { IconTrash } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/client"
+import { useAuth } from "@/context/AuthContext"
 
 export function Dashboard() {
   const [files, setFiles] = useState<FileRow[]>([])
   const [query, setQuery] = useState("")
+  const { user } = useAuth()
 
-  const handleFilesCommitted = (incoming: File[]) => {
+    const handleFilesCommitted = async (incoming: File[]) => {
+    if (!user) {
+      alert("Session expired. Please sign in again.")
+      return
+    }
+
     const rows: FileRow[] = incoming.map((f) => ({
       id: `${f.name}-${f.size}-${f.lastModified}`,
       name: f.name,
@@ -43,6 +51,39 @@ export function Dashboard() {
       }
       return next
     })
+
+    for (const f of incoming) {
+      const safeName = f.name.replace(/\s+/g, "_")
+      const storagePath = `${user.id}/${crypto.randomUUID()}-${safeName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(storagePath, f, {
+          contentType: f.type,
+          upsert: false,
+        })
+
+      if (uploadError) {
+        console.error(uploadError)
+        alert(`Upload failed for ${f.name}: ${uploadError.message}`)
+        continue
+      }
+      
+      console.log("Storage upload succeeded:", storagePath)
+
+      const { error: dbError } = await supabase.from("documents").insert({
+        owner_id: user.id,
+        title: f.name,
+        storage_bucket: "documents",
+        storage_path: storagePath,
+        
+      })
+
+      if (dbError) {
+        console.error(dbError)
+        alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
+      }
+    }
   }
 
   const handleDelete = (id: string) => {
@@ -71,8 +112,7 @@ export function Dashboard() {
       <FilesTable files={filteredFiles} onDelete={handleDelete} />
     </Layout>
   )
-}
-
+ }
 type FileRow = {
   id: string
   name: string
