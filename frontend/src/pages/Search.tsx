@@ -177,15 +177,21 @@ export function Search() {
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
           {SearchBar({ query, setQuery, onSubmit })}
-
           {hasSearch && QuickSearchItem({ onSubmit, setQuery })}
 
         </div>
 
         {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse })}
       </div>
-    </Layout>
-  );
+    <div className="fixed bottom-0 left-16 right-0 z-50 border-t bg-background/95 backdrop-blur">
+      <div className="mx-auto max-w-5xl px-4 py-3 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">Note:</span>{" "}
+          AI responses may contain inaccuracies. Please verify important information
+          using the cited sources or official documents.
+      </div>
+    </div>
+  </Layout>
+);
 };
 
 /******************** Mock quick search items ********************/
