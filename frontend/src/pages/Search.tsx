@@ -23,7 +23,7 @@ export function Search() {
   const [adkSource, setAdkSource] = useState<Source[]>([]);
   const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0);
 
-  const processADKEvent = (rawData: any) => {  
+  const processADKEvent = (rawData: any) => {
     const author = rawData.author;
     const parts = rawData.content?.parts || [];
 
@@ -31,10 +31,10 @@ export function Search() {
       // Check for agent handoffs or tool calls
       if (part.functionCall) {
         const taskName = part.functionCall.name === "transfer_to_agent"
-        ? `Transferring to ${part.functionCall.args.agent_name}`
-        : `Agent ${author} is running tool ${part.functionCall.name}`;
+          ? `Transferring to ${part.functionCall.args.agent_name}`
+          : `Agent ${author} is running tool ${part.functionCall.name}`;
         setSteps((prev) => [
-          ...prev.map(s => ({...s, status: "done" as const})),
+          ...prev.map(s => ({ ...s, status: "done" as const })),
           { id: rawData.id, title: taskName, status: "running" as const }
         ]);
       }
@@ -46,7 +46,6 @@ export function Search() {
           if (parsed.response) {
             setAdkResponse((parsed.response));
             setAdkSource((parsed.sources || []));
-            console.log("ADK Sources:", parsed.sources);
             setHasResults(true);
             setActiveTab("overview");
             return;
@@ -59,7 +58,7 @@ export function Search() {
     });
   };
 
-  const initializeSession = async (): Promise<{session_id: string; user_id: string} | null> => {
+  const initializeSession = async (): Promise<{ session_id: string; user_id: string } | null> => {
     try {
       // TODO: replace with actual user/session management
       // This can be done by using a randomized userID or one associated with the auth of the user
@@ -118,7 +117,7 @@ export function Search() {
         sid = res?.session_id ?? sid;
         uid = res?.user_id ?? uid;
       }
-      
+
       const response = await fetch(`${BACKEND_URL}/adk/run_sse`, {
         method: "POST",
         headers: {
@@ -146,9 +145,9 @@ export function Search() {
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
 
-      while (true){
+      while (true) {
         const { value, done } = await reader.read();
-        if(done) break;
+        if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -169,13 +168,13 @@ export function Search() {
     } catch (error) {
       console.error("Error during search:", error);
     } finally {
-      setSteps((prev) => prev.map(s => ({...s, status: "done" })));
+      setSteps((prev) => prev.map(s => ({ ...s, status: "done" })));
     }
   };
 
   const onSubmit = (q: string) => {
     const trimmed = q.trim();
-    if (!trimmed) return; 
+    if (!trimmed) return;
     handleSearch(trimmed);
   };
 
@@ -201,12 +200,12 @@ export function Search() {
 
 /******************** Mock quick search items ********************/
 const QuickSearchs = [
-  { questions: "What is the road condition of Longfields Rd?", href: "#" },
-  { questions: "Are there any parks near Baseline?", href: "#" },
-  { questions: "What public transport is available near Carleton University?", href: "#" },
-  { questions: "What are the nearby schools in Nepean?", href: "#" },
-  { questions: "What are the crime rates in Ottawa?", href: "#" },
-  { questions: "What are the popular restaurants in downtown Ottawa?", href: "#" },
+  { questions: "What is the pavement condition rating of the road segment on Baseline Road?", href: "#" },
+  { questions: "What is the Pavement Quality Index (PQI) value for the road segment on Bank Street?", href: "#" },
+  { questions: "Which ward is the road segment on Carling Avenue located in?", href: "#" },
+  { questions: "What functional road class is assigned to the road segment on Hunt Club Road?", href: "#" },
+  { questions: "What is the total replacement cost of the road segment on St. Laurent Boulevard?", href: "#" },
+  { questions: "How many lane kilometers does the road segment on Merivale Road have?", href: "#" },
 ];
 
 type QuickSearchItemProps = {
