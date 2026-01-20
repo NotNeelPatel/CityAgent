@@ -70,3 +70,6 @@ root_agent = LlmAgent(
     instruction=(_ORCHESTRATOR_INSTRUCTIONS),
     sub_agents = [reasoner_agent],
 )
+
+# Used by the Agent Evaluator for testing purposes
+agent = root_agent
