@@ -20,6 +20,7 @@ export function Search() {
   const [userId, setUserId] = useState<string | null>(null);
 
   const [adkResponse, setAdkResponse] = useState<string>("");
+  const [adkSource, setAdkSource] = useState<Source[]>([]);
   const [selectedSourceIndex, setSelectedSourceIndex] = useState<number>(0);
 
   const processADKEvent = (rawData: any) => {  
@@ -40,9 +41,19 @@ export function Search() {
 
       // Check for final text response
       if (part.text) {
-        setAdkResponse((part.text));
-        setHasResults(true);
-        setActiveTab("overview");
+        try {
+          const parsed = JSON.parse(part.text);
+          if (parsed.response) {
+            setAdkResponse((parsed.response));
+            setAdkSource((parsed.sources || []));
+            console.log("ADK Sources:", parsed.sources);
+            setHasResults(true);
+            setActiveTab("overview");
+            return;
+          }
+        } catch (error) {
+          console.error("Error parsing ADK response part text:", error);
+        }
       }
 
     });
@@ -182,7 +193,7 @@ export function Search() {
 
         </div>
 
-        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse })}
+        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource })}
       </div>
     </Layout>
   );
@@ -281,6 +292,7 @@ type ResultsAreaProps = {
   selectedSourceIndex: number;
   setSelectedSourceIndex: Dispatch<SetStateAction<number>>;
   adkResponse: string;
+  adkSource: Source[];
 };
 
 type Source = {
@@ -289,26 +301,8 @@ type Source = {
   href: string;
 };
 
-// TODO: Replace with sources. ADK needs to respond with a list of sources that can be parsed easier.
-const sources: Source[] = [
-  {
-    filename: "roads_data.xlsx (Longfields Rd segment)",
-    lastUpdated: "2023-10-01",
-    href: '#',
-  },
-  {
-    filename: "transit_routes.csv (Carleton vicinity)",
-    lastUpdated: "2023-09-28",
-    href: '#',
-  },
-  {
-    filename: "parks.geojson (Baseline area)",
-    lastUpdated: "2023-09-15",
-    href: '#',
-  },
-];
-const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse }: ResultsAreaProps) => {
-  const selectedSource = sources[selectedSourceIndex];
+const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource }: ResultsAreaProps) => {
+  const selectedSource = adkSource[selectedSourceIndex];
 
   return (
     <div className="mt-8">
@@ -328,7 +322,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
               </div>
 
               <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
-                {sources.map((src, idx) => (
+                {adkSource.map((src, idx) => (
                   <div key={idx} className="rounded-md bg-muted p-4">
                     <div className="text-muted-foreground text-xs">Last updated: {src.lastUpdated}</div>
                     <h2 className="font-medium">{src.filename}</h2>
@@ -357,7 +351,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
             <div className="flex flex-col md:flex-row gap-4 justify-between">
 
               <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
-                {sources.map((src, idx) => {
+                {adkSource.map((src, idx) => {
                   const isSelected = idx === selectedSourceIndex;
 
                   return (

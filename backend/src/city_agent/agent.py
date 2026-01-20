@@ -3,14 +3,12 @@ import asyncio
 from rag_pipeline.vector import query_retriever
 from ai_api_selector import get_agent_model
 
-
 async def search_data(query: str) -> str:
     # Offload the (potentially) blocking retriever call to a thread so the
     # async event loop isn't blocked when this tool is used inside an async
     # agent/runtime.
     relevant_data = await asyncio.to_thread(query_retriever, query)
     return relevant_data
-
 
 ai_api = get_agent_model()
 
@@ -46,9 +44,15 @@ Failure Condition
 If search_data returns empty results or results that are completely unrelated to the query, you must output exactly: "I could not find any relevant information."
 CRITICAL: Locate the filename and last_updated (or date_modified) fields in the metadata of the relevant chunks.
 Citation Protocol
-You must provide a citation for every piece of information you retrieve. Do not include data if you cannot attribute it to a specific file. Use the following format for your answers:
-    Format: [Fact/Answer] (Source: [filename], Last Updated: [date])
-    Example: "The budget for the Rideau Canal maintenance is set at $2.5M (Source: 2024_Capital_Budget_Final.pdf, Last Updated: 2023-12-15)."
+You must provide a citation for every piece of information you retrieve, only include source files once. Do not include data if you cannot attribute it to a specific file. Use the following format for your answers:
+ONLY output in minified JSON format as follows:
+{
+  "response": "<final formatted answer here>"
+  "sources": ["filename": "<filename>",
+    "lastUpdated": "2023-10-01",
+    "href": "#",
+    ]
+}
 """
 
 reasoner_agent = LlmAgent(
@@ -59,14 +63,10 @@ reasoner_agent = LlmAgent(
     tools=[search_data],
 )
 
-
 root_agent = LlmAgent(
     name="CityAgent_Orchestrator",
     model=ai_api,
     description=("A helpful assistant for user questions."),
     instruction=(_ORCHESTRATOR_INSTRUCTIONS),
-    sub_agents=[reasoner_agent],
+    sub_agents = [reasoner_agent],
 )
-
-# Used by the Agent Evaluator for testing purposes
-agent = root_agent
