@@ -2,7 +2,7 @@ import { type User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/client";
 
-type AppRole = "general" | "employee" | "admin";
+export type AppRole = "general" | "employee" | "admin";
 
 interface AuthContextType {
   user: User | null;
