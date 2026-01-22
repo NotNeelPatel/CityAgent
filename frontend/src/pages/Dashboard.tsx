@@ -23,13 +23,49 @@ import { IconTrash } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
+import type { User } from "@supabase/supabase-js"
 
 export function Dashboard() {
   const [files, setFiles] = useState<FileRow[]>([])
   const [query, setQuery] = useState("")
   const { user } = useAuth()
 
-    const handleFilesCommitted = async (incoming: File[]) => {
+  const uploadToSupabase = async (user: User, f: File) => {
+    const safeName = f.name.replace(/\s+/g, "_")
+    const storagePath = `${crypto.randomUUID()}-${safeName}`
+
+    // upload file to supabase storage
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(storagePath, f, {
+        contentType: f.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error(uploadError)
+      alert(`Upload failed for ${f.name}: ${uploadError.message}`)
+      return null
+    }
+
+    // insert file metadata into supabase database
+    const { error: dbError } = await supabase.from("documents").insert({
+      owner_id: user.id,
+      title: f.name,
+      last_updated: new Date(f.lastModified).toISOString(),
+      storage_bucket: "documents",
+      storage_path: storagePath,
+
+    })
+
+    if (dbError) {
+      console.error(dbError)
+      alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
+      return null
+    }
+  }
+
+  const handleFilesCommitted = async (incoming: File[]) => {
     if (!user) {
       alert("Session expired. Please sign in again.")
       return
@@ -38,7 +74,7 @@ export function Dashboard() {
     const rows: FileRow[] = incoming.map((f) => ({
       id: `${f.name}-${f.size}-${f.lastModified}`,
       name: f.name,
-      lastUpdated: formatDate(new Date(f.lastModified)),
+      lastUpdated: new Date(f.lastModified).toISOString(),
       size: formatBytes(f.size),
       file: f,
     }))
@@ -53,36 +89,7 @@ export function Dashboard() {
     })
 
     for (const f of incoming) {
-      const safeName = f.name.replace(/\s+/g, "_")
-      const storagePath = `${user.id}/${crypto.randomUUID()}-${safeName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(storagePath, f, {
-          contentType: f.type,
-          upsert: false,
-        })
-
-      if (uploadError) {
-        console.error(uploadError)
-        alert(`Upload failed for ${f.name}: ${uploadError.message}`)
-        continue
-      }
-      
-      console.log("Storage upload succeeded:", storagePath)
-
-      const { error: dbError } = await supabase.from("documents").insert({
-        owner_id: user.id,
-        title: f.name,
-        storage_bucket: "documents",
-        storage_path: storagePath,
-        
-      })
-
-      if (dbError) {
-        console.error(dbError)
-        alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
-      }
+      await uploadToSupabase(user, f)
     }
   }
 
@@ -112,7 +119,7 @@ export function Dashboard() {
       <FilesTable files={filteredFiles} onDelete={handleDelete} />
     </Layout>
   )
- }
+}
 type FileRow = {
   id: string
   name: string
@@ -128,14 +135,6 @@ function formatBytes(bytes: number) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   const value = bytes / Math.pow(k, i)
   return `${value.toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`
-}
-
-function formatDate(d: Date) {
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
 }
 
 function normalize(s: string) {

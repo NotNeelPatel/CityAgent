@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 export function CityAgentSidebar() {
   const [open, setOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
 
   const links_top: Links[] = [
     {
@@ -43,12 +43,16 @@ export function CityAgentSidebar() {
       },
       icon: <IconSunMoon className="h-5 w-5 shrink-0" />,
     },
-    {
-      kind: "link",
-      label: "Dashboard",
-      href: "/dashboard",
-      icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
-    },
+    ...(role === "admin"
+      ? [
+        {
+          kind: "link",
+          label: "Dashboard",
+          href: "/dashboard",
+          icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+        } satisfies Links,
+      ]
+      : []),
     {
       kind: "action",
       label: "Sign Out",
