@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { FileUpload } from "@/components/ui/aceternity/file-upload"
 import { SearchBar } from "@/components/searchbar"
 import {
@@ -23,71 +23,125 @@ import { IconTrash } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
+import type { User } from "@supabase/supabase-js"
 
 export function Dashboard() {
   const [files, setFiles] = useState<FileRow[]>([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const { user } = useAuth()
 
-    const handleFilesCommitted = async (incoming: File[]) => {
+  const loadFiles = async () => {
+    setLoading(true)
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, owner_id, title, storage_bucket, storage_path, mime_type, size_bytes, created_at, last_updated")
+      .eq("storage_bucket", "documents")
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error(error)
+      alert(`Failed to load files: ${error.message}`)
+      setFiles([])
+      setLoading(false)
+      return
+    }
+
+    const rows: FileRow[] = (data ?? []).map((d) => ({
+      id: d.id,
+      ownerId: d.owner_id,
+      name: d.title,
+      storagePath: d.storage_path,
+      mimeType: d.mime_type ?? "",
+      sizeBytes: d.size_bytes ?? 0,
+      createdAt: d.created_at,
+      lastUpdated: d.last_updated ?? null,
+    }))
+
+    setFiles(rows)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (!user) return
+    loadFiles()
+  }, [user])
+
+  const uploadToSupabase = async (user: User, f: File) => {
+    const safeName = f.name.replace(/\s+/g, "_")
+    const storagePath = `${crypto.randomUUID()}-${safeName}`
+
+    // upload file to storage
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(storagePath, f, {
+        contentType: f.type,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error(uploadError)
+      alert(`Upload failed for ${f.name}: ${uploadError.message}`)
+      return
+    }
+
+    // insert metadata to DB
+    const { error: dbError } = await supabase.from("documents").insert({
+      owner_id: user.id,
+      title: f.name,
+      storage_bucket: "documents",
+      storage_path: storagePath,
+      mime_type: f.type,
+      size_bytes: f.size,
+      last_updated: new Date(f.lastModified), // safest
+    })
+
+    if (dbError) {
+      console.error(dbError)
+      alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
+      await supabase.storage.from("documents").remove([storagePath])
+      return
+    }
+  }
+
+  const handleFileUpload = async (incoming: File[]) => {
     if (!user) {
       alert("Session expired. Please sign in again.")
       return
     }
 
-    const rows: FileRow[] = incoming.map((f) => ({
-      id: `${f.name}-${f.size}-${f.lastModified}`,
-      name: f.name,
-      lastUpdated: formatDate(new Date(f.lastModified)),
-      size: formatBytes(f.size),
-      file: f,
-    }))
-
-    setFiles((prev) => {
-      const seen = new Set(prev.map((p) => p.id))
-      const next = [...prev]
-      for (const r of rows) {
-        if (!seen.has(r.id)) next.push(r)
-      }
-      return next
-    })
-
     for (const f of incoming) {
-      const safeName = f.name.replace(/\s+/g, "_")
-      const storagePath = `${user.id}/${crypto.randomUUID()}-${safeName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(storagePath, f, {
-          contentType: f.type,
-          upsert: false,
-        })
-
-      if (uploadError) {
-        console.error(uploadError)
-        alert(`Upload failed for ${f.name}: ${uploadError.message}`)
-        continue
-      }
-      
-      console.log("Storage upload succeeded:", storagePath)
-
-      const { error: dbError } = await supabase.from("documents").insert({
-        owner_id: user.id,
-        title: f.name,
-        storage_bucket: "documents",
-        storage_path: storagePath,
-        
-      })
-
-      if (dbError) {
-        console.error(dbError)
-        alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
-      }
+      await uploadToSupabase(user, f)
     }
+
+    // refresh table from DB so it shows all files
+    await loadFiles()
   }
 
-  const handleDelete = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id))
+  const handleFileDelete = async (row: FileRow) => {
+    // delete storage object
+    const { error: storageError } = await supabase.storage
+      .from("documents")
+      .remove([row.storagePath])
+
+    if (storageError) {
+      console.error(storageError)
+      alert(`Failed to delete file from storage: ${storageError.message}`)
+      return
+    }
+
+    // delete DB row
+    const { error: dbError } = await supabase.from("documents").delete().eq("id", row.id)
+
+    if (dbError) {
+      console.error(dbError)
+      alert(`Deleted from storage but DB delete failed: ${dbError.message}`)
+      return
+    }
+
+    // update UI
+    setFiles((prev) => prev.filter((f) => f.id !== row.id))
   }
 
   const filteredFiles = useMemo(() => {
@@ -96,30 +150,46 @@ export function Dashboard() {
     const tokens = q.split(/\s+/).filter(Boolean)
 
     return files.filter((f) => {
-      const haystack = normalize(`${f.name} ${f.lastUpdated} ${f.size}`)
+      const haystack = normalize(
+        `${f.name} ${f.mimeType} ${formatBytes(f.sizeBytes)} ${f.createdAt} ${f.lastUpdated ?? ""}`
+      )
       return tokens.every((t) => haystack.includes(t))
     })
   }, [files, query])
 
   return (
     <Layout>
-      <SearchBar placeholder="Search files" query={query} setQuery={setQuery} onSubmit={() => { }} />
-
-      <div className="my-6 flex justify-end">
-        <FileUploadDialog onUpload={handleFilesCommitted} />
+      <div className="p-1">
+        <SearchBar placeholder="Search files" query={query} setQuery={setQuery} onSubmit={() => { }} />
       </div>
 
-      <FilesTable files={filteredFiles} onDelete={handleDelete} />
+      <div className="my-6 flex justify-end">
+        <FileUploadDialog onUpload={handleFileUpload} />
+      </div>
+
+      {loading ? (
+        <div className="text-sm text-muted-foreground">Loading files...</div>
+      ) : (
+        <FilesTable
+          files={filteredFiles}
+          onDelete={handleFileDelete}
+        />
+      )}
     </Layout>
   )
- }
+}
+
 type FileRow = {
   id: string
+  ownerId: string
   name: string
-  lastUpdated: string
-  size: string
-  file: File
+  storagePath: string
+  mimeType: string
+  sizeBytes: number
+  createdAt: string
+  lastUpdated: string | null
 }
+
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return "0 B"
@@ -128,14 +198,6 @@ function formatBytes(bytes: number) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   const value = bytes / Math.pow(k, i)
   return `${value.toFixed(i === 0 ? 0 : 1)} ${sizes[i]}`
-}
-
-function formatDate(d: Date) {
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
 }
 
 function normalize(s: string) {
@@ -147,7 +209,7 @@ function FilesTable({
   onDelete,
 }: {
   files: FileRow[]
-  onDelete: (id: string) => void
+  onDelete: (row: FileRow) => void
 }) {
   return (
     <Table>
@@ -175,13 +237,13 @@ function FilesTable({
               <TableCell className="text-muted-foreground">
                 {file.lastUpdated}
               </TableCell>
-              <TableCell>{file.size}</TableCell>
+              <TableCell>{formatBytes(file.sizeBytes)}</TableCell>
               <TableCell className="text-right">
                 <Button
                   variant="secondary"
                   size="icon"
                   aria-label={`Delete ${file.name}`}
-                  onClick={() => onDelete(file.id)}
+                  onClick={() => onDelete(file)}
                 >
                   <IconTrash className="h-4 w-4 hover:text-destructive" />
                 </Button>

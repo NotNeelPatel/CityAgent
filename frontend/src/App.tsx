@@ -18,8 +18,11 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/search" element={<Search key={location.key} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
           {/* add more protected pages here later */}
+        </Route>
+
+        <Route element={<ProtectedRoute allow={["admin"]} />}>
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
       </Routes>
     </div>
