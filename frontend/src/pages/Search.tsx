@@ -38,9 +38,10 @@ export function Search() {
           { id: rawData.id, title: taskName, status: "running" as const }
         ]);
       }
+      console.log("ADK Event Part:", part);
 
       // Check for final text response
-      if (part.text) {
+      if (part.text && author === "OutputAgent") {
         try {
           const parsed = JSON.parse(part.text);
           if (parsed.response) {
