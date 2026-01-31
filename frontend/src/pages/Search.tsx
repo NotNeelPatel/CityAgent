@@ -32,13 +32,12 @@ export function Search() {
       if (part.functionCall) {
         const taskName = part.functionCall.name === "transfer_to_agent"
           ? `Transferring to ${part.functionCall.args.agent_name}`
-          : `Agent ${author} is running tool ${part.functionCall.name}`;
+          : `${author} Agent is running tool: ${part.functionCall.name}`;
         setSteps((prev) => [
           ...prev.map(s => ({ ...s, status: "done" as const })),
           { id: rawData.id, title: taskName, status: "running" as const }
         ]);
       }
-      console.log("ADK Event Part:", part);
 
       // Check for final text response
       if (part.text && author === "OutputAgent") {
@@ -54,6 +53,12 @@ export function Search() {
         } catch (error) {
           console.error("Error parsing ADK response part text:", error);
         }
+      } else if (part.text) {
+        const taskName = `${author} Agent completed a step`;
+        setSteps((prev) => [
+          ...prev.map(s => ({ ...s, status: "done" as const })),
+          { id: rawData.id, title: taskName, status: "done" as const, detail: part.text }
+        ]);
       }
 
     });
