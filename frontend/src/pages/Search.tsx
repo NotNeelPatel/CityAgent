@@ -181,20 +181,19 @@ export function Search() {
   const hasSearch = submittedQuery === null;
 
   return (
-    <Layout>
-      <div className="mx-auto w-full max-w-5xl md:px-10">
+    <Layout hasAIdisclaimer={true}>
+      <div className="mx-auto w-full max-w-5xl md:px-10 relative">
         <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "md:pt-6")} >
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
           {SearchBar({ query, setQuery, onSubmit })}
-
           {hasSearch && QuickSearchItem({ onSubmit, setQuery })}
 
         </div>
 
         {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource })}
       </div>
-    </Layout>
+    </Layout >
   );
 };
 
