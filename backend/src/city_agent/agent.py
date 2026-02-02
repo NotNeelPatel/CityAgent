@@ -109,7 +109,7 @@ ai_api = get_agent_model()
 data_fetcher = LlmAgent(
     name="DataFetcher",
     model= ai_api,
-    instruction="You are part of the larger CityAgent framework. Your task is to fetch relevant data based on a user's query. If no relevant data is found or the query is inappropriate given the context of providing an answer relating to the City of Ottawa asset management, respond with a string that says 'no data found'. Only provide raw data output that is relevant to the query.",
+    instruction="You are part of the larger CityAgent framework. Your task is to fetch relevant data based on a user's query. If no relevant data is found or the query is inappropriate given the context of providing an answer relating to the City of Ottawa asset management, respond with a string that says 'no data found'. Only provide raw data output that is relevant to the query. With the raw data output, always include the filename and last_updated",
     output_key="raw_data",
     tools=[search_data],
 )
@@ -119,7 +119,7 @@ reasoner_agent = LlmAgent(
     model= ai_api,
     instruction="""You are part of the larger CityAgent framework. Using the data in {{raw_data}}, 
     construct a logical response to the user's query. If the data is insufficient or irrelevant, state that clearly.
-    Ensure you cite specific data points.""",
+    Ensure you cite specific data points using the metadata 'filename' and 'last_updated'. DO NOT MENTION PREVIOUS STEPS MADE BY OTHER AGENTS""",
     output_key="reasoning_output",
 )
 
@@ -140,7 +140,6 @@ output_agent = LlmAgent(
     }
     """,
     output_key="final_response",
-    include_contents="none",
 )
 
 validator_agent = LlmAgent(
