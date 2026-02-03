@@ -4,7 +4,8 @@ import type { Links } from "@/components/ui/aceternity/sidebar";
 import {
   IconArrowLeft,
   IconPlus,
-  IconSunMoon,
+  IconSun, 
+  IconMoon,
   IconHistory,
   IconLayoutDashboard,
 } from "@tabler/icons-react";
@@ -12,11 +13,22 @@ import CityAgentWordmark from "@/assets/cityagent_wordmark.svg";
 import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/context/ThemeContext";
 
 export function CityAgentSidebar() {
   const [open, setOpen] = useState(false);
   const { signOut, role } = useAuth();
+  const { theme, setTheme } = useTheme(); 
 
+    const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
+  };
+  
   const links_top: Links[] = [
     {
       kind: "link",
@@ -36,12 +48,9 @@ export function CityAgentSidebar() {
   const links_bottom: Links[] = [
     {
       kind: "action",
-      disabled: true,
-      label: "Dark/Light Mode",
-      onClick: () => {
-        // TODO: hook into theme toggle
-      },
-      icon: <IconSunMoon className="h-5 w-5 shrink-0" />,
+          label: isDark ? "Light Mode" : "Dark Mode",
+      onClick: toggleTheme,
+      icon: isDark ? <IconSun className="h-5 w-5 shrink-0" /> : <IconMoon className="h-5 w-5 shrink-0" />,
     },
     ...(role === "admin"
       ? [
