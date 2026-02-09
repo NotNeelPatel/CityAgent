@@ -97,3 +97,24 @@ curl -X POST "http://localhost:8000/adk/run" \
 ```
 
 Expected: the response should mention that the condition is poor (assuming your data includes that road segment).
+
+# 4. Running with Docker
+
+Build the backend image from the `backend` directory
+
+```bash
+docker build -t cityagent-backend -f Dockerfile .
+```
+
+Run the container (maps container port 8000 to host 8000). Mount the Chroma DB and source for persistence and live reload during development:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -v "$(pwd)/backend/chroma_langchain_db:/app/chroma_langchain_db" \
+  -v "$(pwd)/backend/src:/app/src" \
+  cityagent-backend
+```
+
+Notes:
+- If you rely on `--reload`, mount the source directory so code changes trigger reloads inside the container.
+- Adjust volume mounts if your project layout differs or you need additional data mounted.
