@@ -56,16 +56,74 @@ headers: {0:"Title", 1:"Body", 2:"Slug",3:"Created At",4:"Author",5:"Language",6
 
 Example B
 headers: {0:"Name",1:"Description",2:"Category",3:"Image URL",4:"SKU",5:"In Stock",6:"Price"}->
-{"page_content":{0:"Name",1:"Description"],"metadata":[2:"Category",2:"Image URL",4:"SKU",5:"In Stock",6:"Price"}}
+{"page_content":{0:"Name",1:"Description"],"metadata":[2:"Category",3:"Image URL",4:"SKU",5:"In Stock",6:"Price"}}
 
 Example C
 headers: {0:"Résumé",1:"Titre",2:"Lien",3:"Date",4:"Notes"}->
-{"page_content":{4:"Notes"],"metadata":[3:"Date"}}
+{"page_content":{4:"Notes"],"metadata":[2:"Lien",3:"Date"}}
 """
 
 APP_NAME = "Vectorize_Excel_App"
 USER_ID = "1234"
 SESSION_ID = "session1234"
+
+async def _vectorize(df: pd.DataFrame, filepath: str):
+    """
+    Vectorize a DataFrame by classifying columns and creating Document objects.
+    This function processes a pandas DataFrame by:
+    1. Loading the file into a pandas DataFrame (CSV or XLSX).
+    2. Filtering headers to English-only with `_is_english_header`.
+    3. Sending `indexed_headers` and a small set of `sample_rows` to the
+    4. Parsing the agent response and building one `Document` per row using
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to vectorize.
+        filepath (str): The file path of the source file, used for metadata.
+    Returns:
+        tuple: A tuple containing:
+            - documents (list[Document]): List of Document objects with page_content and metadata.
+            - ids (list[str]): List of corresponding document IDs as UUID strings.
+    """
+
+    documents = []
+    ids = []
+
+    raw_headers = [h for h in df.columns.tolist() if _is_english_header(h)]
+    indexed_headers = dict(enumerate(raw_headers))
+    sample_rows = df.head(5).to_dict(orient="records")
+
+    query = (
+        "{headers:" + str(indexed_headers) + " sample_rows: " + str(sample_rows) + "}"
+    )
+    agent_response = await call_agent(runner, agent, SESSION_ID, query)
+
+    parsed = json.loads(agent_response)
+    parsed["page_content"] = {int(k): v for k, v in parsed["page_content"].items()}
+    parsed["metadata"] = {int(k): v for k, v in parsed["metadata"].items()}
+
+    for i, row in df.iterrows():
+        page_content_values = []
+        for k, col_name in parsed["page_content"].items():
+            if col_name in row and pd.notna(row[col_name]):
+                page_content_values.append(str(row[col_name]))
+
+        str_page_content = " ".join(page_content_values)
+        if not str_page_content.strip():
+            continue
+
+        metadata = {}
+
+        for k, col_name in parsed["metadata"].items():
+            if col_name in row and pd.notna(row[col_name]):
+                metadata[col_name] = str(row[col_name])
+
+        metadata["filename"] = os.path.basename(filepath)
+        metadata["last_updated"] = str(ctime(os.path.getmtime(filepath))) 
+
+        id = str(uuid.uuid4())
+        doc = Document(page_content=str_page_content, metadata=metadata, id=id)
+        ids.append(id)
+        documents.append(doc)
+    return documents, ids
 
 
 def _is_english_header(h: str) -> bool:
@@ -169,16 +227,7 @@ async def call_agent(
 async def vectorize_excel(filepath: str):
     """Vectorize a spreadsheet or CSV into Document objects and ids.
 
-    Steps:
-    1. Load the file into a pandas DataFrame (CSV or XLSX).
-    2. Filter headers to English-only with `_is_english_header`.
-    3. Send `indexed_headers` and a small set of `sample_rows` to the
-       configured agent to classify which columns are `page_content`
-       versus `metadata`.
-    4. Parse the agent response and build one `Document` per row using
-       the chosen page_content columns (concatenated) and metadata.
-
-    Args:
+     Args:
         filepath (str): Path to the CSV or XLSX file to vectorize.
 
     Returns:
@@ -188,51 +237,19 @@ async def vectorize_excel(filepath: str):
 
     session_service = await get_or_create_session(APP_NAME, USER_ID, SESSION_ID)
 
-    df = None
+    sheets = []
     if filepath.endswith(".csv"):
-        df = pd.read_csv(filepath, encoding="cp1252")
+        sheets.append(pd.read_csv(filepath, encoding="cp1252"))
     elif filepath.endswith(".xlsx"):
-        df = pd.read_excel(filepath)
-
-    raw_headers = [h for h in df.columns.tolist() if _is_english_header(h)]
-    indexed_headers = dict(enumerate(raw_headers))
-    sample_rows = df.head(5).to_dict(orient="records")
-
-    query = (
-        "{headers:" + str(indexed_headers) + " sample_rows: " + str(sample_rows) + "}"
-    )
-    agent_response = await call_agent(runner, agent, SESSION_ID, query)
-
-    parsed = json.loads(agent_response)
-    parsed["page_content"] = {int(k): v for k, v in parsed["page_content"].items()}
-    parsed["metadata"] = {int(k): v for k, v in parsed["metadata"].items()}
-
+        excel_data = pd.ExcelFile(filepath)
+        for sheet in excel_data.sheet_names:
+            sheets.append(pd.read_excel(excel_data, sheet))
+    
     documents = []
     ids = []
 
-    for i, row in df.iterrows():
-        page_content_values = []
-        for k, col_name in parsed["page_content"].items():
-            if col_name in row and pd.notna(row[col_name]):
-                page_content_values.append(str(row[col_name]))
-
-        str_page_content = " ".join(page_content_values)
-        if not str_page_content.strip():
-            continue
-
-        metadata = {}
-
-        for k, col_name in parsed["metadata"].items():
-            if col_name in row and pd.notna(row[col_name]):
-                metadata[col_name] = str(row[col_name])
-
-        metadata["filename"] = os.path.basename(filepath)
-        metadata["last_updated"] = str(ctime(os.path.getmtime(filepath))) 
-
-        id = str(uuid.uuid4())
-        doc = Document(page_content=str_page_content, metadata=metadata, id=id)
-        ids.append(id)
-        documents.append(doc)
+    for df in sheets:
+        (documents, ids) = await _vectorize(df, filepath)
 
     return documents, ids
 
