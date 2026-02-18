@@ -9,7 +9,7 @@ function App() {
   const location = useLocation();
 
   return (
-    <div className="">
+    <div className="min-h-svh">
       <Routes>
         <Route element={<PublicRoute />}>
           <Route path="/" element={<Login />} />
