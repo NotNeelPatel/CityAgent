@@ -66,13 +66,14 @@ class OrchestratorAgent(BaseAgent):
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         logger.info(f"[{self.name}] Starting CityAgent workflow.")
 
-        async for event in self.orchestrator_agent.run_async(ctx):
-            yield event
 
         is_valid = False
         attempts = 0
         while not is_valid and attempts < 2:
             async for event in self.orchestrator_agent.run_async(ctx):
+                yield event
+            
+            async for event in self.reasoner_agent.run_async(ctx):
                 yield event
             #logger.info(f"[{self.name}] Running Reasoner (Attempt {attempts + 1})...")
             """
@@ -89,9 +90,6 @@ class OrchestratorAgent(BaseAgent):
             # Validator not implemented, assume always valid
             is_valid = True
 
-        logger.info(f"[{self.name}] Finalizing output...")
-        async for event in self.output_agent.run_async(ctx):
-            yield event
 
 ai_api = get_agent_model()
 
@@ -124,16 +122,14 @@ data_analyst = LlmAgent(
     name="DataAnalyst",
     model= ai_api,
     instruction="""
-    Your ONLY task is to use 'search_data' to find documents relevant to the prompt.
+    Your task is to use 'search_data' to find documents relevant to the prompt, note that there are dedicated spreadsheet tools for better searching.
     - Provide the raw text snippets and citations (filename/last_updated) for all other data.
-    - DO NOT perform calculations or answer the user's question directly.
     - DO NOT attempt to search more than 3 times.
     - If you find a relevant spreadsheet (CSV/Excel), use the following tools to analyze it:
     - get_spreadsheet_info(<filename>) which takes in a query of the filename, and returns the head and first 5 rows of the spreadsheet.
-    - If there are multiple sheets
-    (like in an excel file), it will return multiple results. Use this tool to get specific data points or statistics, including the following:
+    - If there are multiple sheets (like in an excel file), it will return multiple results.
     - get_mean(<filename>, <column_name>) returns the mean of a column
-    - filter_values(<filename>, <column_name>, <keyword>) returns rows where the column contains the keyword 
+    - filter_values(<filename>, <column_name>, <keyword>) returns rows where the column contains the keyword. ALWAYS INVOKE filter_values if there is a spreadsheet to ensure full coverage
     """,
     tools=[search_data, get_spreadsheet_info, get_mean, filter_values],
 )
