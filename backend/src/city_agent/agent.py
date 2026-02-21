@@ -9,7 +9,18 @@ from google.adk.events import Event
 import asyncio
 from rag_pipeline.vector import query_retriever
 from ai_api_selector import get_agent_model
-from city_agent.agent_tools.math_analyst_tools import get_spreadsheet_info_impl, get_mean_impl, filter_values_impl
+from city_agent.agent_tools.math_analyst_tools import (
+    get_spreadsheet_info_impl,
+    get_mean_impl,
+    filter_values_impl,
+    get_unique_values_impl,
+    count_values_impl,
+    get_min_in_column_impl,
+    get_max_in_column_impl,
+    get_sum_in_column_impl,
+    get_sum_of_filtered_values_impl,
+    filter_values_in_range_impl
+)
 
 async def get_spreadsheet_info(filename: str) -> str:
     return await asyncio.to_thread(get_spreadsheet_info_impl, filename)
@@ -17,8 +28,29 @@ async def get_spreadsheet_info(filename: str) -> str:
 async def get_mean(filename: str, column_name: str) -> float:
     return await asyncio.to_thread(get_mean_impl, filename, column_name)
 
-async def filter_values(filename: str, column_name: str, keyword: str) -> str:
-    return await asyncio.to_thread(filter_values_impl, filename, column_name, keyword)
+async def filter_values(filename: str, columns: list, keyword: str) -> str:
+    return await asyncio.to_thread(filter_values_impl, filename, columns, keyword)
+
+async def get_unique_values(filename: str, column_name: str) -> str:
+    return await asyncio.to_thread(get_unique_values_impl, filename, column_name)
+
+async def count_values(filename: str, column_name: str) -> str:
+    return await asyncio.to_thread(count_values_impl, filename, column_name)
+
+async def get_min_in_column(filename: str, column_name: str) -> float:
+    return await asyncio.to_thread(get_min_in_column_impl, filename, column_name)
+
+async def get_max_in_column(filename: str, column_name: str) -> float:
+    return await asyncio.to_thread(get_max_in_column_impl, filename, column_name)
+
+async def get_sum_in_column(filename: str, column_name: str) -> float:
+    return await asyncio.to_thread(get_sum_in_column_impl, filename, column_name)
+
+async def get_sum_of_filtered_values(filename: str, column_name: str, keyword: str) -> float:
+    return await asyncio.to_thread(get_sum_of_filtered_values_impl, filename, column_name, keyword)
+
+async def filter_values_in_range(filename: str, column_name: str, min_value: float, max_value: float) -> str:
+    return await asyncio.to_thread(filter_values_in_range_impl, filename, column_name, min_value, max_value)
 
 async def search_data(query: str) -> str:
     """
@@ -124,22 +156,41 @@ data_analyst = LlmAgent(
     instruction="""
     Your task is to use 'search_data' to find documents relevant to the prompt, note that there are dedicated spreadsheet tools for better searching.
     - Provide the raw text snippets and citations (filename/last_updated) for all other data.
-    - DO NOT attempt to search more than 3 times.
-    - If you find a relevant spreadsheet (CSV/Excel), use the following tools to analyze it:
+    - DO NOT attempt to use a tool more than 3 times.
+    - If you find a relevant spreadsheet (csv/xlsx), use the following tools to analyze it:
     - get_spreadsheet_info(<filename>) which takes in a query of the filename, and returns the head and first 5 rows of the spreadsheet.
     - If there are multiple sheets (like in an excel file), it will return multiple results.
-    - get_mean(<filename>, <column_name>) returns the mean of a column
-    - filter_values(<filename>, <column_name>, <keyword>) returns rows where the column contains the keyword. ALWAYS INVOKE filter_values if there is a spreadsheet to ensure full coverage
+    - get_mean(<filename>, <column_name>) returns the mean of a column.
+    - get_unique_values(<filename>, <column_name>) returns unique values for a column.
+    - count_values(<filename>, <column_name>) returns counts for each unique value in a column.
+    - get_min_in_column(<filename>, <column_name>) returns the minimum numeric value in a column.
+    - get_max_in_column(<filename>, <column_name>) returns the maximum numeric value in a column.
+    - filter_values(<filename>, <columns>, <keyword>) returns rows with keyword in specified columns.
+    - filter_values_in_range(<filename>, <column_name>, <min_value>, <max_value>) returns rows with values in a specified column within a range.
+    - get_sum_in_column(<filename>, <column_name>) returns the sum of a numeric column.
+    - get_sum_of_filtered_values(<filename>, <column_name>, <keyword>) returns the sum of values in a numeric column for rows that contain the keyword.
     """,
-    tools=[search_data, get_spreadsheet_info, get_mean, filter_values],
+    tools=[
+        search_data,
+        get_spreadsheet_info,
+        get_mean,
+        get_unique_values,
+        count_values,
+        get_min_in_column,
+        get_max_in_column,
+        filter_values,
+        filter_values_in_range,
+        get_sum_in_column,
+        get_sum_of_filtered_values,
+    ],
 )
 
 orchestrator_agent = LlmAgent(
-    name="CityAgent_Orchestrator",
+    name="CityAgent_Orchestrator_Agent",
     model=ai_api,
-    instruction="""Analyze the query. Invoke data_analyst to find documents. If the prompt seems inappropriate, respond with "invalid prompt".
+    instruction="""Analyze the query. Invoke data_analyst to find documents. The data_analyst also has spreadsheet analysis tools. If the prompt seems inappropriate, respond with "invalid prompt".
     """,
-    sub_agents=[data_analyst, reasoner_agent]
+    sub_agents=[data_analyst]
 )
 
 root_agent = OrchestratorAgent(
