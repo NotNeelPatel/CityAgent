@@ -4,7 +4,10 @@ from fastapi import Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.adk.cli.fast_api import get_fast_api_app
-from src.rag_pipeline.vector import vectorize_and_store_supabase_file
+from src.rag_pipeline.vector import (
+    vectorize_and_store_supabase_file,
+    delete_vector_from_vector_store,
+)
 
 # Directory that contains agent packages (src)
 AGENTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +51,18 @@ class VectorizeRequest(BaseModel):
 async def vectorize_file(request: VectorizeRequest):
     try:
         return await vectorize_and_store_supabase_file(
+            storage_location=request.storage_path, bucket=request.bucket
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/vectorize-file/delete-vectors")
+async def delete_vectors_for_file(request: VectorizeRequest):
+    try:
+        return delete_vector_from_vector_store(
             storage_location=request.storage_path, bucket=request.bucket
         )
     except ValueError as exc:

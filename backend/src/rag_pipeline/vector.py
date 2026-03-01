@@ -194,6 +194,34 @@ def add_documents_to_vector_store(documents, ids):
                 _insert_rows_with_retry(client, table_name, [row], i + row_idx, 1)
 
 
+def delete_vector_from_vector_store(storage_location: str, bucket: str | None):
+    """Delete vector rows associated with a storage object."""
+    if not bucket:
+        raise ValueError("bucket is required to delete associated vectors.")
+
+    file_path = storage_location.strip().lstrip("/")
+    if not file_path:
+        raise ValueError("storage_path is required to delete associated vectors.")
+
+    table_name = os.getenv("SUPABASE_VECTOR_TABLE", "documents")
+    source_path_col = os.getenv("SUPABASE_SOURCE_PATH_COLUMN", "source_path")
+    source_bucket_col = os.getenv("SUPABASE_SOURCE_BUCKET_COLUMN", "source_bucket")
+
+    client = get_supabase_client()
+    delete_query = client.table(table_name).delete().eq(source_path_col, file_path)
+    if source_bucket_col:
+        delete_query = delete_query.eq(source_bucket_col, bucket)
+
+    response = delete_query.execute()
+    deleted_rows = len(response.data) if response.data else 0
+    return {
+        "status": "ok",
+        "bucket": bucket,
+        "file_path": file_path,
+        "deleted_rows": deleted_rows,
+    }
+
+
 def _is_transient_insert_error(error_text: str) -> bool:
     lower = error_text.lower()
     return (

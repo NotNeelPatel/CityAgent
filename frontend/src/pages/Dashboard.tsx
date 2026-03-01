@@ -162,6 +162,39 @@ export function Dashboard() {
   }
 
   const handleFileDelete = async (row: FileRow) => {
+    const vectorizeHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+
+    // delete vectors associated with this file
+    try {
+      const deleteVectorsResponse = await fetch(`${BACKEND_URL}/api/vectorize-file/delete-vectors`, {
+        method: "POST",
+        headers: vectorizeHeaders,
+        body: JSON.stringify({
+          bucket: "documents",
+          storage_path: row.storagePath,
+        }),
+      })
+
+      if (!deleteVectorsResponse.ok) {
+        let errorDetail = `status ${deleteVectorsResponse.status}`
+        try {
+          const payload = await deleteVectorsResponse.json()
+          errorDetail = payload?.detail ?? errorDetail
+        } catch {
+          // Ignore JSON parsing errors and use status fallback.
+        }
+
+        alert(`Failed to delete vectors: ${errorDetail}`)
+        return
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed"
+      alert(`Failed to delete vectors: ${message}`)
+      return
+    }
+
     // delete storage object
     const { error: storageError } = await supabase.storage
       .from("documents")
