@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/searchbar";
 import { IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import remarkGfm from "remark-gfm";
 import { BACKEND_URL } from "@/lib/client";
 
 export function Search() {
@@ -322,7 +323,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
             <div className="flex flex-col md:flex-row gap-4 justify-between">
 
               <div className="prose flex-1">
-                <ReactMarkdown>{adkResponse}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{adkResponse}</ReactMarkdown>
               </div>
 
               <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">

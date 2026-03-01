@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { IconTrash } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/client"
+import { BACKEND_URL, supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
 import type { User } from "@supabase/supabase-js"
 
@@ -71,10 +71,11 @@ export function Dashboard() {
   const uploadToSupabase = async (user: User, f: File) => {
     const safeName = f.name.replace(/\s+/g, "_")
     const storagePath = `${crypto.randomUUID()}-${safeName}`
+    const bucket = "documents"
 
     // upload file to storage
     const { error: uploadError } = await supabase.storage
-      .from("documents")
+      .from(bucket)
       .upload(storagePath, f, {
         contentType: f.type,
         upsert: false,
@@ -90,7 +91,7 @@ export function Dashboard() {
     const { error: dbError } = await supabase.from("documents").insert({
       owner_id: user.id,
       title: f.name,
-      storage_bucket: "documents",
+      storage_bucket: bucket,
       storage_path: storagePath,
       mime_type: f.type,
       size_bytes: f.size,
@@ -100,7 +101,48 @@ export function Dashboard() {
     if (dbError) {
       console.error(dbError)
       alert(`Uploaded ${f.name} but DB insert failed: ${dbError.message}`)
-      await supabase.storage.from("documents").remove([storagePath])
+      await supabase.storage.from(bucket).remove([storagePath])
+      return
+    }
+
+    const vectorizeHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    }
+    const vectorizeApiKey = import.meta.env.VITE_VECTORIZE_API_KEY as string | undefined
+    if (vectorizeApiKey) {
+      vectorizeHeaders["x-vectorize-api-key"] = vectorizeApiKey
+    }
+
+    try {
+      const vectorizeResponse = await fetch(`${BACKEND_URL}/api/vectorize-file`, {
+        method: "POST",
+        headers: vectorizeHeaders,
+        body: JSON.stringify({
+          bucket,
+          storage_path: storagePath,
+        }),
+      })
+
+      if (!vectorizeResponse.ok) {
+        let errorDetail = `status ${vectorizeResponse.status}`
+        try {
+          const payload = await vectorizeResponse.json()
+          errorDetail = payload?.detail ?? errorDetail
+        } catch {
+          // Ignore JSON parsing errors and use status fallback.
+        }
+
+        // Keep storage + DB in sync by rolling back when vectorization fails.
+        await supabase.from("documents").delete().eq("storage_path", storagePath).eq("owner_id", user.id)
+        await supabase.storage.from(bucket).remove([storagePath])
+        alert(`Upload saved but vectorization failed for ${f.name}: ${errorDetail}`)
+        return
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed"
+      await supabase.from("documents").delete().eq("storage_path", storagePath).eq("owner_id", user.id)
+      await supabase.storage.from(bucket).remove([storagePath])
+      alert(`Upload saved but vectorization request failed for ${f.name}: ${message}`)
       return
     }
   }
@@ -256,7 +298,7 @@ function FilesTable({
   )
 }
 
-function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => void }) {
+function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => Promise<void> }) {
   const [open, setOpen] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
@@ -270,9 +312,9 @@ function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => void }) {
     setOpen(nextOpen)
   }
 
-  const handleUploadClick = () => {
+  const handleUploadClick = async () => {
     if (!hasPending) return
-    onUpload(pendingFiles)
+    await onUpload(pendingFiles)
     clearPending()
     closeDialog()
   }

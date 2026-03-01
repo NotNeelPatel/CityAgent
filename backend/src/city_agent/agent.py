@@ -7,8 +7,8 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 
 import asyncio
-from rag_pipeline.vector import query_retriever
-from ai_api_selector import get_agent_model
+from src.rag_pipeline.vector import query_retriever
+from src.ai_api_selector import get_agent_model
 
 
 async def search_data(query: str) -> str:
@@ -20,7 +20,9 @@ async def search_data(query: str) -> str:
     relevant_data = await asyncio.to_thread(query_retriever, query)
     return relevant_data
 
+
 logger = logging.getLogger(__name__)
+
 
 class OrchestratorAgent(BaseAgent):
     """
@@ -47,7 +49,14 @@ class OrchestratorAgent(BaseAgent):
         validator_agent: LlmAgent,
         output_agent: LlmAgent,
     ):
-        sub_agents_list = [data_fetcher, location_agent, math_analyst, reasoner_agent, validator_agent, output_agent]
+        sub_agents_list = [
+            data_fetcher,
+            location_agent,
+            math_analyst,
+            reasoner_agent,
+            validator_agent,
+            output_agent,
+        ]
         super().__init__(
             name=name,
             data_fetcher=data_fetcher,
@@ -60,7 +69,9 @@ class OrchestratorAgent(BaseAgent):
         )
 
     @override
-    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
         logger.info(f"[{self.name}] Starting CityAgent workflow.")
 
         async for event in self.data_fetcher.run_async(ctx):
@@ -104,11 +115,12 @@ class OrchestratorAgent(BaseAgent):
         async for event in self.output_agent.run_async(ctx):
             yield event
 
+
 ai_api = get_agent_model()
 
 data_fetcher = LlmAgent(
     name="DataFetcher",
-    model= ai_api,
+    model=ai_api,
     instruction="You are part of the larger CityAgent framework. Your task is to fetch relevant data based on a user's query. If no relevant data is found or the query is inappropriate given the context of providing an answer relating to the City of Ottawa asset management, respond with a string that says 'no data found'. Only provide raw data output that is relevant to the query. With the raw data output, always include the filename and last_updated",
     output_key="raw_data",
     tools=[search_data],
@@ -116,7 +128,7 @@ data_fetcher = LlmAgent(
 
 reasoner_agent = LlmAgent(
     name="Reasoner",
-    model= ai_api,
+    model=ai_api,
     instruction="""You are part of the larger CityAgent framework. Using the data in {{raw_data}}, 
     construct a logical response to the user's query. If the data is insufficient or irrelevant, state that clearly.
     Ensure you cite specific data points using the metadata 'filename' and 'last_updated'. DO NOT MENTION PREVIOUS STEPS MADE BY OTHER AGENTS""",
@@ -125,7 +137,7 @@ reasoner_agent = LlmAgent(
 
 output_agent = LlmAgent(
     name="OutputAgent",
-    model= ai_api,
+    model=ai_api,
     instruction="""You are part of the larger CityAgent framework. Format the following response into a clean, professional response 
     for the frontend that the user shall see (DO NOT MENTION AGENTS): {{reasoning_output}}
 
@@ -144,21 +156,21 @@ output_agent = LlmAgent(
 
 validator_agent = LlmAgent(
     name="ValidatorAgent",
-    model= ai_api,
+    model=ai_api,
     instruction="Set the validation_result to VALID",
     output_key="validation_result",
 )
 
 location_agent = LlmAgent(
     name="LocationAgent",
-    model= ai_api,
+    model=ai_api,
     instruction="""return none""",
     output_key="location_context",
 )
 
 math_analyst = LlmAgent(
     name="MathAnalyst",
-    model= ai_api,
+    model=ai_api,
     instruction="""return none""",
     output_key="math_results",
 )
