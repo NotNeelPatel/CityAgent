@@ -116,9 +116,9 @@ class OrchestratorAgent(BaseAgent):
             async for event in self.orchestrator_agent.run_async(ctx):
                 yield event
             
+            logger.info(f"[{self.name}] Running Reasoner (Attempt {attempts + 1})...")
             async for event in self.reasoner_agent.run_async(ctx):
                 yield event
-            #logger.info(f"[{self.name}] Running Reasoner (Attempt {attempts + 1})...")
             """
             logger.info(f"[{self.name}] Validating response...")
             async for event in self.validator_agent.run_async(ctx):

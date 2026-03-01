@@ -16,12 +16,18 @@ def _get_spreadsheet(filename: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The contents of the spreadsheet as a DataFrame.
     """
-    if filename.endswith('.csv'):
-        return pd.read_csv(os.path.join(DATA_DIR, filename), encoding="cp1252")
-    elif filename.endswith('.xlsx'):
-        return pd.read_excel(os.path.join(DATA_DIR, filename))
-    else:
-        raise ValueError(f"Unsupported file format for file: {filename}")
+    if(not filename.endswith('.csv') and not filename.endswith('.xlsx')):
+        raise ValueError(f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.")
+    
+    try:
+        if filename.endswith('.csv'):
+            return pd.read_csv(os.path.join(DATA_DIR, filename), encoding="cp1252")
+        elif filename.endswith('.xlsx'):
+            return pd.read_excel(os.path.join(DATA_DIR, filename))
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {filename}")
+    except Exception as e:
+        raise Exception(f"Error reading file '{filename}': {str(e)}")
 
 def get_spreadsheet_info_impl(filename: str) -> str:
     """
@@ -32,12 +38,10 @@ def get_spreadsheet_info_impl(filename: str) -> str:
     Returns:
         str: A string representation of the head and first 5 rows of the spreadsheet.
     """
-    if(filename not in os.listdir(DATA_DIR)):
-        return "File not found: " + filename
     df = _get_spreadsheet(filename)
     return df.head().to_string()
     
-def get_mean_impl(filename: str, column_name: str) -> float:
+def get_mean_impl(filename: str, column_name: str) -> str:
     """
     Tool for calculating the mean of a specified column in a given spreadsheet.
     Args:
@@ -108,7 +112,7 @@ def count_values_impl(filename: str, column_name: str) -> str:
     except KeyError:
         return f"Column '{column_name}' not found in file '{filename}'."
 
-def get_min_in_column_impl(filename: str, column_name: str) -> float:
+def get_min_in_column_impl(filename: str, column_name: str) -> str:
     """
     Tool for calculating the minimum value of a specified column in a given spreadsheet.
     Args:
@@ -123,7 +127,7 @@ def get_min_in_column_impl(filename: str, column_name: str) -> float:
     except KeyError:
         return f"Column '{column_name}' not found in file '{filename}'."
 
-def get_max_in_column_impl(filename: str, column_name: str) -> float:
+def get_max_in_column_impl(filename: str, column_name: str) -> str:
     """
     Tool for calculating the maximum value of a specified column in a given spreadsheet.
     Args:
@@ -153,7 +157,7 @@ def get_sum_in_column_impl(filename: str, column_name: str) -> float:
     except KeyError:
         return f"Column '{column_name}' not found in file '{filename}'."
 
-def get_sum_of_filtered_values_impl(filename: str, column_name: str, keyword: str) -> float:
+def get_sum_of_filtered_values_impl(filename: str, column_name: str, keyword: str) -> str:
     """
     Tool for calculating the sum of values in a specified column that match a keyword in a given spreadsheet.
     Args:
@@ -165,8 +169,9 @@ def get_sum_of_filtered_values_impl(filename: str, column_name: str, keyword: st
     """
     df = _get_spreadsheet(filename)
     try:
-        count = (df[column_name] == keyword).sum()
-        return f"Sum of values in column '{column_name}' for rows containing '{keyword}': {count}"
+        filtered_df = df[df[column_name].astype(str).str.contains(keyword, case=False, na=False)]
+        total_sum = filtered_df[column_name].count()
+        return f"Sum of values in column '{column_name}' for rows containing '{keyword}': {total_sum}"
     except KeyError:
         return f"Column '{column_name}' not found in file '{filename}'."
 
