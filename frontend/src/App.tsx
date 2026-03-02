@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, BrowserRouter, useLocation } from "react-router-dom";
 import { Login } from "@/pages/Login";
 import { Search } from "@/pages/Search";
 import { Dashboard } from "@/pages/Dashboard";
@@ -10,21 +10,23 @@ function App() {
 
   return (
     <div className="min-h-svh">
-      <Routes>
-        <Route element={<PublicRoute />}>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-        </Route>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicRoute />}>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+          </Route>
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/search" element={<Search key={location.key} />} />
-          {/* add more protected pages here later */}
-        </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/search" element={<Search key={location.key} />} />
+            {/* add more protected pages here later */}
+          </Route>
 
-        <Route element={<ProtectedRoute allow={["admin"]} />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Route>
-      </Routes>
+          <Route element={<ProtectedRoute allow={["admin"]} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
