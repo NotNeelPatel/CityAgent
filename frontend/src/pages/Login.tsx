@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { IconBrandGithubFilled, IconBrandGoogleFilled, IconBrandWindowsFilled } from "@tabler/icons-react";
+import { IconBrandGoogleFilled, IconBrandWindowsFilled } from "@tabler/icons-react";
 import { Card, CardFooter, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 
 export function Login() {
