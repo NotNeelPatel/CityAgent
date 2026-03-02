@@ -40,7 +40,7 @@ export function Search() {
       }
 
       // Check for final text response
-      if (part.text && author === "OutputAgent") {
+      if (part.text && author === "Reasoner") {
         try {
           const parsed = JSON.parse(part.text);
           if (parsed.response) {
