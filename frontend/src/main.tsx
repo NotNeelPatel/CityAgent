@@ -9,7 +9,7 @@ import App from '@/App.tsx'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="cityagent-theme">
-    <BrowserRouter>
+	<BrowserRouter basename="/CityAgent">
       <AuthProvider>
         <App />
       </AuthProvider>
