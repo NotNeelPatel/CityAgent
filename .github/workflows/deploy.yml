@@ -20,14 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: 'lts/*'
           cache: 'npm'
-          cache-dependency-path: './frontend/package-lock.json'
 
       - name: Install dependencies
         run: npm install
@@ -48,7 +47,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Vite builds to the 'dist' folder by default
           path: './frontend/dist'
 
       - name: Deploy to GitHub Pages
