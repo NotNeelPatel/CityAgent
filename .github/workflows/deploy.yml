@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - docker-deployment #temp
+      - docker-deployment
   workflow_dispatch:
 
 permissions:
@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v5
         with:
           node-version: 'lts/*'
           cache: 'npm'
