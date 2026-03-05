@@ -39,11 +39,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signInWithGoogle = async () => {
-    supabase.auth.signInWithOAuth({ provider: "google" });
+    supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/CityAgent`,
+      }
+    });
   }
 
   const signInWithAzure = async () => {
-    supabase.auth.signInWithOAuth({ provider: "azure" });
+    supabase.auth.signInWithOAuth({
+      provider: "azure",
+      options: {
+        redirectTo: `${window.location.origin}/CityAgent`,
+      }
+    });
   }
 
   const signOut = async () => {
