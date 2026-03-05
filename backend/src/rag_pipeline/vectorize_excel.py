@@ -7,7 +7,7 @@ from google.adk.sessions import InMemorySessionService
 from langchain_core.documents import Document
 import json, re, pandas as pd, asyncio
 import uuid
-from ai_api_selector import get_agent_model
+from src.ai_api_selector import get_agent_model
 
 # from ai_api_selector import get_agent_model
 
@@ -66,6 +66,8 @@ headers: {0:"Résumé",1:"Titre",2:"Lien",3:"Date",4:"Notes"}->
 APP_NAME = "Vectorize_Excel_App"
 USER_ID = "1234"
 SESSION_ID = "session1234"
+EXCEL_ROWS_PER_VECTOR = max(1, int(os.getenv("EXCEL_ROWS_PER_VECTOR", "25")))
+
 
 async def _vectorize(df: pd.DataFrame, filepath: str):
     """
@@ -100,29 +102,73 @@ async def _vectorize(df: pd.DataFrame, filepath: str):
     parsed["page_content"] = {int(k): v for k, v in parsed["page_content"].items()}
     parsed["metadata"] = {int(k): v for k, v in parsed["metadata"].items()}
 
+    page_content_columns = list(parsed["page_content"].values())
+    metadata_columns = set(parsed["metadata"].values())
+
+    # Fallback: if the agent assigns everything to metadata, force usable text columns.
+    if not page_content_columns:
+        candidate_columns = [h for h in raw_headers if h not in metadata_columns]
+        if not candidate_columns:
+            candidate_columns = raw_headers[: min(5, len(raw_headers))]
+        page_content_columns = candidate_columns
+
+    cur_count = EXCEL_ROWS_PER_VECTOR
+    temp_page_content_values = []
+    temp_metadata_values = {"rowdata": {}}
+
     for i, row in df.iterrows():
         page_content_values = []
-        for k, col_name in parsed["page_content"].items():
+        metadata = {}
+
+        for col_name in page_content_columns:
             if col_name in row and pd.notna(row[col_name]):
                 page_content_values.append(str(row[col_name]))
+                metadata[col_name] = str(row[col_name])
 
         str_page_content = " ".join(page_content_values)
         if not str_page_content.strip():
             continue
 
-        metadata = {}
-
         for k, col_name in parsed["metadata"].items():
             if col_name in row and pd.notna(row[col_name]):
                 metadata[col_name] = str(row[col_name])
 
-        metadata["filename"] = os.path.basename(filepath)
-        metadata["last_updated"] = str(ctime(os.path.getmtime(filepath))) 
+        cur_count -= 1
+
+        temp_page_content_values.append(f"{i}: {str_page_content}")
+
+        row_key = str(i)
+        if row_key not in temp_metadata_values["rowdata"]:
+            temp_metadata_values["rowdata"][row_key] = {}
+        temp_metadata_values["rowdata"][row_key]["metadata"] = metadata
+
+        if cur_count == 0:
+            temp_metadata_values["filename"] = os.path.basename(filepath)
+            temp_metadata_values["last_updated"] = str(
+                ctime(os.path.getmtime(filepath))
+            )
+
+            id = str(uuid.uuid4())
+            p = "[" + ", ".join(temp_page_content_values) + "]"
+            doc = Document(page_content=p, metadata=temp_metadata_values, id=id)
+            ids.append(id)
+            documents.append(doc)
+
+            cur_count = EXCEL_ROWS_PER_VECTOR
+            temp_page_content_values = []
+            temp_metadata_values = {"rowdata": {}}
+
+    # final flush for leftover rows
+    if temp_page_content_values:
+        temp_metadata_values["filename"] = os.path.basename(filepath)
+        temp_metadata_values["last_updated"] = str(ctime(os.path.getmtime(filepath)))
 
         id = str(uuid.uuid4())
-        doc = Document(page_content=str_page_content, metadata=metadata, id=id)
+        p = "[" + " ".join(temp_page_content_values) + "]"
+        doc = Document(page_content=p, metadata=temp_metadata_values, id=id)
         ids.append(id)
         documents.append(doc)
+
     return documents, ids
 
 
@@ -241,15 +287,17 @@ async def vectorize_excel(filepath: str):
     if filepath.endswith(".csv"):
         sheets.append(pd.read_csv(filepath, encoding="cp1252"))
     elif filepath.endswith(".xlsx"):
-        excel_data = pd.ExcelFile(filepath)
-        for sheet in excel_data.sheet_names:
-            sheets.append(pd.read_excel(excel_data, sheet))
-    
+        with pd.ExcelFile(filepath) as excel_data:
+            for sheet in excel_data.sheet_names:
+                sheets.append(pd.read_excel(excel_data, sheet))
+
     documents = []
     ids = []
 
     for df in sheets:
-        (documents, ids) = await _vectorize(df, filepath)
+        curr_documents, curr_ids = await _vectorize(df, filepath)
+        documents.extend(curr_documents)
+        ids.extend(curr_ids)
 
     return documents, ids
 

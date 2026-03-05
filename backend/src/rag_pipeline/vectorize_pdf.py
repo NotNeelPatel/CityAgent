@@ -8,8 +8,7 @@ from langchain_core.documents import Document
 import json
 import asyncio
 import uuid
-from ai_api_selector import get_agent_model
-from ai_api_selector import get_agent_ctx_window_size
+from src.ai_api_selector import get_agent_model, get_agent_ctx_window_size
 import pymupdf4llm
 
 _INSTRUCTIONS = """
@@ -36,31 +35,49 @@ OUTPUT_SCHEMA_DICT = {
         "metadata": {
             "type": "object",
             "properties": {
-                "source_file": {"type": "string", "description": "The name of the source PDF file."},
-                "service_area": {"type": "string", "description": "Specific name like 'Transportation' or 'Citywide'."},
-                "topic": {"type": "string", "description": "The primary topic discussed in this section."},
-                "data_type": {"type": "string", "description": "Category like 'Financial Analysis' or 'Condition Report'."}
+                "source_file": {
+                    "type": "string",
+                    "description": "The name of the source PDF file.",
+                },
+                "service_area": {
+                    "type": "string",
+                    "description": "Specific name like 'Transportation' or 'Citywide'.",
+                },
+                "topic": {
+                    "type": "string",
+                    "description": "The primary topic discussed in this section.",
+                },
+                "data_type": {
+                    "type": "string",
+                    "description": "Category like 'Financial Analysis' or 'Condition Report'.",
+                },
             },
             "required": ["source_file", "service_area", "topic", "data_type"],
-            "additionalProperties": False
+            "additionalProperties": False,
         },
         "page_content": {
             "type": "object",
             "properties": {
-                "context_header": {"type": "string", "description": "The heading or context for this specific chunk."},
-                "content_body": {"type": "string", "description": "The main text content, with tables converted to Markdown."},
+                "context_header": {
+                    "type": "string",
+                    "description": "The heading or context for this specific chunk.",
+                },
+                "content_body": {
+                    "type": "string",
+                    "description": "The main text content, with tables converted to Markdown.",
+                },
                 "key_metrics": {
-                    "type": "array", 
+                    "type": "array",
                     "items": {"type": "string"},
-                    "description": "List of numerical figures, percentages, and date ranges."
-                }
+                    "description": "List of numerical figures, percentages, and date ranges.",
+                },
             },
             "required": ["context_header", "content_body", "key_metrics"],
-            "additionalProperties": False
-        }
+            "additionalProperties": False,
+        },
     },
     "required": ["metadata", "page_content"],
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 APP_NAME = "Vectorize_PDF_App"
@@ -73,11 +90,12 @@ agent = LlmAgent(
     model=ai_api,
     name="PDF_Vectorization_Agent",
     instruction=f"{_INSTRUCTIONS}\n\nSTRICT REQUIREMENT: Return ONLY a valid JSON object matching this schema:\n{json.dumps(OUTPUT_SCHEMA_DICT, indent=2)}",
-    include_contents= "none",
+    include_contents="none",
     generate_content_config={
         "response_mime_type": "application/json",
-    }
+    },
 )
+
 
 async def get_or_create_session(app_name: str, user_id: str, session_id: str):
     """Return an existing session or create a new in-memory session.
@@ -174,11 +192,11 @@ async def vectorize_pdf(filepath: str):
 
     session_service = await get_or_create_session(APP_NAME, USER_ID, SESSION_ID)
 
-    if(not filepath.endswith(".pdf")):
+    if not filepath.endswith(".pdf"):
         raise ValueError("File is not a PDF")
         return
-        
-    query = pymupdf4llm.to_markdown(filepath) 
+
+    query = pymupdf4llm.to_markdown(filepath)
 
     ctx_window_size = get_agent_ctx_window_size()
     # According to OpenAI, 1 token ≈ 4 characters
@@ -191,10 +209,12 @@ async def vectorize_pdf(filepath: str):
 
     attempts = 0
     chunk_number = 0
-    while (chunk_number < num_chunks):
+    while chunk_number < num_chunks:
         attempts += 1
-        start = min(chunk_size * chunk_number, abs(chunk_size * chunk_number - overlap_size)) 
-        end = min(doc_length, chunk_size * (chunk_number+1))
+        start = min(
+            chunk_size * chunk_number, abs(chunk_size * chunk_number - overlap_size)
+        )
+        end = min(doc_length, chunk_size * (chunk_number + 1))
         response = await call_agent(runner, agent, SESSION_ID, query[start:end])
         try:
             chunk = json.loads(response)
@@ -205,7 +225,7 @@ async def vectorize_pdf(filepath: str):
             if attempts < 2:
                 chunk_number -= 1  # Retry the same chunk
         chunk_number += 1
-    
+
     documents = []
     ids = []
 

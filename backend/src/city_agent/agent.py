@@ -7,8 +7,8 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 
 import asyncio
-from rag_pipeline.vector import query_retriever
-from ai_api_selector import get_agent_model
+from src.rag_pipeline.vector import query_retriever
+from src.ai_api_selector import get_agent_model
 from city_agent.agent_tools.spreadsheet_analysis_tools import (
     get_spreadsheet_info_impl,
     get_mean_impl,
@@ -71,7 +71,9 @@ async def search_data(query: str) -> str:
     search_data_count += 1
     return relevant_data
 
+
 logger = logging.getLogger(__name__)
+
 
 class OrchestratorAgent(BaseAgent):
     """
@@ -107,7 +109,6 @@ class OrchestratorAgent(BaseAgent):
         global search_data_count
         logger.info(f"[{self.name}] Starting CityAgent workflow.")
 
-
         is_valid = False
         attempts = 0
         search_data_count = 0 
@@ -134,6 +135,7 @@ class OrchestratorAgent(BaseAgent):
             is_valid = True
 
 
+
 ai_api = get_agent_model()
 
 reasoner_agent = LlmAgent(
@@ -157,7 +159,7 @@ reasoner_agent = LlmAgent(
 
 validator_agent = LlmAgent(
     name="ValidatorAgent",
-    model= ai_api,
+    model=ai_api,
     instruction="Set the validation_result to VALID",
     output_key="validation_result",
 )
