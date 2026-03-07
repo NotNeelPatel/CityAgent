@@ -1,7 +1,8 @@
 import os
 from fastapi import FastAPI
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 from pydantic import BaseModel
 from google.adk.cli.fast_api import get_fast_api_app
 from src.rag_pipeline.vector import (
@@ -25,6 +26,29 @@ adk_app: FastAPI = get_fast_api_app(
     allow_origins=ALLOWED_ORIGINS,
     web=SERVE_WEB_INTERFACE,
 )
+async def verify_auth(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+        supabase_client = get_supabase_client()
+        user_response = supabase_client.auth.get_user(token)
+        if not user_response or not getattr(user_response, "user", None):
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+@adk_app.middleware("http")
+async def verify_auth_adk(request: Request, call_next):
+    if request.url.path.startswith("/adk"):
+        try:
+            await verify_auth(request.headers.get("Authorization"))
+        except HTTPException as exc:
+            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    response = await call_next(request)
+    return response
 
 app = FastAPI(title="CityAgent API")
 app.add_middleware(
@@ -46,20 +70,6 @@ async def health():
 class VectorizeRequest(BaseModel):
     storage_path: str
     bucket: str | None = None
-    
-async def verify_auth(authorization: str = Header(None)):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-        supabase_client = get_supabase_client()
-        user_response = supabase_client.auth.get_user(token)
-        if not user_response or not getattr(user_response, "user", None):
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
     
 AuthUser = Depends(verify_auth)
 

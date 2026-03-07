@@ -75,15 +75,46 @@ def test_vectorize_file_allows_valid_token_and_calls_pipeline(monkeypatch):
     assert response.json() == expected
 
 
-def test_search_session_endpoint_is_not_blocked_by_api_auth():
-    """Search page session creation is served by mounted ADK app, not verify_auth."""
+def test_search_session_endpoint_rejects_missing_authorization_header():
     response = client.post(f"/adk/apps/city_agent/users/dev/sessions/{uuid4()}")
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing Authorization header"}
+
+
+def test_search_run_sse_endpoint_rejects_missing_authorization_header():
+    response = client.post("/adk/run_sse", json={})
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing Authorization header"}
+
+
+def test_search_session_endpoint_allows_valid_token(monkeypatch):
+    mock_supabase = MagicMock()
+    mock_supabase.auth.get_user.return_value = SimpleNamespace(
+        user=SimpleNamespace(id="user-123")
+    )
+    monkeypatch.setattr(server, "get_supabase_client", lambda: mock_supabase)
+
+    response = client.post(
+        f"/adk/apps/city_agent/users/dev/sessions/{uuid4()}",
+        headers={"Authorization": "Bearer valid-token"},
+    )
 
     assert response.status_code != 401
 
 
-def test_search_run_sse_endpoint_is_not_blocked_by_api_auth():
-    """Search streaming endpoint should not require /api/* Authorization guard."""
-    response = client.post("/adk/run_sse", json={})
+def test_search_run_sse_endpoint_allows_valid_token(monkeypatch):
+    mock_supabase = MagicMock()
+    mock_supabase.auth.get_user.return_value = SimpleNamespace(
+        user=SimpleNamespace(id="user-123")
+    )
+    monkeypatch.setattr(server, "get_supabase_client", lambda: mock_supabase)
+
+    response = client.post(
+        "/adk/run_sse",
+        headers={"Authorization": "Bearer valid-token"},
+        json={},
+    )
 
     assert response.status_code != 401
