@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from pydantic import BaseModel
 from google.adk.cli.fast_api import get_fast_api_app
+from src.supabase_interface import get_supabase_client
 from src.rag_pipeline.vector import (
-    get_supabase_client,
     vectorize_and_store_supabase_file,
     delete_vector_from_vector_store,
 )
