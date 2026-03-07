@@ -8,8 +8,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import remarkGfm from "remark-gfm";
 import { fetchData } from "@/lib/client";
+import { useAuth } from "@/context/AuthContext";
 
 export function Search() {
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
 
@@ -67,20 +69,11 @@ export function Search() {
 
   const initializeSession = async (): Promise<{ session_id: string; user_id: string } | null> => {
     try {
-      // TODO: replace with actual user/session management
-      // This can be done by using a randomized userID or one associated with the auth of the user
-      // and then for sessionID either we fetch from history or we create a new one. 
-      // This is NOT something that will be done with this current PR though (issue #107)
-      // At the moment this just creates a new session for a hardcoded "dev" user every time
-      // and you can refresh to reset history.
-
-      // For now generate a random UUID for session ID
       let random_session_id = crypto.randomUUID();
 
-      // We should eventually make a system where we have a dedicated user and not just use dev
-      // And also something that is not handled client side only
+      const currentUserId = user?.id || "dev";
 
-      const response = await fetchData(`/adk/apps/city_agent/users/dev/sessions/${random_session_id}`, {
+      const response = await fetchData(`/adk/apps/city_agent/users/${currentUserId}/sessions/${random_session_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,8 +84,8 @@ export function Search() {
         // Check if session already exists and reuse
         if (errBody && typeof errBody.detail === "string" && errBody.detail.startsWith("Session already exists")) {
           setSessionId(random_session_id);
-          setUserId("dev");
-          return { session_id: random_session_id, user_id: "dev" };
+          setUserId(currentUserId);
+          return { session_id: random_session_id, user_id: currentUserId };
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
