@@ -12,7 +12,7 @@ def _get_spreadsheet(filename: str) -> pd.DataFrame:
         pd.DataFrame: The contents of the spreadsheet as a DataFrame.
     """
     if(not filename.endswith('.csv') and not filename.endswith('.xlsx')):
-        return f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported."
+         raise ValueError(f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.")
     
     try:
         db_file_info = download_supabase_file(filename, "documents")
