@@ -1,36 +1,25 @@
 import os
 import json
 import re
-import tempfile
 import time
 import gc
 from pathlib import Path
-from urllib.parse import urlparse
 
-from supabase import Client, create_client
+from supabase import Client
 
 from src.rag_pipeline.vectorize_excel import vectorize_excel
 from src.rag_pipeline.vectorize_pdf import vectorize_pdf
 from src.ai_api_selector import get_embedding_model
+from src.supabase_interface import get_supabase_client, download_supabase_file
 
-_supabase_client = None
 _embedding_model = None
 
-SUPPORTED_EXTENSIONS = {".pdf", ".xlsx", ".csv"}
 EMBEDDING_MAX_RETRIES = max(1, int(os.getenv("EMBEDDING_MAX_RETRIES", "6")))
 EMBEDDING_BASE_BACKOFF_SECONDS = float(os.getenv("EMBEDDING_BASE_BACKOFF_SECONDS", "5"))
 SUPABASE_INSERT_MAX_RETRIES = max(1, int(os.getenv("SUPABASE_INSERT_MAX_RETRIES", "5")))
 SUPABASE_INSERT_BASE_BACKOFF_SECONDS = float(
     os.getenv("SUPABASE_INSERT_BASE_BACKOFF_SECONDS", "2")
 )
-
-
-def _require_env(var_name: str) -> str:
-    value = os.getenv(var_name)
-    if not value:
-        raise RuntimeError(f"Missing required environment variable: {var_name}")
-    return value
-
 
 def _safe_remove_temp_file(path: str, retries: int = 20, delay_seconds: float = 0.25):
     for attempt in range(retries):
@@ -53,34 +42,6 @@ def get_embedding_model_cached():
     if _embedding_model is None:
         _embedding_model = get_embedding_model()
     return _embedding_model
-
-
-def get_supabase_client() -> Client:
-    global _supabase_client
-    if _supabase_client is not None:
-        return _supabase_client
-
-    supabase_url = _require_env("SUPABASE_URL")
-    supabase_key = _require_env("SUPABASE_SERVICE_ROLE_KEY")
-    _supabase_client = create_client(supabase_url, supabase_key)
-    return _supabase_client
-
-
-def _download_supabase_file(storage_location: str, bucket: str | None):
-    file_path = file_path = storage_location.strip().lstrip("/")
-    extension = Path(file_path).suffix.lower()
-    if extension not in SUPPORTED_EXTENSIONS:
-        raise ValueError(
-            f"Unsupported file extension '{extension}'. "
-            f"Supported: {sorted(SUPPORTED_EXTENSIONS)}"
-        )
-
-    file_bytes = get_supabase_client().storage.from_(bucket).download(file_path)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
-        tmp_file.write(file_bytes)
-        temp_path = tmp_file.name
-
-    return temp_path, bucket, file_path
 
 
 def query_retriever(query: str):
@@ -267,7 +228,7 @@ async def vectorize_and_store_supabase_file(
     storage_location: str, bucket: str | None = None
 ):
     """Download from Supabase Storage, vectorize, then upsert into pgvector."""
-    temp_path, bucket_name, file_path = _download_supabase_file(
+    temp_path, bucket_name, file_path = download_supabase_file(
         storage_location, bucket
     )
     extension = Path(file_path).suffix.lower()
