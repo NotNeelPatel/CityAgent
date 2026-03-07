@@ -1,10 +1,11 @@
 import os
 from fastapi import FastAPI
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.adk.cli.fast_api import get_fast_api_app
 from src.rag_pipeline.vector import (
+    get_supabase_client,
     vectorize_and_store_supabase_file,
     delete_vector_from_vector_store,
 )
@@ -45,10 +46,25 @@ async def health():
 class VectorizeRequest(BaseModel):
     storage_path: str
     bucket: str | None = None
-
+    
+async def verify_auth(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+        supabase_client = get_supabase_client()
+        user_response = supabase_client.auth.get_user(token)
+        if not user_response or not getattr(user_response, "user", None):
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    
+AuthUser = Depends(verify_auth)
 
 @app.post("/api/vectorize-file")
-async def vectorize_file(request: VectorizeRequest):
+async def vectorize_file(request: VectorizeRequest, user=AuthUser):
     try:
         return await vectorize_and_store_supabase_file(
             storage_location=request.storage_path, bucket=request.bucket
@@ -60,7 +76,7 @@ async def vectorize_file(request: VectorizeRequest):
 
 
 @app.post("/api/vectorize-file/delete-vectors")
-async def delete_vectors_for_file(request: VectorizeRequest):
+async def delete_vectors_for_file(request: VectorizeRequest, user=AuthUser):
     try:
         return delete_vector_from_vector_store(
             storage_location=request.storage_path, bucket=request.bucket

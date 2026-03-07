@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { IconTrash } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import { BACKEND_URL, supabase } from "@/lib/client"
+import { fetchData, supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
 import type { User } from "@supabase/supabase-js"
 
@@ -105,18 +105,12 @@ export function Dashboard() {
       return
     }
 
-    const vectorizeHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    }
-    const vectorizeApiKey = import.meta.env.VITE_VECTORIZE_API_KEY as string | undefined
-    if (vectorizeApiKey) {
-      vectorizeHeaders["x-vectorize-api-key"] = vectorizeApiKey
-    }
-
     try {
-      const vectorizeResponse = await fetch(`${BACKEND_URL}/api/vectorize-file`, {
+      const vectorizeResponse = await fetchData("/api/vectorize-file", {
         method: "POST",
-        headers: vectorizeHeaders,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           bucket,
           storage_path: storagePath,
@@ -162,15 +156,13 @@ export function Dashboard() {
   }
 
   const handleFileDelete = async (row: FileRow) => {
-    const vectorizeHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    }
-
     // delete vectors associated with this file
     try {
-      const deleteVectorsResponse = await fetch(`${BACKEND_URL}/api/vectorize-file/delete-vectors`, {
+      const deleteVectorsResponse = await fetchData("/api/vectorize-file/delete-vectors", {
         method: "POST",
-        headers: vectorizeHeaders,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           bucket: "documents",
           storage_path: row.storagePath,

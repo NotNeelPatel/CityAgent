@@ -3,8 +3,11 @@ from pathlib import Path
 import pytest
 import asyncio
 
-# Add src to path so tests can import from it
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Make imports work whether pytest is run from backend/, backend/tests/, or workspace root.
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = BACKEND_DIR / "src"
+sys.path.insert(0, str(BACKEND_DIR))
+sys.path.insert(0, str(SRC_DIR))
 
 # Fix event loop issues with litellm and pytest-asyncio
 @pytest.fixture(scope="session")
