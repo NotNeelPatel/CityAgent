@@ -221,7 +221,7 @@ async def vectorize_pdf(filepath: str):
             knowledge_objects.append(chunk)
             attempts = 0
         except json.JSONDecodeError as e:
-            print(f"JSON decode error for chunk {chunk}: {e}")
+            # print(f"JSON decode error for chunk {chunk}: {e}")
             if attempts < 2:
                 chunk_number -= 1  # Retry the same chunk
         chunk_number += 1
@@ -233,8 +233,6 @@ async def vectorize_pdf(filepath: str):
     for item in knowledge_objects:
         content = item["page_content"]["content_body"]
         meta = item["metadata"]
-        meta["source_file"] = os.path.basename(filepath)
-        meta["last_updated"] = str(ctime(os.path.getmtime(filepath)))
 
         _id = str(uuid.uuid4())
         doc = Document(page_content=content, metadata=meta)

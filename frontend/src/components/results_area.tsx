@@ -1,7 +1,9 @@
-import { type Dispatch, type SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { StatusPill, type Step } from "@/components/statuspill";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { FileViewer } from "@/components/file_viewer";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,22 @@ type Source = {
 
 const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource }: ResultsAreaProps) => {
   const selectedSource = adkSource[selectedSourceIndex];
+
+  const [selectedSourceSupabase, setSelectedSourceSupabase] = useState<string | null>(null);
+
+  const getSupabaseSource = async (source: string) => {
+    console.log("Fetching source from Supabase with path:", source);
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(source, 60); // URL valid for 60 seconds
+    if (error) {
+      console.error("Error fetching signed URL from Supabase:", error);
+      return;
+    }
+
+    console.log("Supabase public URL for source:", data.signedUrl);
+    setSelectedSourceSupabase(data.signedUrl);
+  }
 
   return (
     <div className="mt-8">
@@ -54,11 +72,12 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                           onClick={(e) => {
                             e.preventDefault();
                             setSelectedSourceIndex(idx);
+                            getSupabaseSource(src.filename);
                             setActiveTab("sources");
                           }}>View here</a>
                       </Button>
                       <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
-                        <a href={src.href} target="_blank">Original PDF →</a>
+                        <a href={src.href} target="_blank">Original Source →</a>
                       </Button>
                     </div>
                   </div>
@@ -80,7 +99,10 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setSelectedSourceIndex(idx)}
+                      onClick={() => {
+                        setSelectedSourceIndex(idx)
+                        getSupabaseSource(src.filename);
+                      }}
                       className={cn(
                         "text-left rounded-md bg-muted p-4 border transition",
                         "hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -102,7 +124,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                         asChild
                       >
                         <a href={src.href} target="_blank" rel="noreferrer">
-                          Original PDF →
+                          Original Source →
                         </a>
                       </Button>
                     </button>
@@ -111,9 +133,16 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
               </div>
 
               <div className="flex-1 h-160 rounded-md border p-4">
-                <div className="text-muted-foreground text-xs mb-2">Selected file</div>
-                <div className="font-medium">
-                  {selectedSource ? selectedSource.filename : "No file selected"}
+                <div className="font-medium h-full">
+                  {selectedSource ? (
+                    <FileViewer
+                      src={selectedSourceSupabase}
+                      filename={selectedSource.filename}
+                      className="doc-viewer-wrapper h-full"
+                    />
+                  ) : (
+                    "No file selected"
+                  )}
                 </div>
               </div>
 

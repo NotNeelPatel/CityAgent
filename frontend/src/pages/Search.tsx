@@ -185,12 +185,23 @@ export function Search() {
         <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "md:pt-6")} >
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
-          {SearchBar({ query, setQuery, onSubmit })}
-          {hasSearch && QuickSearchItem({ onSubmit, setQuery })}
+          <SearchBar query={query} setQuery={setQuery} onSubmit={onSubmit} />
+          {hasSearch && <QuickSearchItem onSubmit={onSubmit} setQuery={setQuery} />}
 
         </div>
 
-        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource })}
+        {!hasSearch && (
+          <ResultsArea
+            steps={steps}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            hasResults={hasResults}
+            selectedSourceIndex={selectedSourceIndex}
+            setSelectedSourceIndex={setSelectedSourceIndex}
+            adkResponse={adkResponse}
+            adkSource={adkSource}
+          />
+        )}
       </div>
     </Layout >
   );

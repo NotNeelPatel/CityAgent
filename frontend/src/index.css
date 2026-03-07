@@ -118,3 +118,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+.doc-viewer-wrapper #header-bar {
+  display: none !important;
+}
+
+.doc-viewer-wrapper #react-doc-viewer,
+.doc-viewer-wrapper #react-doc-viewer > div,
+.doc-viewer-wrapper #proxy-renderer,
+.doc-viewer-wrapper #msdoc-renderer,
+.doc-viewer-wrapper #msdoc-iframe {
+  height: 100% !important;
+  overflow: auto;
+}

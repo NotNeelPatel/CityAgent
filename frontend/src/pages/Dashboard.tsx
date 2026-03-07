@@ -70,7 +70,7 @@ export function Dashboard() {
 
   const uploadToSupabase = async (user: User, f: File) => {
     const safeName = f.name.replace(/\s+/g, "_")
-    const storagePath = `${crypto.randomUUID()}-${safeName}`
+    const storagePath = `${safeName}`
     const bucket = "documents"
 
     // upload file to storage
