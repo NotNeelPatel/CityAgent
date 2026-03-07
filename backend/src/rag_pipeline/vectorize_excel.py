@@ -143,11 +143,6 @@ async def _vectorize(df: pd.DataFrame, filepath: str):
         temp_metadata_values["rowdata"][row_key]["metadata"] = metadata
 
         if cur_count == 0:
-            temp_metadata_values["filename"] = os.path.basename(filepath)
-            temp_metadata_values["last_updated"] = str(
-                ctime(os.path.getmtime(filepath))
-            )
-
             id = str(uuid.uuid4())
             p = "[" + ", ".join(temp_page_content_values) + "]"
             doc = Document(page_content=p, metadata=temp_metadata_values, id=id)

@@ -1,10 +1,9 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
-import ReactMarkdown from "react-markdown";
+import { useState } from "react";
 import { Layout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/searchbar";
-import { IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tabler/icons-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ResultsArea, type Source } from "@/components/results_area";
+import { QuickSearchItem } from "@/components/quick_search";
+import { type Step } from "@/components/statuspill";
 import { cn } from "@/lib/utils";
 import remarkGfm from "remark-gfm";
 import { fetchData } from "@/lib/client";
@@ -186,243 +185,24 @@ export function Search() {
         <div className={cn("flex flex-col items-center gap-10", hasSearch ? "h-[80vh] justify-center" : "md:pt-6")} >
           {hasSearch && <h1 className="text-7xl font-bold">CityAgent</h1>}
 
-          {SearchBar({ query, setQuery, onSubmit })}
-          {hasSearch && QuickSearchItem({ onSubmit, setQuery })}
+          <SearchBar query={query} setQuery={setQuery} onSubmit={onSubmit} />
+          {hasSearch && <QuickSearchItem onSubmit={onSubmit} setQuery={setQuery} />}
 
         </div>
 
-        {!hasSearch && ResultsArea({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource })}
+        {!hasSearch && (
+          <ResultsArea
+            steps={steps}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            hasResults={hasResults}
+            selectedSourceIndex={selectedSourceIndex}
+            setSelectedSourceIndex={setSelectedSourceIndex}
+            adkResponse={adkResponse}
+            adkSource={adkSource}
+          />
+        )}
       </div>
     </Layout >
-  );
-};
-
-/******************** Mock quick search items ********************/
-const QuickSearchs = [
-  { questions: "What is the pavement condition rating of the road segment on Baseline Road?", href: "#" },
-  { questions: "What is the Pavement Quality Index (PQI) value for the road segment on Bank Street?", href: "#" },
-  { questions: "Which ward is the road segment on Carling Avenue located in?", href: "#" },
-  { questions: "What functional road class is assigned to the road segment on Hunt Club Road?", href: "#" },
-  { questions: "What is the total replacement cost of the road segment on St. Laurent Boulevard?", href: "#" },
-  { questions: "How many lane kilometers does the road segment on Merivale Road have?", href: "#" },
-];
-
-type QuickSearchItemProps = {
-  onSubmit: (q: string) => void;
-  setQuery: (q: string) => void;
-};
-
-const QuickSearchItem = ({ onSubmit, setQuery }: QuickSearchItemProps) => {
-  return (
-    <div className="grid w-full grid-cols-3 gap-4">
-      {QuickSearchs.map((item, idx) => (
-        <Button
-          key={idx}
-          variant="secondary"
-          className="h-auto items-start justify-start whitespace-normal break-words text-left"
-          asChild
-        >
-          <a
-            href={item.href}
-            onClick={(e) => {
-              e.preventDefault();
-              setQuery(item.questions);
-              onSubmit(item.questions);
-            }}
-          >
-            {item.questions}
-          </a>
-        </Button>
-      ))}
-    </div>
-
-  );
-};
-
-/******************** Mock Step Plan and Status Pill ********************/
-type StepStatus = "queued" | "running" | "done" | "error";
-
-type Step = {
-  id: string;
-  title: string;
-  status: StepStatus;
-  detail?: string;
-};
-
-/*
-const statusLabel: Record<StepStatus, string> = {
-  queued: "Queued",
-  running: "Running",
-  done: "Done",
-  error: "Error",
-};
-*/
-
-function StatusPill({ status }: { status: StepStatus }) {
-  const getStatusClass = (status: StepStatus) => {
-    switch (status) {
-      case "done":
-        return "text-emerald-600";
-      case "error":
-        return "text-destructive";
-      default:
-        return "text-muted-foreground";
-    }
-  };
-
-  const style = "size-6 " + getStatusClass(status);
-
-  return (
-    <span className={style}>
-      {status === "queued" && <IconCircle className={style} />}
-      {status === "running" && <IconCircleDashed className={style} />}
-      {status === "done" && <IconCircleCheck className={style} />}
-      {status === "error" && <IconCircleX className={style} />}
-    </span>
-  );
-}
-
-
-/******************** Results Area with Tabs ********************/
-type ResultsAreaProps = {
-  steps: Step[];
-  activeTab: "steps" | "overview" | "sources";
-  setActiveTab: Dispatch<SetStateAction<"steps" | "overview" | "sources">>;
-  hasResults: boolean;
-  selectedSourceIndex: number;
-  setSelectedSourceIndex: Dispatch<SetStateAction<number>>;
-  adkResponse: string;
-  adkSource: Source[];
-};
-
-type Source = {
-  filename: string;
-  lastUpdated: string;
-  href: string;
-};
-
-const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourceIndex, setSelectedSourceIndex, adkResponse, adkSource }: ResultsAreaProps) => {
-  const selectedSource = adkSource[selectedSourceIndex];
-
-  return (
-    <div className="mt-8">
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList>
-          {hasResults && <TabsTrigger value="overview">Overview</TabsTrigger>}
-          {hasResults && <TabsTrigger value="sources">Source Viewer</TabsTrigger>}
-          <TabsTrigger value="steps">Steps</TabsTrigger>
-        </TabsList>
-
-        {hasResults && (
-          <TabsContent value="overview" className="mt-6">
-            <div className="flex flex-col md:flex-row gap-4 justify-between">
-
-              <div className="prose flex-1">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{adkResponse}</ReactMarkdown>
-              </div>
-
-              <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
-                {adkSource.map((src, idx) => (
-                  <div key={idx} className="rounded-md bg-muted p-4">
-                    <div className="text-muted-foreground text-xs">Last updated: {src.lastUpdated}</div>
-                    <h2 className="font-medium">{src.filename}</h2>
-                    <div className="flex float-right gap-4 mt-4">
-                      <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
-                        <a href={src.href}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setSelectedSourceIndex(idx);
-                            setActiveTab("sources");
-                          }}>View here</a>
-                      </Button>
-                      <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
-                        <a href={src.href} target="_blank">Original PDF →</a>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-        )}
-
-        {hasResults && (
-          <TabsContent value="sources" className="mt-6">
-            <div className="flex flex-col md:flex-row gap-4 justify-between">
-
-              <div className="flex-1 w-full md:max-w-96 flex flex-col gap-4">
-                {adkSource.map((src, idx) => {
-                  const isSelected = idx === selectedSourceIndex;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedSourceIndex(idx)}
-                      className={cn(
-                        "text-left rounded-md bg-muted p-4 border transition",
-                        "hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                        isSelected ? "border-ring" : "border-transparent"
-                      )}
-                      aria-pressed={isSelected}
-                    >
-                      <div className="text-muted-foreground text-xs">
-                        Last updated: {src.lastUpdated}
-                      </div>
-
-                      <div className="mt-1 flex items-start justify-between gap-3">
-                        <h2 className="font-medium">{src.filename}</h2>
-                      </div>
-
-                      <Button
-                        className="text-blue-800 mt-4 p-0 h-auto"
-                        variant="link"
-                        asChild
-                      >
-                        <a href={src.href} target="_blank" rel="noreferrer">
-                          Original PDF →
-                        </a>
-                      </Button>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex-1 h-160 rounded-md border p-4">
-                <div className="text-muted-foreground text-xs mb-2">Selected file</div>
-                <div className="font-medium">
-                  {selectedSource ? selectedSource.filename : "No file selected"}
-                </div>
-              </div>
-
-            </div>
-          </TabsContent>
-        )}
-
-
-        <TabsContent value="steps" className="mt-6">
-          <div className="mt-6 space-y-8">
-            {steps.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Processing query...</div>
-            ) : (
-              steps.map((s) => (
-                <div key={s.id} className="flex items-start gap-4">
-                  <StatusPill status={s.status} />
-                  <div className="min-w-0">
-                    <div className="font-medium">{s.title}</div>
-                    {s.detail && (
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        {s.detail}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-      </Tabs>
-    </div>
   );
 };

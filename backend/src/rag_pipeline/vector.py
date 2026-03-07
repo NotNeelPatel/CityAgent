@@ -146,7 +146,9 @@ def add_documents_to_vector_store(documents, ids):
     content_col = os.getenv("SUPABASE_CONTENT_COLUMN", "content")
     metadata_col = os.getenv("SUPABASE_METADATA_COLUMN", "metadata")
     id_col = os.getenv("SUPABASE_ID_COLUMN", "id")
-    source_path_col = os.getenv("SUPABASE_SOURCE_PATH_COLUMN", "source_path")
+    source_filename_col = os.getenv(
+        "SUPABASE_SOURCE_FILENAME_COLUMN", "source_filename"
+    )
     source_bucket_col = os.getenv("SUPABASE_SOURCE_BUCKET_COLUMN", "source_bucket")
     embedding_col = os.getenv("SUPABASE_EMBEDDING_COLUMN", "embedding")
     write_embeddings = os.getenv(
@@ -178,8 +180,8 @@ def add_documents_to_vector_store(documents, ids):
             }
             if id_col:
                 row[id_col] = _id
-            if source_path_col:
-                row[source_path_col] = doc.metadata.get("source_path")
+            if source_filename_col:
+                row[source_filename_col] = doc.metadata.get("source_filename")
             if source_bucket_col:
                 row[source_bucket_col] = doc.metadata.get("source_bucket")
             if chunk_embeddings is not None:
@@ -204,11 +206,13 @@ def delete_vector_from_vector_store(storage_location: str, bucket: str | None):
         raise ValueError("storage_path is required to delete associated vectors.")
 
     table_name = os.getenv("SUPABASE_VECTOR_TABLE", "documents")
-    source_path_col = os.getenv("SUPABASE_SOURCE_PATH_COLUMN", "source_path")
+    source_filename_col = os.getenv(
+        "SUPABASE_SOURCE_FILENAME_COLUMN", "source_filename"
+    )
     source_bucket_col = os.getenv("SUPABASE_SOURCE_BUCKET_COLUMN", "source_bucket")
 
     client = get_supabase_client()
-    delete_query = client.table(table_name).delete().eq(source_path_col, file_path)
+    delete_query = client.table(table_name).delete().eq(source_filename_col, file_path)
     if source_bucket_col:
         delete_query = delete_query.eq(source_bucket_col, bucket)
 
@@ -281,7 +285,7 @@ async def vectorize_and_store_supabase_file(
 
         for doc in documents:
             doc.metadata["source_bucket"] = bucket_name
-            doc.metadata["source_path"] = file_path
+            doc.metadata["source_filename"] = file_path
 
         add_documents_to_vector_store(documents, ids)
         return {
