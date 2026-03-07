@@ -4,7 +4,7 @@ import pandas as pd
 
 # TODO: We should be pulling from the DB and not from data.
 BACKEND_DIR = str(
-    next(p for p in Path(__file__).resolve().parents if p.name == "backend")
+    next(p for p in Path(__file__).resolve().parents if p.name == "backend" or p.name == "app")
 )
 DATA_DIR = f"{BACKEND_DIR}/data"
 

@@ -2,8 +2,11 @@
   "name": "frontend",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://notneelpatel.github.io/CityAgent",
   "type": "module",
   "scripts": {
+    "predeploy": "tsc -b && vite build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -13,6 +16,7 @@
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "@supabase/auth-ui-react": "^0.4.7",
@@ -30,6 +34,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.5",
     "remark-gfm": "^4.0.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -44,6 +49,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "gh-pages": "^6.3.0",
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",

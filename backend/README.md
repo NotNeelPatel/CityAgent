@@ -110,7 +110,6 @@ Run the container (maps container port 8000 to host 8000). Mount the Chroma DB a
 
 ```bash
 docker run --rm -p 8000:8000 \
-  -v "$(pwd)/backend/chroma_langchain_db:/app/chroma_langchain_db" \
   -v "$(pwd)/backend/src:/app/src" \
   cityagent-backend
 ```
@@ -118,3 +117,22 @@ docker run --rm -p 8000:8000 \
 Notes:
 - If you rely on `--reload`, mount the source directory so code changes trigger reloads inside the container.
 - Adjust volume mounts if your project layout differs or you need additional data mounted.
+
+# 5. Deploying to Azure
+
+First Login to Azure and the registry
+
+```bash
+az login
+az acr login --name cityagentregistry
+```
+
+Tag and Deploy the container
+
+```bash
+docker tag cityagent-backend:latest cityagentregistry.azurecr.io/backend/cityagent-backend
+docker push cityagentregistry.azurecr.io/backend/cityagent-backend
+```
+
+
+

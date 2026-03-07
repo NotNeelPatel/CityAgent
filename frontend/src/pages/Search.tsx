@@ -249,12 +249,14 @@ type Step = {
   detail?: string;
 };
 
+/*
 const statusLabel: Record<StepStatus, string> = {
   queued: "Queued",
   running: "Running",
   done: "Done",
   error: "Error",
 };
+*/
 
 function StatusPill({ status }: { status: StepStatus }) {
   const getStatusClass = (status: StepStatus) => {
