@@ -7,7 +7,7 @@ import { IconCircleCheck, IconCircleX, IconCircle, IconCircleDashed } from "@tab
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import remarkGfm from "remark-gfm";
-import { BACKEND_URL } from "@/lib/client";
+import { fetchData } from "@/lib/client";
 
 export function Search() {
   const [query, setQuery] = useState("");
@@ -80,7 +80,7 @@ export function Search() {
       // We should eventually make a system where we have a dedicated user and not just use dev
       // And also something that is not handled client side only
 
-      const response = await fetch(`${BACKEND_URL}/adk/apps/city_agent/users/dev/sessions/${random_session_id}`, {
+      const response = await fetchData(`/adk/apps/city_agent/users/dev/sessions/${random_session_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,7 +125,7 @@ export function Search() {
         uid = res?.user_id ?? uid;
       }
 
-      const response = await fetch(`${BACKEND_URL}/adk/run_sse`, {
+      const response = await fetchData(`/adk/run_sse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

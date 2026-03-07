@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
+from uuid import uuid4
 
 import server
 
@@ -72,3 +73,17 @@ def test_vectorize_file_allows_valid_token_and_calls_pipeline(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == expected
+
+
+def test_search_session_endpoint_is_not_blocked_by_api_auth():
+    """Search page session creation is served by mounted ADK app, not verify_auth."""
+    response = client.post(f"/adk/apps/city_agent/users/dev/sessions/{uuid4()}")
+
+    assert response.status_code != 401
+
+
+def test_search_run_sse_endpoint_is_not_blocked_by_api_auth():
+    """Search streaming endpoint should not require /api/* Authorization guard."""
+    response = client.post("/adk/run_sse", json={})
+
+    assert response.status_code != 401
