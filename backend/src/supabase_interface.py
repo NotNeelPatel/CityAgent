@@ -23,7 +23,7 @@ def get_supabase_client() -> Client:
     _supabase_client = create_client(supabase_url, supabase_key)
     return _supabase_client
 
-def download_supabase_file(storage_location: str, bucket: str | None):
+def download_supabase_file(storage_location: str, bucket="documents"):
     file_path = file_path = storage_location.strip().lstrip("/")
     extension = Path(file_path).suffix.lower()
     if extension not in SUPPORTED_EXTENSIONS:
