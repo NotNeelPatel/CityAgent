@@ -1,12 +1,7 @@
 import os
 from pathlib import Path
 import pandas as pd
-
-# TODO: We should be pulling from the DB and not from data.
-BACKEND_DIR = str(
-    next(p for p in Path(__file__).resolve().parents if p.name == "backend" or p.name == "app")
-)
-DATA_DIR = f"{BACKEND_DIR}/data"
+from src.supabase_interface import download_supabase_file
 
 def _get_spreadsheet(filename: str) -> pd.DataFrame:
     """
@@ -20,10 +15,12 @@ def _get_spreadsheet(filename: str) -> pd.DataFrame:
         raise ValueError(f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.")
     
     try:
-        if filename.endswith('.csv'):
-            return pd.read_csv(os.path.join(DATA_DIR, filename), encoding="cp1252")
-        elif filename.endswith('.xlsx'):
-            return pd.read_excel(os.path.join(DATA_DIR, filename))
+        db_file_info = download_supabase_file(filename, "documents")
+        # db_file_info[0] is the local file path of the downloaded file
+        if db_file_info[0].endswith('.csv'):
+            return pd.read_csv(db_file_info[0], encoding="cp1252")
+        elif db_file_info[0].endswith('.xlsx'):
+            return pd.read_excel(db_file_info[0])
     except FileNotFoundError:
         raise FileNotFoundError(f"File not found: {filename}")
     except Exception as e:
@@ -197,3 +194,15 @@ def filter_values_in_range_impl(filename: str, column_name: str, min_value: floa
         return filtered_df.to_string()
     except KeyError:
         return f"Column '{column_name}' not found in file '{filename}'."
+
+def purge_cached_files():
+    """
+    Utility function to clear cached files in the /tmp directory.
+    """
+    tmp_dir = Path("/tmp")
+    for file in tmp_dir.glob("tmp*"):
+        if str(file).endswith(('.csv', '.xlsx', '.pdf', '.xls', '.docx')):
+            try:
+                file.unlink()
+            except Exception as e:
+                raise Exception(f"Error deleting temporary file '{file}': {str(e)}")

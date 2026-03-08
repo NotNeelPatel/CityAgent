@@ -20,6 +20,7 @@ from city_agent.agent_tools.spreadsheet_analysis_tools import (
     filter_values_in_range_impl,
     get_sum_in_column_impl,
     get_sum_of_filtered_values_impl,
+    purge_cached_files
 )
 
 search_data_count = 0
@@ -112,7 +113,6 @@ class OrchestratorAgent(BaseAgent):
         is_valid = False
         attempts = 0
         search_data_count = 0 
-        print("search_data_count reset to 0 at start of workflow")
         while not is_valid and attempts < 2:
             async for event in self.orchestrator_agent.run_async(ctx):
                 yield event
@@ -133,6 +133,7 @@ class OrchestratorAgent(BaseAgent):
             """
             # Validator not implemented, assume always valid
             is_valid = True
+        purge_cached_files()  # Clear cached files after processing the query
 
 
 
@@ -179,7 +180,7 @@ data_analyst = LlmAgent(
     - get_min_in_column(<filename>, <column_name>) returns the minimum numeric value in a column.
     - get_max_in_column(<filename>, <column_name>) returns the maximum numeric value in a column.
     - filter_values(<filename>, <columns>, <keyword>) returns rows with keyword in specified columns.
-    - filter_values_in_range(<filename>, <column_name>, <min_value>, <max_value>) returns rows with values in a specified column within a range.
+    - filter_values_in_range(<filename>, <column_name>, <min_value (int)>, <max_value (int)>) returns rows with values in a specified column within a range.
     - get_sum_in_column(<filename>, <column_name>) returns the sum of a numeric column.
     - get_sum_of_filtered_values(<filename>, <column_name>, <keyword>) returns the sum of values in a numeric column for rows that contain the keyword.
     """,
