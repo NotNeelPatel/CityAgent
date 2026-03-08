@@ -101,12 +101,19 @@ export function Search() {
     }
   };
 
-  const handleSearch = async (q: string) => {
-    setSubmittedQuery(q);
-    setHasResults(false);
-    setActiveTab("steps");
-    setSteps([]);
-    setAdkResponse("");
+ const handleSearch = async (q: string) => {
+  if (!q.trim()) return;
+  
+  const existing = JSON.parse(localStorage.getItem("search_history") || "[]");
+  
+  const updatedHistory = [
+    { query: q, date: new Date().toISOString() },
+    ...existing.filter((item: any) => item.query !== q),
+  ].slice(0, 20);
+
+localStorage.setItem("search_history", JSON.stringify(updatedHistory));
+
+window.dispatchEvent(new Event("historyUpdated"));
 
     try {
       let sid = sessionId;
@@ -172,10 +179,12 @@ export function Search() {
   };
 
   const onSubmit = (q: string) => {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    handleSearch(trimmed);
-  };
+  const trimmed = q.trim();
+  if (!trimmed) return;
+  setSubmittedQuery(trimmed);
+  setQuery(trimmed);
+  handleSearch(trimmed);
+};
 
   const hasSearch = submittedQuery === null;
 

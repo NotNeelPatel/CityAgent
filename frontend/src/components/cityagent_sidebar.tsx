@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/aceternity/sidebar";
 import type { Links } from "@/components/ui/aceternity/sidebar";
 import {
@@ -36,13 +36,6 @@ export function CityAgentSidebar() {
       href: "/search",
       icon: <IconPlus className="h-5 w-5 shrink-0" />,
     },
-    {
-      kind: "link",
-      disabled: true,
-      label: "History",
-      href: "/history", // TODO: implement the history view
-      icon: <IconHistory className="h-5 w-5 shrink-0" />,
-    },
   ];
 
   const links_bottom: Links[] = [
@@ -70,6 +63,23 @@ export function CityAgentSidebar() {
     },
   ];
 
+  const [history, setHistory] = useState<{ query: string; date: string }[]>([]);
+
+useEffect(() => {
+  const loadHistory = () => {
+    const stored = JSON.parse(localStorage.getItem("search_history") || "[]");
+    setHistory(stored);
+  };
+
+  loadHistory(); 
+
+  window.addEventListener("historyUpdated", loadHistory);
+
+  return () => {
+    window.removeEventListener("historyUpdated", loadHistory);
+  };
+}, []);
+
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10">
@@ -78,10 +88,34 @@ export function CityAgentSidebar() {
 
           <div className="flex flex-col flex-1 justify-between">
             <div className="mt-8 flex flex-col gap-2">
-              {links_top.map((link) => (
-                <SidebarLink key={link.label} link={link} />
-              ))}
-            </div>
+
+  {links_top.map((link) => (
+    <SidebarLink key={link.label} link={link} />
+  ))}
+
+  {/* History Section */}
+  {history.length > 0 && (
+    <div className="mt-6 flex flex-col gap-1">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
+        <IconHistory className="h-4 w-4" />
+        History
+      </div>
+
+      {history.map((item, i) => (
+        <button
+          key={i}
+          onClick={() => window.location.href = `/search?q=${encodeURIComponent(item.query)}`}
+          className="text-left text-sm truncate px-2 py-1 rounded hover:bg-muted"
+        >
+          {item.query.length > 40
+            ? item.query.slice(0, 40) + "..."
+            : item.query}
+        </button>
+      ))}
+    </div>
+  )}
+
+</div>
 
             <div className="mt-8 flex flex-col gap-2">
               {links_bottom.map((link) => (
