@@ -18,7 +18,6 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/search" element={<Search key={location.key} />} />
-          {/* add more protected pages here later */}
         </Route>
 
         <Route element={<ProtectedRoute allow={["admin"]} />}>
