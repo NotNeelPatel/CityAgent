@@ -5,7 +5,7 @@ on:
   # Automatically trigger it when detected changes in repo
   push:
     branches: 
-      [ 148-backend-cicd ]
+      [ main ]
     paths:
     - '**'
     - '.github/workflows/cityagentbackend-AutoDeployTrigger-41f37a9a-d71d-4e2e-b4d1-2f864e352f11.yml'
