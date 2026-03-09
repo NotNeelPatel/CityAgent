@@ -48,15 +48,15 @@ jobs:
             azure-api-key-embedding=${{ secrets.AZURE_API_KEY_EMBEDDING }}
             supabase-service-key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           environmentVariables: >-
-            AZURE_API_BASE=${{ secrets.AZURE_API_BASE }}
-            AZURE_API_BASE_EMBEDDING=${{ secrets.AZURE_API_BASE_EMBEDDING }}
+            AZURE_API_BASE=${{ vars.AZURE_API_BASE }}
+            AZURE_API_BASE_EMBEDDING=${{ vars.AZURE_API_BASE_EMBEDDING }}
             AZURE_API_KEY=secretref:azure-api-key
             AZURE_API_KEY_EMBEDDING=secretref:azure-api-key-embedding
-            AZURE_API_VERSION=${{ secrets.AZURE_API_VERSION }}
-            AZURE_API_VERSION_EMBEDDING=${{ secrets.AZURE_API_VERSION_EMBEDDING }}
-            SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
+            AZURE_API_VERSION=${{ vars.AZURE_API_VERSION }}
+            AZURE_API_VERSION_EMBEDDING=${{ vars.AZURE_API_VERSION_EMBEDDING }}
+            SUPABASE_DB_URL=${{ vars.SUPABASE_DB_URL }}
             SUPABASE_SERVICE_ROLE_KEY=secretref:supabase-service-key
-            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_URL=${{ vars.SUPABASE_URL }}
             AI_API_PROVIDER=${{ vars.AI_API_PROVIDER }}
             EXCEL_ROWS_PER_VECTOR=${{ vars.EXCEL_ROWS_PER_VECTOR }}
             SUPABASE_CONTENT_COLUMN=${{ vars.SUPABASE_CONTENT_COLUMN }}
