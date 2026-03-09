@@ -43,31 +43,6 @@ jobs:
           containerAppName: cityagentbackend
           resourceGroup: CityAgentResourceGroup
           imageToBuild: cityagentregistry.azurecr.io/cityagentbackend:${{ github.sha }}
-          secrets: |
-            azure-api-key=${{ secrets.AZURE_API_KEY }}
-            azure-api-key-embedding=${{ secrets.AZURE_API_KEY_EMBEDDING }}
-            supabase-service-key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          environmentVariables: >-
-            AZURE_API_BASE=${{ vars.AZURE_API_BASE }}
-            AZURE_API_BASE_EMBEDDING=${{ vars.AZURE_API_BASE_EMBEDDING }}
-            AZURE_API_KEY=secretref:azure-api-key
-            AZURE_API_KEY_EMBEDDING=secretref:azure-api-key-embedding
-            AZURE_API_VERSION=${{ vars.AZURE_API_VERSION }}
-            AZURE_API_VERSION_EMBEDDING=${{ vars.AZURE_API_VERSION_EMBEDDING }}
-            SUPABASE_DB_URL=${{ vars.SUPABASE_DB_URL }}
-            SUPABASE_SERVICE_ROLE_KEY=secretref:supabase-service-key
-            SUPABASE_URL=${{ vars.SUPABASE_URL }}
-            AI_API_PROVIDER=${{ vars.AI_API_PROVIDER }}
-            EXCEL_ROWS_PER_VECTOR=${{ vars.EXCEL_ROWS_PER_VECTOR }}
-            SUPABASE_CONTENT_COLUMN=${{ vars.SUPABASE_CONTENT_COLUMN }}
-            SUPABASE_INSERT_BATCH_SIZE=${{ vars.SUPABASE_INSERT_BATCH_SIZE }}
-            SUPABASE_MATCH_COUNT=${{ vars.SUPABASE_MATCH_COUNT }}
-            SUPABASE_MATCH_MODE=${{ vars.SUPABASE_MATCH_MODE }}
-            SUPABASE_MATCH_RPC=${{ vars.SUPABASE_MATCH_RPC }}
-            SUPABASE_METADATA_COLUMN=${{ vars.SUPABASE_METADATA_COLUMN }}
-            SUPABASE_SOURCE_BUCKET_COLUMN=${{ vars.SUPABASE_SOURCE_BUCKET_COLUMN }}
-            SUPABASE_SOURCE_FILENAME_COLUMN=${{ vars.SUPABASE_SOURCE_FILENAME_COLUMN }}
-            SUPABASE_VECTOR_TABLE=${{ vars.SUPABASE_VECTOR_TABLE }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
