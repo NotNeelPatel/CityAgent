@@ -47,37 +47,15 @@ jobs:
             azure-api-key=${{ secrets.AZURE_API_KEY }}
             azure-api-key-embedding=${{ secrets.AZURE_API_KEY_EMBEDDING }}
             supabase-service-key=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-          environmentVariables: |
+          environmentVariables: >-
             AZURE_API_BASE=${{ secrets.AZURE_API_BASE }}
             AZURE_API_BASE_EMBEDDING=${{ secrets.AZURE_API_BASE_EMBEDDING }}
-            AZURE_API_VERSION=${{ secrets.AZURE_API_VERSION }}
-            AZURE_API_VERSION_EMBEDDING=${{ secrets.AZURE_API_VERSION_EMBEDDING }}
-            SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
-            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-            AI_API_PROVIDER=${{ vars.AI_API_PROVIDER }}
-            EXCEL_ROWS_PER_VECTOR=${{ vars.EXCEL_ROWS_PER_VECTOR }}
-            SUPABASE_CONTENT_COLUMN=${{ vars.SUPABASE_CONTENT_COLUMN }}
-            SUPABASE_INSERT_BATCH_SIZE=${{ vars.SUPABASE_INSERT_BATCH_SIZE }}
-            SUPABASE_MATCH_COUNT=${{ vars.SUPABASE_MATCH_COUNT }}
-            SUPABASE_MATCH_MODE=${{ vars.SUPABASE_MATCH_MODE }}
-            SUPABASE_MATCH_RPC=${{ vars.SUPABASE_MATCH_RPC }}
-            SUPABASE_METADATA_COLUMN=${{ vars.SUPABASE_METADATA_COLUMN }}
-            SUPABASE_SOURCE_BUCKET_COLUMN=${{ vars.SUPABASE_SOURCE_BUCKET_COLUMN }}
-            SUPABASE_SOURCE_FILENAME_COLUMN=${{ vars.SUPABASE_SOURCE_FILENAME_COLUMN }}
-            SUPABASE_VECTOR_TABLE=${{ vars.SUPABASE_VECTOR_TABLE }}
-            
             AZURE_API_KEY=secretref:azure-api-key
             AZURE_API_KEY_EMBEDDING=secretref:azure-api-key-embedding
-            SUPABASE_SERVICE_ROLE_KEY=secretref:supabase-service-key          environmentVariables: |
-            AZURE_API_BASE=${{ secrets.AZURE_API_BASE }}
-            AZURE_API_BASE_EMBEDDING=${{ secrets.AZURE_API_BASE_EMBEDDING }}
-            AZURE_API_KEY=secretref:${{ secrets.AZURE_API_KEY }}
-            AZURE_API_KEY_EMBEDDING=secretref:${{ secrets.AZURE_API_KEY_EMBEDDING }}
             AZURE_API_VERSION=${{ secrets.AZURE_API_VERSION }}
             AZURE_API_VERSION_EMBEDDING=${{ secrets.AZURE_API_VERSION_EMBEDDING }}
             SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
-            SUPABASE_SERVICE_ROLE_KEY=secretref:${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=secretref:supabase-service-key
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
             AI_API_PROVIDER=${{ vars.AI_API_PROVIDER }}
             EXCEL_ROWS_PER_VECTOR=${{ vars.EXCEL_ROWS_PER_VECTOR }}
