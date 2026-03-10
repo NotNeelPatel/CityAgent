@@ -5,7 +5,7 @@ import { ResultsArea, type Source } from "@/components/results_area";
 import { QuickSearchItem } from "@/components/quick_search";
 import { type Step } from "@/components/statuspill";
 import { cn } from "@/lib/utils";
-import remarkGfm from "remark-gfm";
+//import remarkGfm from "remark-gfm";
 import { fetchData } from "@/lib/client";
 import { useAuth } from "@/context/AuthContext";
 
