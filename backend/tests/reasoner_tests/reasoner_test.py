@@ -3,12 +3,11 @@ from google.adk.evaluation.agent_evaluator import AgentEvaluator
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_logic():
+async def test_reasoner_logic():
     await AgentEvaluator.evaluate(
-        agent_name="CityAgent_Reasoner",
-        agent_module="city_agent.agent",
+        agent_module="city_agent.eval_agents.reasoner_eval_agent",
         eval_dataset_file_path_or_dir="tests/reasoner_tests/reasoner_evalset.json",
-        num_runs=1,
+        num_runs=2,
         print_detailed_results=True
     )
 

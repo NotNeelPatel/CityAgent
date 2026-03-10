@@ -1,0 +1,35 @@
+[
+  {
+    "name": "data_analyst_scope_relevant",
+    "query": "Find details about the road segment FERGUS CR between COBBLE HILL DR intersections and provide source details.",
+    "reference": "The assistant attempts retrieval and provides either matching snippets with citations or a clear no-data statement.",
+    "expected_tool_use": [],
+    "description": "Retrieval query with high LLM/tool-call variance; focus is on coherent output instead of strict trajectory."
+  },
+  {
+    "name": "data_analyst_comparison_query",
+    "query": "Compare AGES DR and WELLINGTON ST condition information using available records.",
+    "reference": "The assistant returns a comparison when data is available, otherwise it clearly indicates limits and next-best guidance.",
+    "expected_tool_use": [],
+    "description": "Comparison retrieval can trigger multiple search variants; keep trajectory non-strict for stability."
+  },
+  {
+    "name": "data_analyst_spreadsheet_filter",
+    "query": "Using spreadsheet tools, find rows in sample_roads.csv that contain FERGUS in road-related columns and summarize the matches.",
+    "reference": "Rows containing FERGUS are identified from sample_roads.csv and summarized.",
+    "expected_tool_use": [
+      {
+        "tool_name": "filter_values",
+        "tool_input": {}
+      }
+    ],
+    "description": "Spreadsheet filtering case using the local sample roads fixture."
+  },
+  {
+    "name": "data_analyst_spreadsheet_count",
+    "query": "Using sample_roads.csv, count values in the Ward column and report the highest-frequency ward entries.",
+    "reference": "Ward value counts from sample_roads.csv are reported.",
+    "expected_tool_use": [],
+    "description": "Spreadsheet counting case to validate non-retrieval tool trajectory."
+  }
+]
