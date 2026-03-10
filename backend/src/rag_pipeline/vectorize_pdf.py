@@ -157,9 +157,9 @@ async def call_agent(
         if event.is_final_response() and event.content and event.content.parts:
             final_response_content = event.content.parts[0].text
 
-    print(
-        f"\n\n<<< Agent '{agent_instance.name}' Response: {final_response_content}\n\n"
-    )
+    # print(
+    #     f"\n\n<<< Agent '{agent_instance.name}' Response: {final_response_content}\n\n"
+    # )
 
     return final_response_content
 
