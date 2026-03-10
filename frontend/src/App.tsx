@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Login } from "@/pages/Login";
+import { SignUp } from "@/pages/Signup";
 import { Search } from "@/pages/Search";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
@@ -14,11 +15,11 @@ function App() {
         <Route element={<PublicRoute />}>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/sign-up" element={<SignUp />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route path="/search" element={<Search key={location.key} />} />
-          {/* add more protected pages here later */}
         </Route>
 
         <Route element={<ProtectedRoute allow={["admin"]} />}>
