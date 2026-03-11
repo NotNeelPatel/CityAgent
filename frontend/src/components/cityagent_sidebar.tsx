@@ -123,10 +123,14 @@ export function CityAgentSidebar() {
 
               {history.length > 0 && (
                 <div className="mt-6 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground">
-                    <IconHistory className="h-5 w-5 shrink-0" />
-                    {open && <span>History</span>}
-                  </div>
+                  <SidebarLink
+                  link={{
+                    kind: "action",
+                    label: "History",
+                    onClick: () => {},
+                    icon: <IconHistory className="h-5 w-5 shrink-0" />,
+                    }}
+                    />
 
                   {open &&
                     history.map((item) => {
