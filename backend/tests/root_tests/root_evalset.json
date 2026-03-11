@@ -1,0 +1,25 @@
+[
+  {
+    "name": "root_happy_path_query",
+    "query": "Describe the road segment FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).",
+    "reference": "A concise answer is returned with supporting source citations.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "Root agent should orchestrate retrieval and produce a final answer."
+  },
+  {
+    "name": "root_out_of_scope_query",
+    "query": "What is the capital of France?",
+    "reference": "I'm sorry, I can only answer questions related to the City of Ottawa.",
+    "expected_tool_use": [],
+    "description": "Root agent should reject clearly out-of-scope queries."
+  }
+]
