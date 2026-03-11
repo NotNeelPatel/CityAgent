@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { fetchData, supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
 import type { User } from "@supabase/supabase-js"
-import streamVectorizeFile from "@/components/vecctorize_toast"
+import streamVectorizeFile from "@/components/vectorize_toast"
 
 export function Dashboard() {
   const [files, setFiles] = useState<FileRow[]>([])
