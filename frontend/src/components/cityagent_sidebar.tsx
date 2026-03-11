@@ -4,7 +4,7 @@ import type { Links } from "@/components/ui/aceternity/sidebar";
 import {
   IconArrowLeft,
   IconPlus,
-  IconSun, 
+  IconSun,
   IconMoon,
   IconHistory,
   IconLayoutDashboard,
@@ -12,15 +12,25 @@ import {
 import CityAgentWordmark from "@/assets/cityagent_wordmark.svg";
 import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
 import { useAuth } from "@/context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
+
+type StoredConversation = {
+  id: string;
+  query: string;
+  date: string;
+  sessionId: string;
+};
 
 export function CityAgentSidebar() {
   const [open, setOpen] = useState(false);
-  const { signOut, role } = useAuth();
-  const { theme, setTheme } = useTheme(); 
+  const { signOut, role, user } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
-    const isDark =
+  const [history, setHistory] = useState<StoredConversation[]>([]);
+
+  const isDark =
     theme === "dark" ||
     (theme === "system" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches);
@@ -28,7 +38,7 @@ export function CityAgentSidebar() {
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
   };
-  
+
   const links_top: Links[] = [
     {
       kind: "link",
@@ -41,19 +51,23 @@ export function CityAgentSidebar() {
   const links_bottom: Links[] = [
     {
       kind: "action",
-          label: isDark ? "Light Mode" : "Dark Mode",
+      label: isDark ? "Light Mode" : "Dark Mode",
       onClick: toggleTheme,
-      icon: isDark ? <IconSun className="h-5 w-5 shrink-0" /> : <IconMoon className="h-5 w-5 shrink-0" />,
+      icon: isDark ? (
+        <IconSun className="h-5 w-5 shrink-0" />
+      ) : (
+        <IconMoon className="h-5 w-5 shrink-0" />
+      ),
     },
     ...(role === "admin"
       ? [
-        {
-          kind: "link",
-          label: "Dashboard",
-          href: "/dashboard",
-          icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
-        } satisfies Links,
-      ]
+          {
+            kind: "link",
+            label: "Dashboard",
+            href: "/dashboard",
+            icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+          } satisfies Links,
+        ]
       : []),
     {
       kind: "action",
@@ -63,22 +77,34 @@ export function CityAgentSidebar() {
     },
   ];
 
-  const [history, setHistory] = useState<{ query: string; date: string }[]>([]);
+  useEffect(() => {
+    const historyKey = `search_history_${user?.id || "dev"}`;
 
-useEffect(() => {
-  const loadHistory = () => {
-    const stored = JSON.parse(localStorage.getItem("search_history") || "[]");
-    setHistory(stored);
-  };
+    const loadHistory = () => {
+      const raw = JSON.parse(localStorage.getItem(historyKey) || "[]");
 
-  loadHistory(); 
+      const safeHistory: StoredConversation[] = Array.isArray(raw)
+        ? raw.filter(
+            (item): item is StoredConversation =>
+              item &&
+              typeof item === "object" &&
+              typeof item.id === "string" &&
+              typeof item.query === "string" &&
+              typeof item.date === "string" &&
+              typeof item.sessionId === "string"
+          )
+        : [];
 
-  window.addEventListener("historyUpdated", loadHistory);
+      setHistory(safeHistory);
+    };
 
-  return () => {
-    window.removeEventListener("historyUpdated", loadHistory);
-  };
-}, []);
+    loadHistory();
+    window.addEventListener("historyUpdated", loadHistory);
+
+    return () => {
+      window.removeEventListener("historyUpdated", loadHistory);
+    };
+  }, [user]);
 
   return (
     <Sidebar open={open} setOpen={setOpen}>
@@ -86,36 +112,45 @@ useEffect(() => {
         <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
           {open ? <Wordmark /> : <LogoIcon />}
 
-          <div className="flex flex-col flex-1 justify-between">
+          <div className="flex flex-1 flex-col justify-between">
             <div className="mt-8 flex flex-col gap-2">
+              {links_top.map((link) => (
+                <SidebarLink key={link.label} link={link} />
+              ))}
 
-  {links_top.map((link) => (
-    <SidebarLink key={link.label} link={link} />
-  ))}
+              {history.length > 0 && (
+                <div className="mt-6 flex flex-col gap-1">
+                  <div className="flex items-center gap-2 px-2 text-sm text-muted-foreground">
+                    <IconHistory className="h-4 w-4" />
+                    History
+                  </div>
 
-  {/* History Section */}
-  {history.length > 0 && (
-    <div className="mt-6 flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
-        <IconHistory className="h-4 w-4" />
-        History
-      </div>
+                  {history.map((item, i) => {
+                    const query = typeof item?.query === "string" ? item.query : "";
+                    const id = typeof item?.id === "string" ? item.id : `${i}`;
 
-      {history.map((item, i) => (
-        <button
-          key={i}
-          onClick={() => window.location.href = `/search?q=${encodeURIComponent(item.query)}`}
-          className="text-left text-sm truncate px-2 py-1 rounded hover:bg-muted"
-        >
-          {item.query.length > 40
-            ? item.query.slice(0, 40) + "..."
-            : item.query}
-        </button>
-      ))}
-    </div>
-  )}
+                    if (!query) return null;
 
-</div>
+                    return (
+                      <button
+                        key={id}
+                        onClick={() =>
+                          navigate(
+                            `/search?conversation=${encodeURIComponent(
+                              id
+                            )}&q=${encodeURIComponent(query)}`
+                          )
+                        }
+                        className="truncate rounded px-2 py-1 text-left text-sm hover:bg-muted"
+                        title={query}
+                      >
+                        {query.length > 40 ? `${query.slice(0, 40)}...` : query}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div className="mt-8 flex flex-col gap-2">
               {links_bottom.map((link) => (
