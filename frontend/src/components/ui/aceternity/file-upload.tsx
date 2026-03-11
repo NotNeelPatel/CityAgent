@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
@@ -63,20 +63,16 @@ export const FileUpload = ({
   const dropzoneAccept = buildDropzoneAccept(allowedFileTypes);
   const inputAccept = buildInputAccept(allowedFileTypes);
 
+  useEffect(() => {
+    onChange?.(files);
+  }, [files, onChange]);
+
   const handleFileChange = (newFiles: File[]) => {
-    setFiles((prevFiles) => {
-      const updated = [...prevFiles, ...newFiles]
-      onChange?.(updated)
-      return updated
-    })
+    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
   }
 
   const removeFileAtIndex = (idxToRemove: number) => {
-    setFiles((prev) => {
-      const updated = prev.filter((_, idx) => idx !== idxToRemove)
-      onChange?.(updated)
-      return updated
-    })
+    setFiles((prev) => prev.filter((_, idx) => idx !== idxToRemove));
   }
 
   const handleClick = () => {
