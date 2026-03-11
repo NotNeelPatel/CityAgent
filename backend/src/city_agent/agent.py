@@ -20,7 +20,7 @@ from city_agent.agent_tools.spreadsheet_analysis_tools import (
     filter_values_in_range_impl,
     get_sum_in_column_impl,
     get_sum_of_filtered_values_impl,
-    purge_cached_files
+    purge_cached_files,
 )
 
 search_data_count = 0
@@ -28,36 +28,89 @@ search_data_count = 0
 # Max number of times the agent can call search_data tool per query.
 MAX_SEARCH_CALLS = 3
 
+
+def _tool_error(tool_name: str, error: Exception) -> str:
+    return f"TOOL_ERROR|tool={tool_name}|message={str(error)}"
+
+
 # Convert synchronous spreadsheet analysis tools to asynchronous versions using asyncio.to_thread
 async def get_spreadsheet_info(filename: str) -> str:
-    return await asyncio.to_thread(get_spreadsheet_info_impl, filename)
+    try:
+        return await asyncio.to_thread(get_spreadsheet_info_impl, filename)
+    except Exception as e:
+        return _tool_error("get_spreadsheet_info", e)
+
 
 async def get_mean(filename: str, column_name: str) -> float:
-    return await asyncio.to_thread(get_mean_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(get_mean_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("get_mean", e)
+
 
 async def filter_values(filename: str, columns: list, keyword: str) -> str:
-    return await asyncio.to_thread(filter_values_impl, filename, columns, keyword)
+    try:
+        return await asyncio.to_thread(filter_values_impl, filename, columns, keyword)
+    except Exception as e:
+        return _tool_error("filter_values", e)
+
 
 async def get_unique_values(filename: str, column_name: str) -> str:
-    return await asyncio.to_thread(get_unique_values_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(get_unique_values_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("get_unique_values", e)
+
 
 async def count_values(filename: str, column_name: str) -> str:
-    return await asyncio.to_thread(count_values_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(count_values_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("count_values", e)
+
 
 async def get_min_in_column(filename: str, column_name: str) -> float:
-    return await asyncio.to_thread(get_min_in_column_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(get_min_in_column_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("get_min_in_column", e)
+
 
 async def get_max_in_column(filename: str, column_name: str) -> float:
-    return await asyncio.to_thread(get_max_in_column_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(get_max_in_column_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("get_max_in_column", e)
+
 
 async def get_sum_in_column(filename: str, column_name: str) -> float:
-    return await asyncio.to_thread(get_sum_in_column_impl, filename, column_name)
+    try:
+        return await asyncio.to_thread(get_sum_in_column_impl, filename, column_name)
+    except Exception as e:
+        return _tool_error("get_sum_in_column", e)
 
-async def get_sum_of_filtered_values(filename: str, column_name: str, keyword: str) -> float:
-    return await asyncio.to_thread(get_sum_of_filtered_values_impl, filename, column_name, keyword)
 
-async def filter_values_in_range(filename: str, column_name: str, min_value: float, max_value: float) -> str:
-    return await asyncio.to_thread(filter_values_in_range_impl, filename, column_name, min_value, max_value)
+async def get_sum_of_filtered_values(
+    filename: str, column_name: str, keyword: str
+) -> float:
+    try:
+        return await asyncio.to_thread(
+            get_sum_of_filtered_values_impl, filename, column_name, keyword
+        )
+    except Exception as e:
+        return _tool_error("get_sum_of_filtered_values", e)
+
+
+async def filter_values_in_range(
+    filename: str, column_name: str, min_value: float, max_value: float
+) -> str:
+    try:
+        return await asyncio.to_thread(
+            filter_values_in_range_impl, filename, column_name, min_value, max_value
+        )
+    except Exception as e:
+        return _tool_error("filter_values_in_range", e)
+
 
 async def search_data(query: str) -> str:
     """
@@ -66,11 +119,14 @@ async def search_data(query: str) -> str:
     agent/runtime.
     """
     global search_data_count
-    if(search_data_count >= MAX_SEARCH_CALLS):
+    if search_data_count >= MAX_SEARCH_CALLS:
         return "Search data tool has been called too many times for this query. This limit will reset for the next query."
-    relevant_data = await asyncio.to_thread(query_retriever, query)
-    search_data_count += 1
-    return relevant_data
+    try:
+        relevant_data = await asyncio.to_thread(query_retriever, query)
+        search_data_count += 1
+        return relevant_data
+    except Exception as e:
+        return _tool_error("search_data", e)
 
 
 logger = logging.getLogger(__name__)
@@ -106,17 +162,19 @@ class OrchestratorAgent(BaseAgent):
         )
 
     @override
-    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
         global search_data_count
         logger.info(f"[{self.name}] Starting CityAgent workflow.")
 
         is_valid = False
         attempts = 0
-        search_data_count = 0 
+        search_data_count = 0
         while not is_valid and attempts < 2:
             async for event in self.orchestrator_agent.run_async(ctx):
                 yield event
-            
+
             logger.info(f"[{self.name}] Running Reasoner (Attempt {attempts + 1})...")
             async for event in self.reasoner_agent.run_async(ctx):
                 yield event
@@ -136,25 +194,40 @@ class OrchestratorAgent(BaseAgent):
         purge_cached_files()  # Clear cached files after processing the query
 
 
-
 ai_api = get_agent_model()
 
 reasoner_agent = LlmAgent(
     name="Reasoner",
-    model= ai_api,
-    instruction="""You are part of the larger CityAgent framework. Using the data fetched by the DataAnalyst and any analysis from the SpreadsheetAnalyst, 
-    construct a logical response to the user's query. If the data is insufficient or irrelevant, state that clearly.
-    Ensure you cite specific data points using the metadata 'filename' and 'last_updated'. DO NOT MENTION PREVIOUS STEPS MADE BY OTHER AGENTS
-    If the question is not relevant to City of Ottawa, the "response" key should be "I'm sorry, I can only answer questions related to the City of Ottawa.".
-    Use the following format for your answers, if there are no sources, still include an empty sources list.
-    ONLY output in minified JSON format as follows:
+    model=ai_api,
+    instruction="""
+    You are the CityAgent Reasoner. Your job is to synthesize a final answer
+    based ONLY on the information provided by the data_analyst.
+
+    RULES:
+    * Source Integrity: You may only list a file along with its last_updated
+    information in the sources array if it
+    was explicitly provided in the current context.
+    * Grounded Response: If the provided data does not contain the answer,
+    state clearly that the information is unavailable.
+    * No Agent Speak: Do not mention the DataAnalyst or previous internal
+    steps taken. Speak directly to the user.
+    * Filter: If the question is not about the City of Ottawa,
+    your response key must be: "I'm sorry, I can only answer questions
+    related to the City of Ottawa.".
+
+    OUTPUT FORMAT:
+    You MUST output in minified JSON format only:
     {
-    "response": "<final formatted answer here>",
-    "sources": [{"filename": "<filename>",
-        "lastUpdated": "2026-10-01",
-        "href": "#",
-        }]
+    "response": "<your detailed answer here>",
+    "sources": [
+    {
+        "filename": "<exact_filename_from_context>",
+        "lastUpdated": "<date_from_metadata>",
+        "href": "#"
     }
+    ]
+    }
+    If no sources exist, return "sources": [].
     """,
 )
 
@@ -167,22 +240,36 @@ validator_agent = LlmAgent(
 
 data_analyst = LlmAgent(
     name="DataAnalyst",
-    model= ai_api,
+    model=ai_api,
     instruction="""
-    Your task is to use 'search_data' to find documents relevant to the prompt, note that there are dedicated spreadsheet tools for better searching.
-    - Provide the raw text snippets and citations (filename/last_updated) for all other data.
-    - If you find a relevant spreadsheet (csv/xlsx), use the following tools to analyze it:
-    - get_spreadsheet_info(<filename>) which takes in a query of the filename, and returns the head and first 5 rows of the spreadsheet.
-    - If there are multiple sheets (like in an excel file), it will return multiple results.
-    - get_mean(<filename>, <column_name>) returns the mean of a column.
-    - get_unique_values(<filename>, <column_name>) returns unique values for a column.
-    - count_values(<filename>, <column_name>) returns counts for each unique value in a column.
-    - get_min_in_column(<filename>, <column_name>) returns the minimum numeric value in a column.
-    - get_max_in_column(<filename>, <column_name>) returns the maximum numeric value in a column.
-    - filter_values(<filename>, <columns>, <keyword>) returns rows with keyword in specified columns.
-    - filter_values_in_range(<filename>, <column_name>, <min_value (int)>, <max_value (int)>) returns rows with values in a specified column within a range.
-    - get_sum_in_column(<filename>, <column_name>) returns the sum of a numeric column.
-    - get_sum_of_filtered_values(<filename>, <column_name>, <keyword>) returns the sum of values in a numeric column for rows that contain the keyword.
+    You are the CityAgent Data Analyst. You must use specialized Python tools
+    to query and analyze City of Ottawa assets.
+
+    STRICT TOOL PROTOCOL:
+    1. Discovery: Use 'search_data' first to find filenames.
+    2. Validation: If the file is a spreadsheet (.csv/.xlsx), you MUST use
+    the tools below.
+    3. No Regex: The 'keyword' argument in all tools is a simple string.
+    DO NOT use regex patterns, wildcards, or boolean logic.
+    4. Case Insensitivity: All tools handle case-insensitivity internally.
+
+    TOOL REFERENCE:
+    * get_spreadsheet_info(filename): Returns headers/first 5 rows.
+    * get_mean(filename, column_name): Numeric average only.
+    * get_unique_values(filename, column_name): Returns up to 20 unique items.
+    * count_values(filename, column_name): Frequency of values in a column.
+    * get_min_in_column / get_max_in_column: Finds numeric extremes.
+    * filter_values(filename, columns, keyword): 'columns' MUST be a list.
+    Example: ["Street Name", "Condition"].
+    * filter_values_in_range(filename, column_name, min_value, max_value):
+    Requires numeric floats for min/max.
+    * get_sum_of_filtered_values(filename, column_name, keyword): Sums a
+    column after filtering by a simple string keyword.
+
+    OUTPUT REQUIREMENT:
+    Provide the raw output of the tool, the filename, and 'last_updated'
+    from metadata. If a tool returns 'Column not found', check the
+    headers using 'get_spreadsheet_info' and retry once.
     """,
     tools=[
         search_data,
@@ -202,12 +289,27 @@ data_analyst = LlmAgent(
 orchestrator_agent = LlmAgent(
     name="CityAgent_Orchestrator",
     model=ai_api,
-    instruction="""Analyze the query. Invoke data_analyst to find documents.
-    The data_analyst also has spreadsheet analysis tools. If the prompt
-    is not relevant to City of Ottawa Asset Management, respond with 
+    instruction="""
+    You are the CityAgent Orchestrator. Your sole responsibility is to analyze
+    the user's query and coordinate the data_analyst to gather information.
+
+    STRICT CONSTRAINTS:
+    * DO NOT attempt to answer the user's question yourself.
+    * DO NOT make assumptions about City of Ottawa assets.
+    * If the query is not related to City of Ottawa Asset Management (e.g.,
+    "What is the capital of France?"), respond exactly with:
     "irrelevant question".
+
+    OPERATIONAL PROTOCOL:
+    1. Assess Relevance: Determine if the query is about Ottawa infrastructure,
+    roads, parks, or municipal assets.
+    2. Formulate a Search Plan: Identify what specific points or
+    documents are missing to fulfill the request.
+    3. Delegate: Invoke the data_analyst to perform the actual data retrieval
+    and technical analysis using its available tools.
+    4. Pass the user's original intent and your refined plan to the sub-agent.
     """,
-    sub_agents=[data_analyst]
+    sub_agents=[data_analyst],
 )
 
 root_agent = OrchestratorAgent(
