@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/aceternity/sidebar";
 import type { Links } from "@/components/ui/aceternity/sidebar";
 import {
   IconArrowLeft,
   IconPlus,
-  IconSun, 
+  IconSun,
   IconMoon,
   IconHistory,
   IconLayoutDashboard,
@@ -15,12 +15,20 @@ import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
 
+type StoredConversation = {
+  id: string;
+  query: string;
+  date: string;
+  sessionId: string;
+};
+
 export function CityAgentSidebar() {
   const [open, setOpen] = useState(false);
-  const { signOut, role } = useAuth();
-  const { theme, setTheme } = useTheme(); 
+  const { signOut, role, user } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [history, setHistory] = useState<StoredConversation[]>([]);
 
-    const isDark =
+  const isDark =
     theme === "dark" ||
     (theme === "system" &&
       window.matchMedia?.("(prefers-color-scheme: dark)").matches);
@@ -28,7 +36,7 @@ export function CityAgentSidebar() {
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
   };
-  
+
   const links_top: Links[] = [
     {
       kind: "link",
@@ -36,31 +44,28 @@ export function CityAgentSidebar() {
       href: "/search",
       icon: <IconPlus className="h-5 w-5 shrink-0" />,
     },
-    {
-      kind: "link",
-      disabled: true,
-      label: "History",
-      href: "/history", // TODO: implement the history view
-      icon: <IconHistory className="h-5 w-5 shrink-0" />,
-    },
   ];
 
   const links_bottom: Links[] = [
     {
       kind: "action",
-          label: isDark ? "Light Mode" : "Dark Mode",
+      label: isDark ? "Light Mode" : "Dark Mode",
       onClick: toggleTheme,
-      icon: isDark ? <IconSun className="h-5 w-5 shrink-0" /> : <IconMoon className="h-5 w-5 shrink-0" />,
+      icon: isDark ? (
+        <IconSun className="h-5 w-5 shrink-0" />
+      ) : (
+        <IconMoon className="h-5 w-5 shrink-0" />
+      ),
     },
     ...(role === "admin"
       ? [
-        {
-          kind: "link",
-          label: "Dashboard",
-          href: "/dashboard",
-          icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
-        } satisfies Links,
-      ]
+          {
+            kind: "link",
+            label: "Dashboard",
+            href: "/dashboard",
+            icon: <IconLayoutDashboard className="h-5 w-5 shrink-0" />,
+          } satisfies Links,
+        ]
       : []),
     {
       kind: "action",
@@ -70,17 +75,85 @@ export function CityAgentSidebar() {
     },
   ];
 
+  useEffect(() => {
+    const historyKey = `search_history_${user?.id || "dev"}`;
+
+    const loadHistory = () => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+        const safeHistory: StoredConversation[] = Array.isArray(raw)
+          ? raw.filter(
+              (item): item is StoredConversation =>
+                item &&
+                typeof item === "object" &&
+                typeof item.id === "string" &&
+                typeof item.query === "string" &&
+                typeof item.date === "string" &&
+                typeof item.sessionId === "string"
+            )
+          : [];
+
+        setHistory(safeHistory);
+      } catch (error) {
+        console.error("Error loading search history:", error);
+        setHistory([]);
+      }
+    };
+
+    loadHistory();
+    window.addEventListener("historyUpdated", loadHistory);
+
+    return () => {
+      window.removeEventListener("historyUpdated", loadHistory);
+    };
+  }, [user]);
+
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10">
         <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
           {open ? <Wordmark /> : <LogoIcon />}
 
-          <div className="flex flex-col flex-1 justify-between">
+          <div className="flex flex-1 flex-col justify-between">
             <div className="mt-8 flex flex-col gap-2">
               {links_top.map((link) => (
                 <SidebarLink key={link.label} link={link} />
               ))}
+
+              {history.length > 0 && (
+                <div className="mt-6 flex flex-col gap-1">
+                  <SidebarLink
+                  link={{
+                    kind: "action",
+                    label: "History",
+                    onClick: () => {},
+                    icon: <IconHistory className="h-5 w-5 shrink-0" />,
+                    }}
+                    />
+
+                  {open &&
+                    history.map((item) => {
+                      const query =
+                        item.query.length > 40
+                          ? `${item.query.slice(0, 40)}...`
+                          : item.query;
+
+                      return (
+                        <Link
+                          key={item.id}
+                          to={`/search?conversation=${encodeURIComponent(
+                            item.id
+                          )}&q=${encodeURIComponent(item.query)}`}
+                          className="block truncate rounded px-2 py-1 text-left text-sm hover:bg-muted"
+                          title={item.query}
+                        >
+                          {query}
+                        </Link>
+                      );
+                    })}
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-col gap-2">
