@@ -12,7 +12,7 @@ import {
 import CityAgentWordmark from "@/assets/cityagent_wordmark.svg";
 import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
 import { useAuth } from "@/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
 
 type StoredConversation = {
@@ -26,8 +26,6 @@ export function CityAgentSidebar() {
   const [open, setOpen] = useState(false);
   const { signOut, role, user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
-
   const [history, setHistory] = useState<StoredConversation[]>([]);
 
   const isDark =
@@ -81,21 +79,26 @@ export function CityAgentSidebar() {
     const historyKey = `search_history_${user?.id || "dev"}`;
 
     const loadHistory = () => {
-      const raw = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      try {
+        const raw = JSON.parse(localStorage.getItem(historyKey) || "[]");
 
-      const safeHistory: StoredConversation[] = Array.isArray(raw)
-        ? raw.filter(
-            (item): item is StoredConversation =>
-              item &&
-              typeof item === "object" &&
-              typeof item.id === "string" &&
-              typeof item.query === "string" &&
-              typeof item.date === "string" &&
-              typeof item.sessionId === "string"
-          )
-        : [];
+        const safeHistory: StoredConversation[] = Array.isArray(raw)
+          ? raw.filter(
+              (item): item is StoredConversation =>
+                item &&
+                typeof item === "object" &&
+                typeof item.id === "string" &&
+                typeof item.query === "string" &&
+                typeof item.date === "string" &&
+                typeof item.sessionId === "string"
+            )
+          : [];
 
-      setHistory(safeHistory);
+        setHistory(safeHistory);
+      } catch (error) {
+        console.error("Error loading search history:", error);
+        setHistory([]);
+      }
     };
 
     loadHistory();
@@ -120,34 +123,31 @@ export function CityAgentSidebar() {
 
               {history.length > 0 && (
                 <div className="mt-6 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 px-2 text-sm text-muted-foreground">
-                    <IconHistory className="h-4 w-4" />
-                    History
+                  <div className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground">
+                    <IconHistory className="h-5 w-5 shrink-0" />
+                    {open && <span>History</span>}
                   </div>
 
-                  {history.map((item, i) => {
-                    const query = typeof item?.query === "string" ? item.query : "";
-                    const id = typeof item?.id === "string" ? item.id : `${i}`;
+                  {open &&
+                    history.map((item) => {
+                      const query =
+                        item.query.length > 40
+                          ? `${item.query.slice(0, 40)}...`
+                          : item.query;
 
-                    if (!query) return null;
-
-                    return (
-                      <button
-                        key={id}
-                        onClick={() =>
-                          navigate(
-                            `/search?conversation=${encodeURIComponent(
-                              id
-                            )}&q=${encodeURIComponent(query)}`
-                          )
-                        }
-                        className="truncate rounded px-2 py-1 text-left text-sm hover:bg-muted"
-                        title={query}
-                      >
-                        {query.length > 40 ? `${query.slice(0, 40)}...` : query}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={item.id}
+                          to={`/search?conversation=${encodeURIComponent(
+                            item.id
+                          )}&q=${encodeURIComponent(item.query)}`}
+                          className="block truncate rounded px-2 py-1 text-left text-sm hover:bg-muted"
+                          title={item.query}
+                        >
+                          {query}
+                        </Link>
+                      );
+                    })}
                 </div>
               )}
             </div>
