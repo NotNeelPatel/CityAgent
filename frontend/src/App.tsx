@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Login } from "@/pages/Login";
+import { SignUp } from "@/pages/Signup";
 import { Search } from "@/pages/Search";
 import { Dashboard } from "@/pages/Dashboard";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
@@ -10,20 +11,21 @@ function App() {
 
   return (
     <div className="min-h-svh">
-        <Routes>
-          <Route element={<PublicRoute />}>
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
-          </Route>
+      <Routes>
+        <Route element={<PublicRoute />}>
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/sign-up" element={<SignUp />} />
+        </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/search" element={<Search key={location.key} />} />
-            </Route>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/search" element={<Search key={location.key} />} />
+        </Route>
 
-          <Route element={<ProtectedRoute allow={["admin"]} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-          </Route>
-        </Routes>
+        <Route element={<ProtectedRoute allow={["admin"]} />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
+      </Routes>
     </div>
   );
 }

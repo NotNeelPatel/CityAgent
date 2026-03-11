@@ -57,7 +57,7 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
           <TabsContent value="overview" className="mt-6">
             <div className="flex flex-col md:flex-row gap-4 justify-between">
 
-              <div className="prose flex-1">
+              <div className="prose flex-1 dark:prose-invert">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{adkResponse}</ReactMarkdown>
               </div>
 
