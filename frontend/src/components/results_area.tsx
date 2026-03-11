@@ -76,9 +76,9 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                             setActiveTab("sources");
                           }}>View here</a>
                       </Button>
-                      <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
+                      {/* <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
                         <a href={src.href} target="_blank">Original Source →</a>
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 ))}
@@ -118,15 +118,15 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                         <h2 className="font-medium">{src.filename}</h2>
                       </div>
 
-                      <Button
+                      {/* <Button
                         className="text-blue-800 mt-4 p-0 h-auto"
                         variant="link"
                         asChild
                       >
                         <a href={src.href} target="_blank" rel="noreferrer">
                           Original Source →
-                        </a>
-                      </Button>
+                        </a> 
+                      </Button>*/}
                     </button>
                   );
                 })}
