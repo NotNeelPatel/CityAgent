@@ -7,6 +7,7 @@ from pathlib import Path
 
 from supabase import Client
 
+from src.events_interface import make_event
 from src.rag_pipeline.vectorize_excel import vectorize_excel
 from src.rag_pipeline.vectorize_pdf import vectorize_pdf
 from src.ai_api_selector import get_embedding_model
@@ -20,6 +21,7 @@ SUPABASE_INSERT_MAX_RETRIES = max(1, int(os.getenv("SUPABASE_INSERT_MAX_RETRIES"
 SUPABASE_INSERT_BASE_BACKOFF_SECONDS = float(
     os.getenv("SUPABASE_INSERT_BASE_BACKOFF_SECONDS", "2")
 )
+
 
 def _safe_remove_temp_file(path: str, retries: int = 20, delay_seconds: float = 0.25):
     for attempt in range(retries):
@@ -99,7 +101,7 @@ def _embed_documents_with_retry(texts: list[str]):
 
 
 def add_documents_to_vector_store(documents, ids):
-    """Insert chunked documents into a Supabase table for native vectorization."""
+    """Insert chunked documents into Supabase and yield progress events."""
     if not documents:
         return
 
@@ -114,19 +116,18 @@ def add_documents_to_vector_store(documents, ids):
     embedding_col = os.getenv("SUPABASE_EMBEDDING_COLUMN", "embedding")
     write_embeddings = os.getenv(
         "SUPABASE_WRITE_EMBEDDINGS", "true"
-    ).strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
+    ).strip().lower() in ("1", "true", "yes", "on")
     insert_batch_size = int(os.getenv("SUPABASE_INSERT_BATCH_SIZE", "50"))
 
     client = get_supabase_client()
-    for i in range(0, len(documents), insert_batch_size):
+    total_chunks = len(documents)
+    completed = 0
+
+    for i in range(0, total_chunks, insert_batch_size):
         chunk_docs = documents[i : i + insert_batch_size]
         chunk_ids = ids[i : i + insert_batch_size]
         chunk_texts = [doc.page_content for doc in chunk_docs]
+
         chunk_embeddings = (
             _embed_documents_with_retry(chunk_texts)
             if write_embeddings and embedding_col
@@ -151,10 +152,24 @@ def add_documents_to_vector_store(documents, ids):
 
         try:
             _insert_rows_with_retry(client, table_name, payload, i, len(chunk_docs))
+            completed += len(chunk_docs)
+
+            yield make_event(
+                "loading",
+                message=f"Embedding ({completed}/{total_chunks})",
+                chunks_embedded=completed,
+            )
+
         except Exception:
-            # If batch insert keeps failing due to network/TLS issues, degrade to row-by-row inserts.
+            # degrade to row-by-row and still report progress
             for row_idx, row in enumerate(payload):
                 _insert_rows_with_retry(client, table_name, [row], i + row_idx, 1)
+                completed += 1
+                yield make_event(
+                    "loading",
+                    message=f"Embedding ({completed}/{total_chunks})",
+                    chunks_embedded=completed,
+                )
 
 
 def delete_vector_from_vector_store(storage_location: str, bucket: str | None):
@@ -228,12 +243,16 @@ async def vectorize_and_store_supabase_file(
     storage_location: str, bucket: str | None = None
 ):
     """Download from Supabase Storage, vectorize, then upsert into pgvector."""
-    temp_path, bucket_name, file_path = download_supabase_file(
-        storage_location, bucket
-    )
+    temp_path, bucket_name, file_path = download_supabase_file(storage_location, bucket)
     extension = Path(file_path).suffix.lower()
 
     try:
+        yield make_event(
+            "loading",
+            message="Chunking",
+            file_path=file_path,
+        )
+
         if extension == ".pdf":
             documents, ids = await vectorize_pdf(temp_path)
         else:
@@ -244,17 +263,39 @@ async def vectorize_and_store_supabase_file(
                 "Vectorization produced zero chunks. Verify source file content/columns."
             )
 
+        total_chunks = len(ids)
+
         for doc in documents:
             doc.metadata["source_bucket"] = bucket_name
             doc.metadata["source_filename"] = file_path
 
-        add_documents_to_vector_store(documents, ids)
-        return {
-            "status": "ok",
-            "bucket": bucket_name,
-            "file_path": file_path,
-            "chunks_indexed": len(ids),
-        }
+        print(f"Vectorization complete for {file_path}. Total chunks: {total_chunks}")
+
+        yield make_event(
+            "loading",
+            message="Embedding",
+            file_path=file_path,
+            chunks_embedded=0,
+            total_chunks=total_chunks,
+        )
+
+        for event in add_documents_to_vector_store(documents, ids):
+            yield make_event(
+                event["type"],
+                message=event.get("message"),
+                file_path=file_path,
+                chunks_embedded=event.get("chunks_embedded"),
+                total_chunks=total_chunks,
+            )
+
+        yield make_event(
+            "success",
+            message="Fully vectorized",
+            file_path=file_path,
+            chunks_embedded=total_chunks,
+            total_chunks=total_chunks,
+        )
+
     finally:
         if os.path.exists(temp_path):
             _safe_remove_temp_file(temp_path)

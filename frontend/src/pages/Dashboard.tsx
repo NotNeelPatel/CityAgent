@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { fetchData, supabase } from "@/lib/client"
 import { useAuth } from "@/context/AuthContext"
 import type { User } from "@supabase/supabase-js"
+import streamVectorizeFile from "@/components/vecctorize_toast"
 
 export function Dashboard() {
   const [files, setFiles] = useState<FileRow[]>([])
@@ -106,37 +107,18 @@ export function Dashboard() {
     }
 
     try {
-      const vectorizeResponse = await fetchData("/api/vectorize-file", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bucket,
-          storage_path: storagePath,
-        }),
-      })
-
-      if (!vectorizeResponse.ok) {
-        let errorDetail = `status ${vectorizeResponse.status}`
-        try {
-          const payload = await vectorizeResponse.json()
-          errorDetail = payload?.detail ?? errorDetail
-        } catch {
-          // Ignore JSON parsing errors and use status fallback.
-        }
-
-        // Keep storage + DB in sync by rolling back when vectorization fails.
-        await supabase.from("documents").delete().eq("storage_path", storagePath).eq("owner_id", user.id)
-        await supabase.storage.from(bucket).remove([storagePath])
-        alert(`Upload saved but vectorization failed for ${f.name}: ${errorDetail}`)
-        return
-      }
+      await streamVectorizeFile(bucket, storagePath, f.name)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Request failed"
-      await supabase.from("documents").delete().eq("storage_path", storagePath).eq("owner_id", user.id)
+      await supabase
+        .from("documents")
+        .delete()
+        .eq("storage_path", storagePath)
+        .eq("owner_id", user.id)
+
       await supabase.storage.from(bucket).remove([storagePath])
-      alert(`Upload saved but vectorization request failed for ${f.name}: ${message}`)
+
+      alert(`Upload saved but vectorization failed for ${f.name}: ${message}`)
       return
     }
   }
@@ -242,6 +224,7 @@ export function Dashboard() {
           onDelete={handleFileDelete}
         />
       )}
+
     </Layout>
   )
 }
@@ -339,9 +322,10 @@ function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => Promise<v
 
   const handleUploadClick = async () => {
     if (!hasPending) return
-    await onUpload(pendingFiles)
+    const filesToUpload = [...pendingFiles]
     clearPending()
     closeDialog()
+    await onUpload(filesToUpload)
   }
 
   return (
@@ -380,3 +364,4 @@ function FileUploadDialog({ onUpload }: { onUpload: (files: File[]) => Promise<v
     </Dialog>
   )
 }
+

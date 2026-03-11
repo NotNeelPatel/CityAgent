@@ -1,4 +1,6 @@
 import os
+import json
+from starlette.responses import StreamingResponse
 from fastapi import FastAPI
 from fastapi import Header, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +28,8 @@ adk_app: FastAPI = get_fast_api_app(
     allow_origins=ALLOWED_ORIGINS,
     web=SERVE_WEB_INTERFACE,
 )
+
+
 async def verify_auth(authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
@@ -40,15 +44,19 @@ async def verify_auth(authorization: str = Header(None)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+
 @adk_app.middleware("http")
 async def verify_auth_adk(request: Request, call_next):
     if request.url.path.startswith("/adk"):
         try:
             await verify_auth(request.headers.get("Authorization"))
         except HTTPException as exc:
-            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+            return JSONResponse(
+                status_code=exc.status_code, content={"detail": exc.detail}
+            )
     response = await call_next(request)
     return response
+
 
 app = FastAPI(title="CityAgent API")
 app.add_middleware(
@@ -70,19 +78,36 @@ async def health():
 class VectorizeRequest(BaseModel):
     storage_path: str
     bucket: str | None = None
-    
+
+
 AuthUser = Depends(verify_auth)
 
+
 @app.post("/api/vectorize-file")
-async def vectorize_file(request: VectorizeRequest, user=AuthUser):
-    try:
-        return await vectorize_and_store_supabase_file(
-            storage_location=request.storage_path, bucket=request.bucket
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+async def vectorize_file_stream(request: VectorizeRequest, user=AuthUser):
+    async def event_generator():
+        try:
+            async for event in vectorize_and_store_supabase_file(
+                storage_location=request.storage_path,
+                bucket=request.bucket,
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+
+        except ValueError as exc:
+            yield f"data: {json.dumps({'type': 'error', 'detail': str(exc)})}\n\n"
+        except RuntimeError as exc:
+            yield f"data: {json.dumps({'type': 'error', 'detail': str(exc)})}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'type': 'error', 'detail': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @app.post("/api/vectorize-file/delete-vectors")

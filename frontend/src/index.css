@@ -131,3 +131,7 @@
   height: 100% !important;
   overflow: auto;
 }
+
+li[data-sonner-toast] > [data-content] {
+  width: 100%;
+}
