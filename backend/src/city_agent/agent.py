@@ -1,5 +1,5 @@
 import logging
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, Callable
 from typing_extensions import override
 
 from google.adk.agents import LlmAgent, BaseAgent
@@ -33,83 +33,70 @@ def _tool_error(tool_name: str, error: Exception) -> str:
     return f"TOOL_ERROR|tool={tool_name}|message={str(error)}"
 
 
+async def _run_tool(tool_name: str, tool_func: Callable[..., Any], *args: Any) -> Any:
+    """Run sync tool code in a thread and convert failures to non-throwing tool errors."""
+    try:
+        return await asyncio.to_thread(tool_func, *args)
+    except Exception as e:
+        return _tool_error(tool_name, e)
+
+
 # Convert synchronous spreadsheet analysis tools to asynchronous versions using asyncio.to_thread
 async def get_spreadsheet_info(filename: str) -> str:
-    try:
-        return await asyncio.to_thread(get_spreadsheet_info_impl, filename)
-    except Exception as e:
-        return _tool_error("get_spreadsheet_info", e)
+    return await _run_tool("get_spreadsheet_info", get_spreadsheet_info_impl, filename)
 
 
 async def get_mean(filename: str, column_name: str) -> float:
-    try:
-        return await asyncio.to_thread(get_mean_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("get_mean", e)
+    return await _run_tool("get_mean", get_mean_impl, filename, column_name)
 
 
 async def filter_values(filename: str, columns: list, keyword: str) -> str:
-    try:
-        return await asyncio.to_thread(filter_values_impl, filename, columns, keyword)
-    except Exception as e:
-        return _tool_error("filter_values", e)
+    return await _run_tool("filter_values", filter_values_impl, filename, columns, keyword)
 
 
 async def get_unique_values(filename: str, column_name: str) -> str:
-    try:
-        return await asyncio.to_thread(get_unique_values_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("get_unique_values", e)
+    return await _run_tool("get_unique_values", get_unique_values_impl, filename, column_name)
 
 
 async def count_values(filename: str, column_name: str) -> str:
-    try:
-        return await asyncio.to_thread(count_values_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("count_values", e)
+    return await _run_tool("count_values", count_values_impl, filename, column_name)
 
 
 async def get_min_in_column(filename: str, column_name: str) -> float:
-    try:
-        return await asyncio.to_thread(get_min_in_column_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("get_min_in_column", e)
+    return await _run_tool("get_min_in_column", get_min_in_column_impl, filename, column_name)
 
 
 async def get_max_in_column(filename: str, column_name: str) -> float:
-    try:
-        return await asyncio.to_thread(get_max_in_column_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("get_max_in_column", e)
+    return await _run_tool("get_max_in_column", get_max_in_column_impl, filename, column_name)
 
 
 async def get_sum_in_column(filename: str, column_name: str) -> float:
-    try:
-        return await asyncio.to_thread(get_sum_in_column_impl, filename, column_name)
-    except Exception as e:
-        return _tool_error("get_sum_in_column", e)
+    return await _run_tool("get_sum_in_column", get_sum_in_column_impl, filename, column_name)
 
 
 async def get_sum_of_filtered_values(
     filename: str, column_name: str, keyword: str
 ) -> float:
-    try:
-        return await asyncio.to_thread(
-            get_sum_of_filtered_values_impl, filename, column_name, keyword
-        )
-    except Exception as e:
-        return _tool_error("get_sum_of_filtered_values", e)
+    return await _run_tool(
+        "get_sum_of_filtered_values",
+        get_sum_of_filtered_values_impl,
+        filename,
+        column_name,
+        keyword,
+    )
 
 
 async def filter_values_in_range(
     filename: str, column_name: str, min_value: float, max_value: float
 ) -> str:
-    try:
-        return await asyncio.to_thread(
-            filter_values_in_range_impl, filename, column_name, min_value, max_value
-        )
-    except Exception as e:
-        return _tool_error("filter_values_in_range", e)
+    return await _run_tool(
+        "filter_values_in_range",
+        filter_values_in_range_impl,
+        filename,
+        column_name,
+        min_value,
+        max_value,
+    )
 
 
 async def search_data(query: str) -> str:
@@ -121,12 +108,11 @@ async def search_data(query: str) -> str:
     global search_data_count
     if search_data_count >= MAX_SEARCH_CALLS:
         return "Search data tool has been called too many times for this query. This limit will reset for the next query."
-    try:
-        relevant_data = await asyncio.to_thread(query_retriever, query)
-        search_data_count += 1
+    relevant_data = await _run_tool("search_data", query_retriever, query)
+    if isinstance(relevant_data, str) and relevant_data.startswith("TOOL_ERROR|"):
         return relevant_data
-    except Exception as e:
-        return _tool_error("search_data", e)
+    search_data_count += 1
+    return relevant_data
 
 
 logger = logging.getLogger(__name__)
@@ -214,6 +200,8 @@ reasoner_agent = LlmAgent(
     * Filter: If the question is not about the City of Ottawa,
     your response key must be: "I'm sorry, I can only answer questions
     related to the City of Ottawa.".
+    * Missing Context: If the data retrieved only partially answers the user 
+    because the query was broad, ask for missing specifics.
 
     OUTPUT FORMAT:
     You MUST output in minified JSON format only:
