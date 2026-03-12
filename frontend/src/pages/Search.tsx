@@ -408,6 +408,7 @@ export function Search() {
             setSelectedSourceIndex={setSelectedSourceIndex}
             adkResponse={adkResponse}
             adkSource={adkSource}
+            query={submittedQuery ?? query}
           />
         )}
       </div>
