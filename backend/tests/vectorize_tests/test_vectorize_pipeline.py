@@ -184,7 +184,7 @@ class TestAddDocumentsToVectorStore:
         ), patch("src.rag_pipeline.vector.get_supabase_client", return_value=mock_client), patch(
             "src.rag_pipeline.vector._insert_rows_with_retry"
         ) as mock_insert:
-            add_documents_to_vector_store(docs, ids)
+            list(add_documents_to_vector_store(docs, ids))
 
         assert mock_insert.call_count == 3  
         first_rows = mock_insert.call_args_list[0].args[2]
