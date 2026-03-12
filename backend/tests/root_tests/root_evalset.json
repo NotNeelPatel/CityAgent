@@ -1,8 +1,15 @@
 [
   {
+    "name": "root_out_of_scope_query",
+    "query": "What is the capital of France?",
+    "reference": "I'm sorry, I can only answer questions related to the City of Ottawa.",
+    "expected_tool_use": [],
+    "description": "Root agent should reject clearly out-of-scope queries."
+  },
+  {
     "name": "root_happy_path_query",
-    "query": "Describe the road segment FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).",
-    "reference": "A concise answer is returned with supporting source citations.",
+    "query": "What is the pavement condition rating of the road segment on Baseline Road?",
+    "reference": "The pavement condition rating for the segment on Baseline Road is 3.Fair",
     "expected_tool_use": [
       {
         "tool_name": "transfer_to_agent",
@@ -13,13 +20,26 @@
         "tool_input": {}
       }
     ],
-    "description": "Root agent should orchestrate retrieval and produce a final answer."
+    "description": "Root agent should handle another in-scope query with appropriate retrieval and response."
   },
   {
-    "name": "root_out_of_scope_query",
-    "query": "What is the capital of France?",
-    "reference": "I'm sorry, I can only answer questions related to the City of Ottawa.",
-    "expected_tool_use": [],
-    "description": "Root agent should reject clearly out-of-scope queries."
+    "name": "root_happy_path_spreadsheet_query",
+    "query": "Show all road segments with PQI below 30",
+    "reference": "The current query returned more than ten matching road segments, and the tool truncated the result to the first ~10 rows. Below is the subset of road segments with a Pavement Quality Index (PQI) < 30 that we have retrieved so far:",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "get_spreadsheet_info",
+        "tool_input": {}
+      }
+    ],
+    "description": "Root agent should handle another in-scope query with appropriate retrieval and response."
   }
 ]
