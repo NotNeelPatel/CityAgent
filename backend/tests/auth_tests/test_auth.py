@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from uuid import uuid4
+import json
 
 import server
 
@@ -57,7 +58,7 @@ def test_vectorize_file_allows_valid_token_and_calls_pipeline(monkeypatch):
     async def fake_vectorize_and_store_supabase_file(storage_location, bucket):
         assert storage_location == "roads/sample.csv"
         assert bucket == "city-docs"
-        return expected
+        yield expected
 
     monkeypatch.setattr(
         server,
@@ -72,7 +73,10 @@ def test_vectorize_file_allows_valid_token_and_calls_pipeline(monkeypatch):
     )
 
     assert response.status_code == 200
-    assert response.json() == expected
+    lines = response.text.strip().split("\n")
+    data_line = [l for l in lines if l.startswith("data: ")][0]
+    actual = json.loads(data_line[6:])
+    assert actual == expected
 
 
 def test_search_session_endpoint_rejects_missing_authorization_header():

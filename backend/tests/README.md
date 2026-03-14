@@ -2,11 +2,32 @@
 
 To run in backend do `pytest tests/` to run all tests. What follows is how this all works. 
 
+## Per-Agent ADK Suites
+
+CityAgent is currently evaluated with separate ADK suites for each agent path.
+
+- `tests/orchestrator_tests/` evaluates `CityAgent_Orchestrator`
+- `tests/reasoner_tests/` evaluates `Reasoner`
+- `tests/data_analyst_tests/` evaluates `DataAnalyst`
+
+These suites use wrapper modules in `src/city_agent/eval_agents/` so ADK can evaluate each agent directly.
+
+Run all ADK suites:
+
+```bash
+pytest tests/orchestrator_tests tests/reasoner_tests tests/data_analyst_tests 
+```
+
+Run a single suite:
+
+```bash
+pytest tests/reasoner_tests
+pytest tests/orchestrator_tests
+pytest tests/data_analyst_tests
+```
+
 ADK tests are new as of writing this, so there are multiple warnings about features being experimental. These do not affect the test
 and can be safely ignored. Using the command `pytest tests --disable-warnings` can suppress those messages.
-
-Note that it is assumed that the "Roads Data for LLM" excel file data is present in the vector database. See the README in the backend
-folder for more information on vectorizing files.
 
 ## Core Architecture
 
