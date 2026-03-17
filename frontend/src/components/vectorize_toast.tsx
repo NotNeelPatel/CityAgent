@@ -34,10 +34,10 @@ export const vectorizeToast = (
     case "error":
       return toast.error(`Vectorization failed for ${fileName}: ${message}`, { id })
     case "success":
-      return toast(content, { id, duration: 10000 })
+      return toast(content, { id, duration: 5000 })
     case "loading":
     default:
-      return toast(content, { id, duration: 10000 })
+      return toast(content, { id, duration: Infinity })
   }
 }
 
