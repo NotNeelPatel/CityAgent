@@ -175,7 +175,7 @@ export function Search() {
           part.functionResponse.response.result ?? part.functionResponse;
         const responseDetail = formatDetailValue(responseValue).includes("transfer_to_agent")
           ? "" // Remove transfer details
-          : `Response: ${formatDetailValue(responseValue)}`;
+          : `${formatDetailValue(responseValue)}`;
 
         setSteps((prev) => {
           // Get the most recent running step index to update with the response

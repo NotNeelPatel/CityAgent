@@ -61,7 +61,47 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
 
     console.log("Supabase public URL for source:", data.signedUrl);
     setSelectedSourceSupabase(data.signedUrl);
-  }
+  };
+
+  const renderArguments = (argumentDetail: string) => {
+    const entries = getArgumentEntries(argumentDetail);
+
+    if (!entries || entries.length === 0) {
+      return (
+        <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+          <span className="font-medium">Arguments:</span>
+          <div className="mt-1 rounded-md p-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
+            {argumentDetail}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+        <span className="font-medium">Arguments:</span>
+        <div className="mt-1 space-y-1 rounded-md p-2 text-xs text-muted-foreground">
+          {entries.map((entry) => (
+            <div key={entry.key} className="whitespace-pre-wrap break-words">
+              <span className="font-medium text-foreground">{entry.key}:</span>{" "}
+              <span>{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderResponse = (responseDetail: string) => (
+    <details className="mt-2 text-sm text-muted-foreground">
+      <summary className="cursor-pointer select-none font-medium">
+        Response
+      </summary>
+      <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted p-2 text-xs text-muted-foreground">
+        {responseDetail}
+      </pre>
+    </details>
+  );
 
   return (
     <div className="mt-8">
@@ -95,9 +135,6 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                             setActiveTab("sources");
                           }}>View here</a>
                       </Button>
-                      {/* <Button className="text-blue-800 p-0 h-auto" variant="link" asChild>
-                        <a href={src.href} target="_blank">Original Source →</a>
-                      </Button> */}
                     </div>
                   </div>
                 ))}
@@ -180,43 +217,8 @@ const ResultsArea = ({ steps, activeTab, setActiveTab, hasResults, selectedSourc
                   <StatusPill status={s.status} />
                   <div className="min-w-0">
                     <div className="font-medium">{s.title}</div>
-                    {s.argumentDetail && (
-                      <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-                        <span className="font-medium">Arguments:</span>
-                        {(() => {
-                          const argumentEntries = getArgumentEntries(s.argumentDetail);
-
-                          if (!argumentEntries || argumentEntries.length === 0) {
-                            return (
-                              <div className="mt-1 rounded-md p-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
-                                {s.argumentDetail}
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div className="mt-1 space-y-1 rounded-md p-2 text-xs text-muted-foreground">
-                              {argumentEntries.map((entry) => (
-                                <div key={entry.key} className="whitespace-pre-wrap break-words">
-                                  <span className="font-medium text-foreground">{entry.key}:</span>{" "}
-                                  <span>{entry.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                    {s.responseDetail && (
-                      <details className="mt-2 text-sm text-muted-foreground">
-                        <summary className="cursor-pointer select-none font-medium">
-                          Response
-                        </summary>
-                        <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted p-2 text-xs text-muted-foreground">
-                          {s.responseDetail}
-                        </pre>
-                      </details>
-                    )}
+                    {s.argumentDetail && renderArguments(s.argumentDetail)}
+                    {s.responseDetail && renderResponse(s.responseDetail)}
                     {!s.argumentDetail && !s.responseDetail && s.detail && (
                       <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
                         {s.detail}
