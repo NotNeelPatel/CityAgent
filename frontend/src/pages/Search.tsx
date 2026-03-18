@@ -110,12 +110,52 @@ export function Search() {
     const author = rawData.author;
     const parts = rawData.content?.parts || [];
 
+    const parseJSON = (value: unknown): unknown => {
+      if (typeof value !== "string") return value;
+
+      const trimmed = value.trim();
+      if (!trimmed) return value;
+
+      if (
+        (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+        (trimmed.startsWith("[") && trimmed.endsWith("]"))
+      ) {
+        try {
+          return JSON.parse(trimmed);
+        } catch {
+          return value;
+        }
+      }
+
+      return value;
+    };
+
+    const formatDetailValue = (value: unknown): string => {
+      const parsedValue = parseJSON(value);
+
+      if (typeof parsedValue === "string") {
+        return parsedValue;
+      }
+
+      try {
+        return JSON.stringify(parsedValue, null, 2).trim();
+      } catch {
+        return String(parsedValue ?? "").trim();
+      }
+    };
+
     parts.forEach((part: any) => {
+      // Function call
       if (part.functionCall) {
-        const stepTitle =
-          part.functionCall.name === "transfer_to_agent"
-            ? `Transferring to ${part.functionCall.args.agent_name}`
-            : `${author} Agent is running tool: ${part.functionCall.name}`;
+        const isTransfer = part.functionCall.name === "transfer_to_agent";
+
+        const stepTitle = isTransfer
+          ? `Transferring to ${part.functionCall.args.agent_name}`
+          : `${author} Agent is running tool: ${part.functionCall.name}`;
+
+        const argumentDetail = isTransfer
+          ? ""
+          : formatDetailValue(part.functionCall.args);
 
         setSteps((prev) => [
           ...prev.map((step) => ({ ...step, status: "done" as const })),
@@ -123,8 +163,55 @@ export function Search() {
             id: rawData.id,
             title: stepTitle,
             status: "running" as const,
+            argumentDetail,
           },
         ]);
+        return;
+      }
+
+      // Function Response
+      if (part.functionResponse) {
+        const responseValue =
+          part.functionResponse.response.result ?? part.functionResponse;
+        const responseDetail = formatDetailValue(responseValue).includes("transfer_to_agent")
+          ? "" // Remove transfer details
+          : `${formatDetailValue(responseValue)}`;
+
+        setSteps((prev) => {
+          // Get the most recent running step index to update with the response
+          let runningIndex = -1;
+          for (let i = prev.length - 1; i >= 0; i--) {
+            if (prev[i].status === "running") {
+              runningIndex = i;
+              break;
+            }
+          }
+
+          // Fallback if no step found
+          if (runningIndex === -1) {
+            return [
+              ...prev,
+              {
+                id: rawData.id,
+                title: `Tool response received`,
+                status: "done" as const,
+                responseDetail,
+              },
+            ];
+          }
+
+          // Update found running step
+          const updated = [...prev];
+          updated[runningIndex] = {
+            ...updated[runningIndex],
+            status: "done" as const,
+            responseDetail, 
+          };
+
+          return updated;
+        });
+
+        return;
       }
 
       if (part.text && author === "Reasoner") {
