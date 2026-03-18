@@ -23,6 +23,7 @@ from city_agent.agent_tools.spreadsheet_analysis_tools import (
     get_sum_of_filtered_values_impl,
     purge_cached_files,
 )
+from city_agent.error_codes import ErrorCode
 
 search_data_count = 0
 
@@ -37,7 +38,7 @@ def _tool_error(tool_name: str, error: Exception) -> str:
             "tool": tool_name,
             "data": None,
             "error": {
-                "code": "TOOL_EXECUTION_ERROR",
+                "code": ErrorCode.TOOL_EXECUTION_ERROR.value,
                 "message": str(error),
             },
         },
@@ -154,7 +155,7 @@ async def search_data(query: str) -> str:
                 "tool": "search_data",
                 "data": None,
                 "error": {
-                    "code": "MAX_SEARCH_CALLS_EXCEEDED",
+                    "code": ErrorCode.MAX_SEARCH_CALLS_EXCEEDED.value,
                     "message": "Search data tool has been called too many times for this query. This limit will reset for the next query.",
                 },
             },

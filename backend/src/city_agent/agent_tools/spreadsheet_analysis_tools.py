@@ -3,7 +3,7 @@ import json
 from typing import Optional, Tuple
 import pandas as pd
 from src.supabase_interface import download_supabase_file
-
+from city_agent.error_codes import ErrorCode
 
 def _normalize_for_json(value):
     """Convert pandas/numpy/NaN values into JSON-safe Python primitives."""
@@ -38,7 +38,7 @@ def _tool_success(tool_name: str, data: dict) -> str:
     )
 
 
-def _tool_error(message: str, tool_name: str = "unknown", code: str = "TOOL_ERROR") -> str:
+def _tool_error(message: str, tool_name: str = "unknown", code: str = ErrorCode.TOOL_EXECUTION_ERROR.value) -> str:
     """Return a structured, non-throwing error payload."""
     payload = {
         "status": "error",
@@ -59,7 +59,7 @@ def _column_not_found_error(filename: str, column_name: str, tool_name: str) -> 
     return _tool_error(
         f"Column '{column_name}' not found in file '{filename}'.",
         tool_name=tool_name,
-        code="COLUMN_NOT_FOUND",
+        code=ErrorCode.COLUMN_NOT_FOUND.value,
     )
 
 
@@ -83,7 +83,7 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
         return None, _tool_error(
             f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.",
             tool_name="spreadsheet",
-            code="UNSUPPORTED_FILE_TYPE",
+            code=ErrorCode.UNSUPPORTED_FILE_TYPE.value,
         )
 
     try:
@@ -96,19 +96,19 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
         return None, _tool_error(
             f"Downloaded file '{filename}' is not a supported spreadsheet type.",
             tool_name="spreadsheet",
-            code="UNSUPPORTED_DOWNLOADED_TYPE",
+            code=ErrorCode.UNSUPPORTED_DOWNLOADED_TYPE.value,
         )
     except FileNotFoundError:
         return None, _tool_error(
             f"File not found: {filename}. Retry with an exact filename from search_data results.",
             tool_name="spreadsheet",
-            code="FILE_NOT_FOUND",
+            code=ErrorCode.FILE_NOT_FOUND.value,
         )
     except Exception as e:
         return None, _tool_error(
             f"Error reading file '{filename}': {str(e)}. Retry once; if it persists, try another file.",
             tool_name="spreadsheet",
-            code="READ_FAILURE",
+            code=ErrorCode.READ_FAILURE.value,
         )
 
 
@@ -177,7 +177,7 @@ def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
         return _tool_error(
             f"Column not found in file '{filename}': {missing_columns}",
             tool_name="filter_values",
-            code="COLUMN_NOT_FOUND",
+            code=ErrorCode.COLUMN_NOT_FOUND.value,
         )
 
     specific_info_df = df[columns]
@@ -427,7 +427,7 @@ def get_sum_of_filtered_values_impl(
         return _tool_error(
             f"Column '{column_name}' has no numeric values in matched rows.",
             tool_name="get_sum_of_filtered_values",
-            code="NON_NUMERIC_SUM_COLUMN",
+            code=ErrorCode.NON_NUMERIC_SUM_COLUMN.value,
         )
     total_sum = numeric_values.sum()
 
