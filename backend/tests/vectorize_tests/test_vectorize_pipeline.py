@@ -171,7 +171,8 @@ class TestVectorizePdf:
 class TestAddDocumentsToVectorStore:
     """Tests for add_documents_to_vector_store batching logic."""
 
-    def test_add_documents_batches_correctly(self):
+    @pytest.mark.asyncio
+    async def test_add_documents_batches_correctly(self):
         """Documents are inserted in environment-configured batch sizes."""
         docs = [Document(page_content=f"row-{i}", metadata={}) for i in range(7)]
         ids = [f"id-{i}" for i in range(7)]
@@ -184,7 +185,7 @@ class TestAddDocumentsToVectorStore:
         ), patch("src.rag_pipeline.vector.get_supabase_client", return_value=mock_client), patch(
             "src.rag_pipeline.vector._insert_rows_with_retry"
         ) as mock_insert:
-            list(add_documents_to_vector_store(docs, ids))
+            [event async for event in add_documents_to_vector_store(docs, ids)]
 
         assert mock_insert.call_count == 3  
         first_rows = mock_insert.call_args_list[0].args[2]

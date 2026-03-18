@@ -3,6 +3,7 @@ import json
 import re
 import time
 import gc
+import asyncio
 from pathlib import Path
 
 from supabase import Client
@@ -100,8 +101,48 @@ def _embed_documents_with_retry(texts: list[str]):
             time.sleep(backoff)
 
 
-def add_documents_to_vector_store(documents, ids):
-    """Insert chunked documents into Supabase and yield progress events."""
+def _build_vector_payload(
+    chunk_docs,
+    chunk_ids,
+    content_col,
+    metadata_col,
+    id_col,
+    source_filename_col,
+    source_last_updated_col,
+    source_bucket_col,
+    embedding_col,
+    write_embeddings,
+):
+    chunk_texts = [doc.page_content for doc in chunk_docs]
+    chunk_embeddings = (
+        _embed_documents_with_retry(chunk_texts)
+        if write_embeddings and embedding_col
+        else None
+    )
+
+    payload = []
+    for idx, (doc, _id) in enumerate(zip(chunk_docs, chunk_ids)):
+        row = {
+            content_col: doc.page_content,
+            metadata_col: doc.metadata,
+        }
+        if id_col:
+            row[id_col] = _id
+        if source_filename_col:
+            row[source_filename_col] = doc.metadata.get("source_filename")
+        if source_last_updated_col:
+            row[source_last_updated_col] = doc.metadata.get("source_last_updated")
+        if source_bucket_col:
+            row[source_bucket_col] = doc.metadata.get("source_bucket")
+        if chunk_embeddings is not None:
+            row[embedding_col] = chunk_embeddings[idx]
+        payload.append(row)
+
+    return payload
+
+
+async def add_documents_to_vector_store(documents, ids):
+    """Insert chunked documents into Supabase and yield progress events without blocking the event loop."""
     if not documents:
         return
 
@@ -129,34 +170,29 @@ def add_documents_to_vector_store(documents, ids):
     for i in range(0, total_chunks, insert_batch_size):
         chunk_docs = documents[i : i + insert_batch_size]
         chunk_ids = ids[i : i + insert_batch_size]
-        chunk_texts = [doc.page_content for doc in chunk_docs]
-
-        chunk_embeddings = (
-            _embed_documents_with_retry(chunk_texts)
-            if write_embeddings and embedding_col
-            else None
+        payload = await asyncio.to_thread(
+            _build_vector_payload,
+            chunk_docs,
+            chunk_ids,
+            content_col,
+            metadata_col,
+            id_col,
+            source_filename_col,
+            source_last_updated_col,
+            source_bucket_col,
+            embedding_col,
+            write_embeddings,
         )
 
-        payload = []
-        for idx, (doc, _id) in enumerate(zip(chunk_docs, chunk_ids)):
-            row = {
-                content_col: doc.page_content,
-                metadata_col: doc.metadata,
-            }
-            if id_col:
-                row[id_col] = _id
-            if source_filename_col:
-                row[source_filename_col] = doc.metadata.get("source_filename")
-            if source_last_updated_col:
-                row[source_last_updated_col] = doc.metadata.get("source_last_updated")
-            if source_bucket_col:
-                row[source_bucket_col] = doc.metadata.get("source_bucket")
-            if chunk_embeddings is not None:
-                row[embedding_col] = chunk_embeddings[idx]
-            payload.append(row)
-
         try:
-            _insert_rows_with_retry(client, table_name, payload, i, len(chunk_docs))
+            await asyncio.to_thread(
+                _insert_rows_with_retry,
+                client,
+                table_name,
+                payload,
+                i,
+                len(chunk_docs),
+            )
             completed += len(chunk_docs)
 
             yield make_event(
@@ -168,7 +204,14 @@ def add_documents_to_vector_store(documents, ids):
         except Exception:
             # degrade to row-by-row and still report progress
             for row_idx, row in enumerate(payload):
-                _insert_rows_with_retry(client, table_name, [row], i + row_idx, 1)
+                await asyncio.to_thread(
+                    _insert_rows_with_retry,
+                    client,
+                    table_name,
+                    [row],
+                    i + row_idx,
+                    1,
+                )
                 completed += 1
                 yield make_event(
                     "loading",
@@ -287,7 +330,7 @@ async def vectorize_and_store_supabase_file(
             total_chunks=total_chunks,
         )
 
-        for event in add_documents_to_vector_store(documents, ids):
+        async for event in add_documents_to_vector_store(documents, ids):
             yield make_event(
                 event["type"],
                 message=event.get("message"),
