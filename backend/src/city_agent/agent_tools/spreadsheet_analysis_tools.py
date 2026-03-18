@@ -1,23 +1,73 @@
 from pathlib import Path
+import json
 from typing import Optional, Tuple
 import pandas as pd
 from src.supabase_interface import download_supabase_file
 
 
-def _tool_error(message: str) -> str:
-    """Return a non-throwing tool error string."""
-    return f"TOOL_ERROR|message={message}"
+def _normalize_for_json(value):
+    """Convert pandas/numpy/NaN values into JSON-safe Python primitives."""
+    if isinstance(value, dict):
+        return {str(k): _normalize_for_json(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_normalize_for_json(v) for v in value]
+    if hasattr(value, "item"):
+        try:
+            value = value.item()
+        except Exception:
+            pass
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    return value
 
 
-def _column_not_found_error(filename: str, column_name: str) -> str:
-    return f"Column '{column_name}' not found in file '{filename}'."
+def _tool_success(tool_name: str, data: dict) -> str:
+    """Return a structured, non-throwing success payload."""
+    payload = {
+        "status": "success",
+        "tool": tool_name,
+        "data": _normalize_for_json(data),
+        "error": None,
+    }
+    return json.dumps(
+        payload,
+        ensure_ascii=True,
+    )
+
+
+def _tool_error(message: str, tool_name: str = "unknown", code: str = "TOOL_ERROR") -> str:
+    """Return a structured, non-throwing error payload."""
+    payload = {
+        "status": "error",
+        "tool": tool_name,
+        "data": None,
+        "error": {
+            "code": code,
+            "message": message,
+        },
+    }
+    return json.dumps(
+        _normalize_for_json(payload),
+        ensure_ascii=True,
+    )
+
+
+def _column_not_found_error(filename: str, column_name: str, tool_name: str) -> str:
+    return _tool_error(
+        f"Column '{column_name}' not found in file '{filename}'.",
+        tool_name=tool_name,
+        code="COLUMN_NOT_FOUND",
+    )
 
 
 def _get_column(
-    df: pd.DataFrame, filename: str, column_name: str
+    df: pd.DataFrame, filename: str, column_name: str, tool_name: str
 ) -> Tuple[Optional[pd.Series], Optional[str]]:
     if column_name not in df.columns:
-        return None, _column_not_found_error(filename, column_name)
+        return None, _column_not_found_error(filename, column_name, tool_name)
     return df[column_name], None
 
 
@@ -32,6 +82,8 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
     if not filename.endswith(".csv") and not filename.endswith(".xlsx"):
         return None, _tool_error(
             f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.",
+            tool_name="spreadsheet",
+            code="UNSUPPORTED_FILE_TYPE",
         )
 
     try:
@@ -43,14 +95,20 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
             return pd.read_excel(db_file_info[0]), None
         return None, _tool_error(
             f"Downloaded file '{filename}' is not a supported spreadsheet type.",
+            tool_name="spreadsheet",
+            code="UNSUPPORTED_DOWNLOADED_TYPE",
         )
     except FileNotFoundError:
         return None, _tool_error(
             f"File not found: {filename}. Retry with an exact filename from search_data results.",
+            tool_name="spreadsheet",
+            code="FILE_NOT_FOUND",
         )
     except Exception as e:
         return None, _tool_error(
             f"Error reading file '{filename}': {str(e)}. Retry once; if it persists, try another file.",
+            tool_name="spreadsheet",
+            code="READ_FAILURE",
         )
 
 
@@ -66,7 +124,13 @@ def get_spreadsheet_info_impl(filename: str) -> str:
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    return df.head().to_string()
+    return _tool_success(
+        "get_spreadsheet_info",
+        {
+            "filename": filename,
+            "preview": df.head().to_string(),
+        },
+    )
 
 
 def get_mean_impl(filename: str, column_name: str) -> str:
@@ -76,15 +140,22 @@ def get_mean_impl(filename: str, column_name: str) -> str:
         filename (str): The name of the spreadsheet file.
         column_name (str): The name of the column for which to calculate the mean.
     Returns:
-        float: The mean value of the specified column.
+        str: The mean value of the specified column.
     """
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_mean")
     if error:
         return error
-    return f"Mean value in column '{column_name}': {column.mean()}"
+    return _tool_success(
+        "get_mean",
+        {
+            "filename": filename,
+            "column": column_name,
+            "mean": column.mean(),
+        },
+    )
 
 
 def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
@@ -103,7 +174,11 @@ def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
         return error
     missing_columns = [column for column in columns if column not in df.columns]
     if missing_columns:
-        return f"Column not found in file '{filename}': {missing_columns}"
+        return _tool_error(
+            f"Column not found in file '{filename}': {missing_columns}",
+            tool_name="filter_values",
+            code="COLUMN_NOT_FOUND",
+        )
 
     specific_info_df = df[columns]
     # Use vectorized matching across selected columns instead of row-wise apply.
@@ -113,11 +188,42 @@ def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
     specific_info_df = specific_info_df[mask]
 
     if len(specific_info_df) == 0:
-        return f"No rows found in file '{filename}' containing keyword '{keyword}' in columns {columns}."
+        return _tool_success(
+            "filter_values",
+            {
+                "filename": filename,
+                "columns": columns,
+                "keyword": keyword,
+                "row_count": 0,
+                "result": "",
+                "truncated": False,
+            },
+        )
     if specific_info_df.size > 200:
         reduced_df = specific_info_df.head(min(10, len(specific_info_df)))
-        return f"Data too large, showing first ~10 rows:\n{reduced_df.to_string()}\nUse more specific keywords or fewer columns to narrow down results."
-    return specific_info_df.to_string()
+        return _tool_success(
+            "filter_values",
+            {
+                "filename": filename,
+                "columns": columns,
+                "keyword": keyword,
+                "row_count": len(specific_info_df),
+                "result": reduced_df.to_string(),
+                "truncated": True,
+                "message": "Use more specific keywords or fewer columns to narrow down results.",
+            },
+        )
+    return _tool_success(
+        "filter_values",
+        {
+            "filename": filename,
+            "columns": columns,
+            "keyword": keyword,
+            "row_count": len(specific_info_df),
+            "result": specific_info_df.to_string(),
+            "truncated": False,
+        },
+    )
 
 
 def get_unique_values_impl(filename: str, column_name: str) -> str:
@@ -132,14 +238,30 @@ def get_unique_values_impl(filename: str, column_name: str) -> str:
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_unique_values")
     if error:
         return error
     unique_values = column.unique()
     if len(unique_values) > 20:
         unique_values = unique_values[:20]
-        return f"More than 20 unique values found. Showing first 20 unique values:\n{str(unique_values)}"
-    return str(unique_values)
+        return _tool_success(
+            "get_unique_values",
+            {
+                "filename": filename,
+                "column": column_name,
+                "unique_values": unique_values.tolist(),
+                "truncated": True,
+            },
+        )
+    return _tool_success(
+        "get_unique_values",
+        {
+            "filename": filename,
+            "column": column_name,
+            "unique_values": unique_values.tolist(),
+            "truncated": False,
+        },
+    )
 
 
 def count_values_impl(filename: str, column_name: str) -> str:
@@ -154,11 +276,18 @@ def count_values_impl(filename: str, column_name: str) -> str:
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "count_values")
     if error:
         return error
     value_counts = column.value_counts()
-    return f"Column '{column_name}' value counts:\n{value_counts.to_string()}"
+    return _tool_success(
+        "count_values",
+        {
+            "filename": filename,
+            "column": column_name,
+            "value_counts": value_counts.to_dict(),
+        },
+    )
 
 
 def get_min_in_column_impl(filename: str, column_name: str) -> str:
@@ -168,15 +297,22 @@ def get_min_in_column_impl(filename: str, column_name: str) -> str:
         filename (str): The name of the spreadsheet file.
         column_name (str): The name of the column for which to calculate the minimum value.
     Returns:
-        float: The minimum value of the specified column.
+        str: The minimum value of the specified column.
     """
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_min_in_column")
     if error:
         return error
-    return f"Minimum value in column '{column_name}': {column.min()}"
+    return _tool_success(
+        "get_min_in_column",
+        {
+            "filename": filename,
+            "column": column_name,
+            "minimum": column.min(),
+        },
+    )
 
 
 def get_max_in_column_impl(filename: str, column_name: str) -> str:
@@ -186,56 +322,127 @@ def get_max_in_column_impl(filename: str, column_name: str) -> str:
         filename (str): The name of the spreadsheet file.
         column_name (str): The name of the column for which to calculate the maximum value.
     Returns:
-        float: The maximum value of the specified column.
+        str: The maximum value of the specified column.
     """
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_max_in_column")
     if error:
         return error
-    return f"Maximum value in column '{column_name}': {column.max()}"
+    return _tool_success(
+        "get_max_in_column",
+        {
+            "filename": filename,
+            "column": column_name,
+            "maximum": column.max(),
+        },
+    )
 
 
-def get_sum_in_column_impl(filename: str, column_name: str) -> float:
+def get_sum_in_column_impl(filename: str, column_name: str) -> str:
     """
     Tool for calculating the sum of a specified column in a given spreadsheet.
     Args:
         filename (str): The name of the spreadsheet file.
         column_name (str): The name of the column for which to calculate the sum.
     Returns:
-        float: The sum of the specified column.
+        str: The sum of the specified column.
     """
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_sum_in_column")
     if error:
         return error
-    return f"Sum of values in column '{column_name}': {column.sum()}"
+    return _tool_success(
+        "get_sum_in_column",
+        {
+            "filename": filename,
+            "column": column_name,
+            "sum": column.sum(),
+        },
+    )
 
 
 def get_sum_of_filtered_values_impl(
-    filename: str, column_name: str, keyword: str
+    filename: str,
+    column_name: str,
+    keyword: str,
+    filter_column: Optional[str] = None,
 ) -> str:
     """
-    Tool for calculating the sum of values in a specified column that match a keyword in a given spreadsheet.
+    Tool for calculating the sum of values in a specified column after filtering rows by keyword.
     Args:
         filename (str): The name of the spreadsheet file.
         column_name (str): The name of the column to sum values in.
         keyword (str): The keyword to filter rows by before summing.
+        filter_column (Optional[str]): The column to apply keyword filtering on.
+            If omitted, falls back to legacy all-column matching.
     Returns:
-        float: The sum of the values in the specified column for rows that match the keyword.
+        str: The sum of the values in the specified column for rows that match the keyword.
     """
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "get_sum_of_filtered_values")
     if error:
         return error
-    filtered_df = df[column.astype(str).str.contains(keyword, case=False, na=False, regex=False)]
-    total_sum = filtered_df[column_name].count()
-    return f"Sum of values in column '{column_name}' for rows containing '{keyword}': {total_sum}"
+    
+    if filter_column:
+        filter_series, error = _get_column(
+            df, filename, filter_column, "get_sum_of_filtered_values"
+        )
+        if error:
+            return error
+        mask = filter_series.astype(str).str.contains(
+            keyword, case=False, na=False, regex=False
+        )
+        matched_on = filter_column
+    else:
+        # Backward-compatible fallback for existing 3-argument calls.
+        mask = df.astype(str).apply(
+            lambda col: col.str.contains(keyword, case=False, na=False, regex=False)
+        ).any(axis=1)
+        matched_on = "all_columns"
+    filtered_df = df[mask]
+
+    if filtered_df.empty:
+        return _tool_success(
+            "get_sum_of_filtered_values",
+            {
+                "filename": filename,
+                "sum_column": column_name,
+                "keyword": keyword,
+                "matched_on": matched_on,
+                "match_count": 0,
+                "numeric_match_count": 0,
+                "sum": 0,
+            },
+        )
+    
+    numeric_values = pd.to_numeric(filtered_df[column_name], errors="coerce")
+    numeric_match_count = int(numeric_values.notna().sum())
+    if numeric_match_count == 0 and len(filtered_df) > 0:
+        return _tool_error(
+            f"Column '{column_name}' has no numeric values in matched rows.",
+            tool_name="get_sum_of_filtered_values",
+            code="NON_NUMERIC_SUM_COLUMN",
+        )
+    total_sum = numeric_values.sum()
+
+    return _tool_success(
+        "get_sum_of_filtered_values",
+        {
+            "filename": filename,
+            "sum_column": column_name,
+            "keyword": keyword,
+            "matched_on": matched_on,
+            "match_count": len(filtered_df),
+            "numeric_match_count": numeric_match_count,
+            "sum": total_sum,
+        },
+    )
 
 
 def filter_values_in_range_impl(
@@ -254,16 +461,50 @@ def filter_values_in_range_impl(
     df, error = _get_spreadsheet(filename)
     if error:
         return error
-    column, error = _get_column(df, filename, column_name)
+    column, error = _get_column(df, filename, column_name, "filter_values_in_range")
     if error:
         return error
     filtered_df = df[(column >= min_value) & (column <= max_value)]
     if len(filtered_df) == 0:
-        return f"No rows found in file '{filename}' with values in column '{column_name}' between {min_value} and {max_value}."
+        return _tool_success(
+            "filter_values_in_range",
+            {
+                "filename": filename,
+                "column": column_name,
+                "min_value": min_value,
+                "max_value": max_value,
+                "row_count": 0,
+                "result": "",
+                "truncated": False,
+            },
+        )
     if filtered_df.size > 200:
         reduced_df = filtered_df.head(min(10, len(filtered_df)))
-        return f"Data too large, showing first ~10 rows:\n{reduced_df.to_string()}\nUse narrower range to reduce results."
-    return filtered_df.to_string()
+        return _tool_success(
+            "filter_values_in_range",
+            {
+                "filename": filename,
+                "column": column_name,
+                "min_value": min_value,
+                "max_value": max_value,
+                "row_count": len(filtered_df),
+                "result": reduced_df.to_string(),
+                "truncated": True,
+                "message": "Use narrower range to reduce results.",
+            },
+        )
+    return _tool_success(
+        "filter_values_in_range",
+        {
+            "filename": filename,
+            "column": column_name,
+            "min_value": min_value,
+            "max_value": max_value,
+            "row_count": len(filtered_df),
+            "result": filtered_df.to_string(),
+            "truncated": False,
+        },
+    )
 
 
 def purge_cached_files():
