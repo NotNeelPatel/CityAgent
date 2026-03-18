@@ -109,6 +109,9 @@ def add_documents_to_vector_store(documents, ids):
     content_col = os.getenv("SUPABASE_CONTENT_COLUMN", "content")
     metadata_col = os.getenv("SUPABASE_METADATA_COLUMN", "metadata")
     id_col = os.getenv("SUPABASE_ID_COLUMN", "id")
+    source_last_updated_col = os.getenv(
+        "SUPABASE_SOURCE_LAST_UPDATED_COLUMN", "source_last_updated"
+    )
     source_filename_col = os.getenv(
         "SUPABASE_SOURCE_FILENAME_COLUMN", "source_filename"
     )
@@ -144,6 +147,8 @@ def add_documents_to_vector_store(documents, ids):
                 row[id_col] = _id
             if source_filename_col:
                 row[source_filename_col] = doc.metadata.get("source_filename")
+            if source_last_updated_col:
+                row[source_last_updated_col] = doc.metadata.get("source_last_updated")
             if source_bucket_col:
                 row[source_bucket_col] = doc.metadata.get("source_bucket")
             if chunk_embeddings is not None:
@@ -243,7 +248,9 @@ async def vectorize_and_store_supabase_file(
     storage_location: str, bucket: str | None = None
 ):
     """Download from Supabase Storage, vectorize, then upsert into pgvector."""
-    temp_path, bucket_name, file_path = download_supabase_file(storage_location, bucket)
+    temp_path, bucket_name, file_path, last_updated = download_supabase_file(
+        storage_location, bucket
+    )
     extension = Path(file_path).suffix.lower()
 
     try:
@@ -268,6 +275,7 @@ async def vectorize_and_store_supabase_file(
         for doc in documents:
             doc.metadata["source_bucket"] = bucket_name
             doc.metadata["source_filename"] = file_path
+            doc.metadata["source_last_updated"] = last_updated
 
         print(f"Vectorization complete for {file_path}. Total chunks: {total_chunks}")
 
