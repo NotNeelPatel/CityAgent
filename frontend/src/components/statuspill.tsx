@@ -7,6 +7,8 @@ type Step = {
   title: string;
   status: StepStatus;
   detail?: string;
+  argumentDetail?: string;
+  responseDetail?: string;
 };
 
 const statusLabel: Record<StepStatus, string> = {
