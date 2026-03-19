@@ -6,25 +6,8 @@ import { ResultsArea, type Source } from "@/components/results_area";
 import { QuickSearchItem } from "@/components/quick_search";
 import { type Step } from "@/components/statuspill";
 import { cn } from "@/lib/utils";
-import { fetchData } from "@/lib/client";
+import { fetchData, supabase } from "@/lib/client";
 import { useAuth } from "@/context/AuthContext";
-
-type ConversationHistoryItem = {
-  id: string;
-  query: string;
-  date: string;
-  sessionId: string;
-};
-
-type SavedConversationState = {
-  submittedQuery: string | null;
-  adkResponse: string;
-  adkSource: Source[];
-  steps: Step[];
-  hasResults: boolean;
-  activeTab: "steps" | "overview" | "sources";
-  selectedSourceIndex: number;
-};
 
 export function Search() {
   const { user } = useAuth();
@@ -46,11 +29,6 @@ export function Search() {
   const [selectedSourceIndex, setSelectedSourceIndex] = useState(0);
 
   const currentUserId = user?.id || "dev";
-  const historyKey = `search_history_${currentUserId}`;
-
-  const getConversationStateKey = (id: string) => {
-    return `conversation_state_${currentUserId}_${id}`;
-  };
 
   const resetSearchState = () => {
     setSteps([]);
@@ -59,51 +37,7 @@ export function Search() {
     setAdkSource([]);
     setSelectedSourceIndex(0);
     setActiveTab("steps");
-  };
-
-  const getHistoryFromStorage = (): ConversationHistoryItem[] => {
-    try {
-      const raw = localStorage.getItem(historyKey);
-      if (!raw) return [];
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [];
-
-      return parsed;
-    } catch (error) {
-      console.error("Error reading history from localStorage:", error);
-      return [];
-    }
-  };
-
-  const saveHistoryToStorage = (history: ConversationHistoryItem[]) => {
-    localStorage.setItem(historyKey, JSON.stringify(history));
-    window.dispatchEvent(new Event("historyUpdated"));
-  };
-
-  const saveConversationState = (id: string) => {
-    const state: SavedConversationState = {
-      submittedQuery,
-      adkResponse,
-      adkSource,
-      steps,
-      hasResults,
-      activeTab,
-      selectedSourceIndex,
-    };
-
-    localStorage.setItem(getConversationStateKey(id), JSON.stringify(state));
-  };
-
-  const loadConversationState = (id: string): SavedConversationState | null => {
-    try {
-      const raw = localStorage.getItem(getConversationStateKey(id));
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (error) {
-      console.error("Error loading saved conversation state:", error);
-      return null;
-    }
+    setConversationId(null);
   };
 
   const processADKEvent = (rawData: any) => {
@@ -127,7 +61,7 @@ export function Search() {
         ]);
       }
 
-      if (part.text && author === "Reasoner") {
+      if (part.text) {
         try {
           const parsedText = JSON.parse(part.text);
 
@@ -136,11 +70,12 @@ export function Search() {
             setAdkSource(parsedText.sources || []);
             setHasResults(true);
             setActiveTab("overview");
+            return;
           }
-        } catch (error) {
-          console.error("Error parsing ADK response:", error);
+        } catch {
+          // normal non-JSON text, continue below
         }
-      } else if (part.text) {
+
         const stepTitle = `${author} Agent completed a step`;
 
         setSteps((prev) => [
@@ -205,20 +140,68 @@ export function Search() {
     }
   };
 
-  const updateConversationHistory = (conversationIdToUse: string, searchText: string, sid: string) => {
-    const oldHistory = getHistoryFromStorage();
+  const createConversation = async (searchText: string) => {
+  const payload = {
+    user_id: user?.id ?? null,
+    query: searchText,
+  };
 
-    const newHistory: ConversationHistoryItem[] = [
-      {
-        id: conversationIdToUse,
-        query: searchText,
-        date: new Date().toISOString(),
-        sessionId: sid,
-      },
-      ...oldHistory.filter((item) => item.id !== conversationIdToUse),
-    ].slice(0, 20);
+  console.log("Creating conversation with:", payload);
 
-    saveHistoryToStorage(newHistory);
+  const { data, error } = await supabase
+    .from("conversations")
+    .insert([payload])
+    .select("id")
+    .single();
+
+  console.log("Conversation data:", data);
+  console.log("Conversation error:", error);
+
+  if (error) {
+    console.error("Error creating conversation:", error);
+    return null;
+  }
+
+  return data.id as string;
+};
+
+  const updateConversation = async (
+    id: string,
+    updates: { response?: string; sources?: Source[] }
+  ) => {
+    const { error } = await supabase
+      .from("conversations")
+      .update({
+        response: updates.response,
+        sources: updates.sources,
+      })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating conversation:", error);
+    }
+  };
+
+  const loadConversation = async (id: string) => {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("id, query, response, sources")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error loading conversation:", error);
+      return;
+    }
+
+    setConversationId(data.id);
+    setSubmittedQuery(data.query);
+    setQuery(data.query);
+    setAdkResponse(data.response || "");
+    setAdkSource((data.sources as Source[]) || []);
+    setSelectedSourceIndex(0);
+    setHasResults(Boolean(data.response));
+    setActiveTab(data.response ? "overview" : "steps");
   };
 
   const readSSEStream = async (response: Response) => {
@@ -253,26 +236,18 @@ export function Search() {
     }
   };
 
-  const handleSearch = async (searchText: string, existingConversationId?: string) => {
+  const handleSearch = async (searchText: string) => {
     if (!searchText.trim()) return;
 
-    const currentConversationId =
-      existingConversationId || conversationId || crypto.randomUUID();
-
-    setConversationId(currentConversationId);
+    resetSearchState();
 
     let sid = sessionId;
     let uid = userId;
+    let newConversationId: string | null = null;
 
     try {
       if (!sid || !uid) {
-        const history = getHistoryFromStorage();
-        const oldConversation = history.find(
-          (item) => item.id === currentConversationId
-        );
-
-        const sessionData = await initializeSession(oldConversation?.sessionId);
-
+        const sessionData = await initializeSession();
         sid = sessionData?.session_id ?? null;
         uid = sessionData?.user_id ?? null;
       }
@@ -281,7 +256,11 @@ export function Search() {
         throw new Error("Session initialization failed.");
       }
 
-      updateConversationHistory(currentConversationId, searchText, sid);
+      newConversationId = await createConversation(searchText);
+
+      if (newConversationId) {
+        setConversationId(newConversationId);
+      }
 
       const response = await fetchData("/adk/run_sse", {
         method: "POST",
@@ -322,62 +301,24 @@ export function Search() {
 
     setSubmittedQuery(trimmed);
     setQuery(trimmed);
-
-    resetSearchState();
-    handleSearch(trimmed, conversationId || undefined);
+    handleSearch(trimmed);
   };
 
   useEffect(() => {
     const conversationFromUrl = searchParams.get("conversation");
-    const queryFromUrl = searchParams.get("q");
-
     if (!conversationFromUrl) return;
 
-    setConversationId(conversationFromUrl);
-
-    const history = getHistoryFromStorage();
-    const selectedConversation = history.find(
-      (item) => item.id === conversationFromUrl
-    );
-
-    if (selectedConversation) {
-      setSessionId(selectedConversation.sessionId);
-      setUserId(currentUserId);
-    }
-
-    const savedState = loadConversationState(conversationFromUrl);
-
-    if (savedState) {
-      setSubmittedQuery(savedState.submittedQuery);
-      setQuery(savedState.submittedQuery || queryFromUrl || "");
-      setAdkResponse(savedState.adkResponse || "");
-      setAdkSource(savedState.adkSource || []);
-      setSteps(savedState.steps || []);
-      setHasResults(savedState.hasResults || false);
-      setActiveTab(savedState.activeTab || "overview");
-      setSelectedSourceIndex(savedState.selectedSourceIndex || 0);
-    } else if (selectedConversation) {
-      setSubmittedQuery(selectedConversation.query);
-      setQuery(selectedConversation.query);
-    } else if (queryFromUrl) {
-      setSubmittedQuery(queryFromUrl);
-      setQuery(queryFromUrl);
-    }
-  }, [searchParams, currentUserId]);
+    loadConversation(conversationFromUrl);
+  }, [searchParams]);
 
   useEffect(() => {
-    if (!conversationId) return;
-    saveConversationState(conversationId);
-  }, [
-    conversationId,
-    submittedQuery,
-    adkResponse,
-    adkSource,
-    steps,
-    hasResults,
-    activeTab,
-    selectedSourceIndex,
-  ]);
+    if (!conversationId || !hasResults || !adkResponse) return;
+
+    updateConversation(conversationId, {
+      response: adkResponse,
+      sources: adkSource,
+    });
+  }, [conversationId, hasResults, adkResponse, adkSource]);
 
   const hasSearch = submittedQuery === null;
 
@@ -408,7 +349,7 @@ export function Search() {
             setSelectedSourceIndex={setSelectedSourceIndex}
             adkResponse={adkResponse}
             adkSource={adkSource}
-            query={submittedQuery ?? query}
+            conversationId={conversationId}
           />
         )}
       </div>

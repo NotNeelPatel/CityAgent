@@ -1,6 +1,7 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { StatusPill, type Step } from "@/components/statuspill";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FileViewer } from "@/components/file_viewer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/client";
@@ -18,7 +19,7 @@ type ResultsAreaProps = {
   setSelectedSourceIndex: Dispatch<SetStateAction<number>>;
   adkResponse: string;
   adkSource: Source[];
-  query: string;
+  conversationId: string | null;
 };
 
 type Source = {
@@ -36,27 +37,70 @@ const ResultsArea = ({
   setSelectedSourceIndex,
   adkResponse,
   adkSource,
-  query,
+  conversationId,
 }: ResultsAreaProps) => {
   const selectedSource = adkSource[selectedSourceIndex];
-
   const [answerFeedback, setAnswerFeedback] = useState<"like" | "dislike" | null>(null);
   const [selectedSourceSupabase, setSelectedSourceSupabase] = useState<string | null>(null);
 
-  const allStepsComplete =
-    steps.length > 0 && steps.every((step) => step.status === "done");
+  useEffect(() => {
+    const loadFeedback = async () => {
+      setAnswerFeedback(null);
+
+      if (!conversationId) return;
+
+      const { data, error } = await supabase
+        .from("answer_feedback")
+        .select("feedback")
+        .eq("conversation_id", conversationId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading feedback:", error);
+        return;
+      }
+
+      if (data?.feedback === "like" || data?.feedback === "dislike") {
+        setAnswerFeedback(data.feedback);
+      }
+    };
+
+    loadFeedback();
+  }, [conversationId]);
 
   const saveFeedback = async (value: "like" | "dislike") => {
-    const nextValue = answerFeedback === value ? null : value;
-    setAnswerFeedback(nextValue);
+    if (!conversationId) return;
 
-    if (!nextValue) return;
+    setAnswerFeedback(value);
+
+    const { data: existing, error: existingError } = await supabase
+      .from("answer_feedback")
+      .select("id")
+      .eq("conversation_id", conversationId)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error("Error checking existing feedback:", existingError);
+      return;
+    }
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("answer_feedback")
+        .update({ feedback: value })
+        .eq("id", existing.id);
+
+      if (error) {
+        console.error("Error updating feedback:", error);
+      }
+
+      return;
+    }
 
     const { error } = await supabase.from("answer_feedback").insert([
       {
-        query,
-        response: adkResponse,
-        feedback: nextValue,
+        conversation_id: conversationId,
+        feedback: value,
       },
     ]);
 
@@ -66,8 +110,6 @@ const ResultsArea = ({
   };
 
   const getSupabaseSource = async (source: string) => {
-    console.log("Fetching source from Supabase with path:", source);
-
     const { data, error } = await supabase.storage
       .from("documents")
       .createSignedUrl(source, 60);
@@ -77,7 +119,6 @@ const ResultsArea = ({
       return;
     }
 
-    console.log("Supabase public URL for source:", data.signedUrl);
     setSelectedSourceSupabase(data.signedUrl);
   };
 
@@ -94,46 +135,25 @@ const ResultsArea = ({
             <TabsTrigger value="steps">Steps</TabsTrigger>
           </TabsList>
 
-          {allStepsComplete && (
-            <TabsList className="ml-auto flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => saveFeedback("like")}
-                className={cn(
-                  "inline-flex h-[calc(100%-1px)] items-center justify-center rounded-md border border-transparent px-2 py-1 transition-[color,box-shadow] hover:bg-background",
-                  answerFeedback === "like" && "bg-background shadow-sm"
-                )}
-                aria-label="Like answer"
+          {hasResults && conversationId && (
+            <div className="ml-auto">
+              <ToggleGroup
+                type="single"
+                value={answerFeedback ?? ""}
+                onValueChange={(value) => {
+                  if (value === "like" || value === "dislike") {
+                    saveFeedback(value);
+                  }
+                }}
               >
-                <IconThumbUp
-                  className={cn(
-                    "h-4 w-4",
-                    answerFeedback === "like"
-                      ? "text-blue-500"
-                      : "text-muted-foreground"
-                  )}
-                />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => saveFeedback("dislike")}
-                className={cn(
-                  "inline-flex h-[calc(100%-1px)] items-center justify-center rounded-md border border-transparent px-2 py-1 transition-[color,box-shadow] hover:bg-background",
-                  answerFeedback === "dislike" && "bg-background shadow-sm"
-                )}
-                aria-label="Dislike answer"
-              >
-                <IconThumbDown
-                  className={cn(
-                    "h-4 w-4",
-                    answerFeedback === "dislike"
-                      ? "text-blue-500"
-                      : "text-muted-foreground"
-                  )}
-                />
-              </button>
-            </TabsList>
+                <ToggleGroupItem value="like" aria-label="Like">
+                  <IconThumbUp className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="dislike" aria-label="Dislike">
+                  <IconThumbDown className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           )}
         </div>
 
@@ -154,7 +174,7 @@ const ResultsArea = ({
                     </div>
                     <h2 className="font-medium">{src.filename}</h2>
 
-                    <div className="mt-4 flex float-right gap-4">
+                    <div className="mt-4 flex justify-end gap-4">
                       <Button className="h-auto p-0 text-blue-800" variant="link" asChild>
                         <a
                           href={src.href}
