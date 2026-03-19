@@ -106,8 +106,12 @@ const ResultsArea = ({
 
     if (error) {
       console.error("Error saving feedback:", error);
+    }
+  };
 
-  const getArgumentEntries = (argumentDetail?: string): Array<{ key: string; value: string }> | null => {
+  const getArgumentEntries = (
+    argumentDetail?: string
+  ): Array<{ key: string; value: string }> | null => {
     if (!argumentDetail) return null;
 
     try {
@@ -138,7 +142,7 @@ const ResultsArea = ({
 
     setSelectedSourceSupabase(data.signedUrl);
   };
-      
+
   const renderArguments = (argumentDetail: string) => {
     const entries = getArgumentEntries(argumentDetail);
 
@@ -170,9 +174,7 @@ const ResultsArea = ({
 
   const renderResponse = (responseDetail: string) => (
     <details className="mt-2 text-sm text-muted-foreground">
-      <summary className="cursor-pointer select-none font-medium">
-        Response
-      </summary>
+      <summary className="cursor-pointer select-none font-medium">Response</summary>
       <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted p-2 text-xs text-muted-foreground">
         {responseDetail}
       </pre>
