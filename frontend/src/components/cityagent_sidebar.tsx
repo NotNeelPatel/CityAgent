@@ -14,12 +14,12 @@ import CityAgentLogoIcon from "@/assets/cityagent_logo.svg";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
+import { supabase } from "@/lib/client";
 
 type StoredConversation = {
   id: string;
   query: string;
   date: string;
-  sessionId: string;
 };
 
 export function CityAgentSidebar() {
@@ -37,7 +37,7 @@ export function CityAgentSidebar() {
     setTheme(isDark ? "light" : "dark");
   };
 
-  const links_top: Links[] = [
+  const linksTop: Links[] = [
     {
       kind: "link",
       label: "New Search",
@@ -46,7 +46,7 @@ export function CityAgentSidebar() {
     },
   ];
 
-  const links_bottom: Links[] = [
+  const linksBottom: Links[] = [
     {
       kind: "action",
       label: isDark ? "Light Mode" : "Dark Mode",
@@ -76,37 +76,35 @@ export function CityAgentSidebar() {
   ];
 
   useEffect(() => {
-    const historyKey = `search_history_${user?.id || "dev"}`;
-
-    const loadHistory = () => {
-      try {
-        const raw = JSON.parse(localStorage.getItem(historyKey) || "[]");
-
-        const safeHistory: StoredConversation[] = Array.isArray(raw)
-          ? raw.filter(
-              (item): item is StoredConversation =>
-                item &&
-                typeof item === "object" &&
-                typeof item.id === "string" &&
-                typeof item.query === "string" &&
-                typeof item.date === "string" &&
-                typeof item.sessionId === "string"
-            )
-          : [];
-
-        setHistory(safeHistory);
-      } catch (error) {
-        console.error("Error loading search history:", error);
+    const loadHistory = async () => {
+      if (!user?.id) {
         setHistory([]);
+        return;
       }
+
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("id, query, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error("Error loading conversation history:", error);
+        setHistory([]);
+        return;
+      }
+
+      const mapped: StoredConversation[] = (data ?? []).map((item) => ({
+        id: item.id,
+        query: item.query,
+        date: item.created_at,
+      }));
+
+      setHistory(mapped);
     };
 
     loadHistory();
-    window.addEventListener("historyUpdated", loadHistory);
-
-    return () => {
-      window.removeEventListener("historyUpdated", loadHistory);
-    };
   }, [user]);
 
   return (
@@ -117,24 +115,24 @@ export function CityAgentSidebar() {
 
           <div className="flex flex-1 flex-col justify-between">
             <div className="mt-8 flex flex-col gap-2">
-              {links_top.map((link) => (
+              {linksTop.map((link) => (
                 <SidebarLink key={link.label} link={link} />
               ))}
 
               {history.length > 0 && (
                 <div className="mt-6 flex flex-col gap-1">
                   <SidebarLink
-                  link={{
-                    kind: "action",
-                    label: "History",
-                    onClick: () => {},
-                    icon: <IconHistory className="h-5 w-5 shrink-0" />,
+                    link={{
+                      kind: "action",
+                      label: "History",
+                      onClick: () => {},
+                      icon: <IconHistory className="h-5 w-5 shrink-0" />,
                     }}
-                    />
+                  />
 
                   {open &&
                     history.map((item) => {
-                      const query =
+                      const shortQuery =
                         item.query.length > 40
                           ? `${item.query.slice(0, 40)}...`
                           : item.query;
@@ -142,13 +140,11 @@ export function CityAgentSidebar() {
                       return (
                         <Link
                           key={item.id}
-                          to={`/search?conversation=${encodeURIComponent(
-                            item.id
-                          )}&q=${encodeURIComponent(item.query)}`}
-                          className="block truncate rounded px-2 py-1 text-left text-sm hover:bg-muted"
+                          to={`/search?conversation=${encodeURIComponent(item.id)}`}
+                          className="block truncate rounded px-2 py-1 text-sm hover:bg-muted"
                           title={item.query}
                         >
-                          {query}
+                          {shortQuery}
                         </Link>
                       );
                     })}
@@ -157,7 +153,7 @@ export function CityAgentSidebar() {
             </div>
 
             <div className="mt-8 flex flex-col gap-2">
-              {links_bottom.map((link) => (
+              {linksBottom.map((link) => (
                 <SidebarLink key={link.label} link={link} />
               ))}
             </div>
