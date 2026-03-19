@@ -196,7 +196,7 @@ async def add_documents_to_vector_store(documents, ids):
             completed += len(chunk_docs)
 
             yield make_event(
-                "loading",
+                "embedding",
                 message=f"Embedding ({completed}/{total_chunks})",
                 chunks_embedded=completed,
             )
@@ -214,7 +214,7 @@ async def add_documents_to_vector_store(documents, ids):
                 )
                 completed += 1
                 yield make_event(
-                    "loading",
+                    "embedding",
                     message=f"Embedding ({completed}/{total_chunks})",
                     chunks_embedded=completed,
                 )
@@ -298,13 +298,21 @@ async def vectorize_and_store_supabase_file(
 
     try:
         yield make_event(
-            "loading",
+            "chunking",
             message="Chunking",
             file_path=file_path,
         )
 
         if extension == ".pdf":
-            documents, ids = await vectorize_pdf(temp_path)
+            documents = None
+            ids = None
+
+            async for item in vectorize_pdf(temp_path):
+                if item["type"] == "result":
+                    documents = item["documents"]
+                    ids = item["ids"]
+                else:
+                    yield item
         else:
             documents, ids = await vectorize_excel(temp_path)
 
@@ -323,7 +331,7 @@ async def vectorize_and_store_supabase_file(
         print(f"Vectorization complete for {file_path}. Total chunks: {total_chunks}")
 
         yield make_event(
-            "loading",
+            "embedding",
             message="Embedding",
             file_path=file_path,
             chunks_embedded=0,
