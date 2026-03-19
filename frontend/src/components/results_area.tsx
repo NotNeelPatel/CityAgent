@@ -43,7 +43,6 @@ const ResultsArea = ({
   const [answerFeedback, setAnswerFeedback] = useState<"like" | "dislike" | null>(null);
   const [selectedSourceSupabase, setSelectedSourceSupabase] = useState<string | null>(null);
 
-<<<<<<< 160-adding-dislikelike-button
   useEffect(() => {
     const loadFeedback = async () => {
       setAnswerFeedback(null);
@@ -107,7 +106,7 @@ const ResultsArea = ({
 
     if (error) {
       console.error("Error saving feedback:", error);
-=======
+
   const getArgumentEntries = (argumentDetail?: string): Array<{ key: string; value: string }> | null => {
     if (!argumentDetail) return null;
 
@@ -124,7 +123,6 @@ const ResultsArea = ({
       }));
     } catch {
       return null;
->>>>>>> main
     }
   };
 
@@ -140,9 +138,7 @@ const ResultsArea = ({
 
     setSelectedSourceSupabase(data.signedUrl);
   };
-<<<<<<< 160-adding-dislikelike-button
-=======
-
+      
   const renderArguments = (argumentDetail: string) => {
     const entries = getArgumentEntries(argumentDetail);
 
@@ -182,7 +178,6 @@ const ResultsArea = ({
       </pre>
     </details>
   );
->>>>>>> main
 
   return (
     <div className="mt-8">
