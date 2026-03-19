@@ -27,3 +27,20 @@ def event_loop(event_loop_policy):
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
 pytest.mark.asyncio = pytest.mark.asyncio(loop_scope="session")
+
+
+@pytest.fixture(autouse=True)
+def reset_city_agent_runtime_state():
+    """Best-effort cleanup to keep ADK tests isolated across cases."""
+    try:
+        from city_agent import agent as city_agent_module
+
+        city_agent_module.MAX_SEARCH_CALLS = 10
+        city_agent_module.search_data_count = 0
+        yield
+        city_agent_module.MAX_SEARCH_CALLS = 10
+        city_agent_module.search_data_count = 0
+        city_agent_module.purge_cached_files()
+    except Exception:
+        # Some test modules do not import/run CityAgent; keep fixture non-blocking.
+        yield

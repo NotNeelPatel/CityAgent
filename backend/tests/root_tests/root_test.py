@@ -12,11 +12,11 @@ def _is_transient_eval_failure(exc: Exception) -> bool:
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_logic():
+async def test_root_agent_flow():
     try:
         await AgentEvaluator.evaluate(
-            agent_module="city_agent.eval_agents.orchestrator_eval_agent",
-            eval_dataset_file_path_or_dir="tests/orchestrator_tests/orches_evalset.json",
+            agent_module="city_agent.eval_agents.root_eval_agent",
+            eval_dataset_file_path_or_dir="tests/root_tests/root_evalset.json",
             num_runs=2,
             print_detailed_results=True,
         )
@@ -26,6 +26,3 @@ async def test_orchestrator_logic():
                 "Transient external eval failure (rate limit / ADK null inference)."
             )
         raise
-
-
-

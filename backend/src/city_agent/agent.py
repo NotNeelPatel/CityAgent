@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import Any, AsyncGenerator, Callable
 from typing_extensions import override
 
@@ -22,6 +23,7 @@ from city_agent.agent_tools.spreadsheet_analysis_tools import (
     get_sum_of_filtered_values_impl,
     purge_cached_files,
 )
+from city_agent.error_codes import ErrorCode
 
 search_data_count = 0
 
@@ -30,7 +32,42 @@ MAX_SEARCH_CALLS = 3
 
 
 def _tool_error(tool_name: str, error: Exception) -> str:
-    return f"TOOL_ERROR|tool={tool_name}|message={str(error)}"
+    return json.dumps(
+        {
+            "status": "error",
+            "tool": tool_name,
+            "data": None,
+            "error": {
+                "code": ErrorCode.TOOL_EXECUTION_ERROR.value,
+                "message": str(error),
+            },
+        },
+        ensure_ascii=True,
+    )
+
+
+def _tool_success(tool_name: str, data: dict) -> str:
+    return json.dumps(
+        {
+            "status": "success",
+            "tool": tool_name,
+            "data": data,
+            "error": None,
+        },
+        ensure_ascii=True,
+    )
+
+
+def _is_tool_error(payload: Any) -> bool:
+    if not isinstance(payload, str):
+        return False
+    try:
+        decoded = json.loads(payload)
+    except Exception:
+        return False
+    if not isinstance(decoded, dict):
+        return False
+    return decoded.get("status") == "error"
 
 
 async def _run_tool(tool_name: str, tool_func: Callable[..., Any], *args: Any) -> Any:
@@ -46,7 +83,7 @@ async def get_spreadsheet_info(filename: str) -> str:
     return await _run_tool("get_spreadsheet_info", get_spreadsheet_info_impl, filename)
 
 
-async def get_mean(filename: str, column_name: str) -> float:
+async def get_mean(filename: str, column_name: str) -> str:
     return await _run_tool("get_mean", get_mean_impl, filename, column_name)
 
 
@@ -62,27 +99,32 @@ async def count_values(filename: str, column_name: str) -> str:
     return await _run_tool("count_values", count_values_impl, filename, column_name)
 
 
-async def get_min_in_column(filename: str, column_name: str) -> float:
+async def get_min_in_column(filename: str, column_name: str) -> str:
     return await _run_tool("get_min_in_column", get_min_in_column_impl, filename, column_name)
 
 
-async def get_max_in_column(filename: str, column_name: str) -> float:
+async def get_max_in_column(filename: str, column_name: str) -> str:
     return await _run_tool("get_max_in_column", get_max_in_column_impl, filename, column_name)
 
 
-async def get_sum_in_column(filename: str, column_name: str) -> float:
+async def get_sum_in_column(filename: str, column_name: str) -> str:
     return await _run_tool("get_sum_in_column", get_sum_in_column_impl, filename, column_name)
 
 
 async def get_sum_of_filtered_values(
-    filename: str, column_name: str, keyword: str
-) -> float:
+    filename: str,
+    column_name: str,
+    keyword: str,
+    filter_column: str = "",
+) -> str:
+    resolved_filter_column = filter_column.strip() or None
     return await _run_tool(
         "get_sum_of_filtered_values",
         get_sum_of_filtered_values_impl,
         filename,
         column_name,
         keyword,
+        resolved_filter_column,
     )
 
 
@@ -107,12 +149,29 @@ async def search_data(query: str) -> str:
     """
     global search_data_count
     if search_data_count >= MAX_SEARCH_CALLS:
-        return "Search data tool has been called too many times for this query. This limit will reset for the next query."
+        return json.dumps(
+            {
+                "status": "error",
+                "tool": "search_data",
+                "data": None,
+                "error": {
+                    "code": ErrorCode.MAX_SEARCH_CALLS_EXCEEDED.value,
+                    "message": "Search data tool has been called too many times for this query. This limit will reset for the next query.",
+                },
+            },
+            ensure_ascii=True,
+        )
     relevant_data = await _run_tool("search_data", query_retriever, query)
-    if isinstance(relevant_data, str) and relevant_data.startswith("TOOL_ERROR|"):
+    if _is_tool_error(relevant_data):
         return relevant_data
     search_data_count += 1
-    return relevant_data
+    return _tool_success(
+        "search_data",
+        {
+            "query": query,
+            "result": relevant_data,
+        },
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -202,6 +261,12 @@ reasoner_agent = LlmAgent(
     related to the City of Ottawa.".
     * Missing Context: If the data retrieved only partially answers the user 
     because the query was broad, ask for missing specifics.
+    
+    NUMERIC VALIDATION RULES:
+    * If the question asks for a total, sum, or numeric result:
+        * Ensure the response includes a numeric value from tool output
+        * If no numeric value is present, state that the total could not be computed
+        * Do NOT infer or estimate totals
 
     OUTPUT FORMAT:
     You MUST output in minified JSON format only:
@@ -247,17 +312,46 @@ data_analyst = LlmAgent(
     * get_unique_values(filename, column_name): Returns up to 20 unique items.
     * count_values(filename, column_name): Frequency of values in a column.
     * get_min_in_column / get_max_in_column: Finds numeric extremes.
+    * get_sum_in_column(filename, column_name): Sums all values in a numeric column.
     * filter_values(filename, columns, keyword): 'columns' MUST be a list.
     Example: ["Street Name", "Condition"].
     * filter_values_in_range(filename, column_name, min_value, max_value):
     Requires numeric floats for min/max.
-    * get_sum_of_filtered_values(filename, column_name, keyword): Sums a
-    column after filtering by a simple string keyword.
+    * get_sum_of_filtered_values(filename, column_name, keyword, filter_column=""):
+    Sums values in column_name after filtering by keyword.
+    Preferred usage: ALWAYS provide filter_column explicitly.
+    Example for "total cost of Poor roads":
+    column_name="Cost", filter_column="Condition", keyword="Poor".
+    Backward compatibility: if filter_column is empty or omitted, the tool falls back
+    to legacy matching across all columns.
+    
+    TOOL SELECTION RULES:
+        * If no filtering condition -> use get_sum_in_column.
+        * If a filtering condition is present -> use get_sum_of_filtered_values with filter_column.
+        * For requests like "total cost of Poor roads", map:
+            sum column -> cost-like numeric column,
+            filter column -> condition-like text column,
+            keyword -> poor.
+        * Avoid legacy all-column fallback unless you cannot identify a filter column.
 
     OUTPUT REQUIREMENT:
-    Provide the raw output of the tool, the filename, and 'last_updated'
-    from metadata. If a tool returns 'Column not found', check the
-    headers using 'get_spreadsheet_info' and retry once.
+    All tool responses are structured JSON with keys:
+    status, tool, data, error.
+        Always inspect status first.
+        * If status="success": use values from data.
+        * If status="error": follow error.code guidance below.
+        * Use values from the data object when composing your response, and include
+        filename plus 'last_updated' from metadata.
+    Error handling:
+    * COLUMN_NOT_FOUND -> call get_spreadsheet_info once to inspect headers and retry once.
+    * NON_NUMERIC_SUM_COLUMN -> explain that matched rows have no numeric values in the requested sum column.
+    * MAX_SEARCH_CALLS_EXCEEDED -> continue using already retrieved context; do not call search_data again.
+    
+    COMPUTATION RULES:
+    * If the user asks for total, sum, or aggregate, you MUST call a sum tool.
+    * NEVER estimate or describe totals.
+    * NEVER compute totals yourself.
+    * ALWAYS rely on get_sum_in_column or get_sum_of_filtered_values.
     """,
     tools=[
         search_data,

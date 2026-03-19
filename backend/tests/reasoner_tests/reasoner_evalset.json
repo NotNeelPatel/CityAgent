@@ -2,15 +2,22 @@
   {
     "name": "scope_check_fail",
     "query": "What is the capital of France?",
-    "reference": "I'm sorry, but I can't help with that.",
+    "reference": "I'm sorry, I can only answer questions related to the City of Ottawa.",
     "expected_tool_use": [],
-    "description": "Should decline non-Ottawa topics."
+    "description": "Reasoner should return out-of-scope City of Ottawa guardrail message."
   },
   {
     "name": "valid_asset_query",
     "query": "Describe the road segment FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).",
-    "reference": "FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S).FERGUS CR between COBBLE HILL DR (N) and COBBLE HILL DR (S) is a short local-road segment in the Barrhaven West area (Ward 3). According to the city's road inventory it is 0.884 km in length, classified as a **Local** functional class within a **Suburban** transect.",
+    "reference": "FERGUS CR between COBBLE HILL DR (N) and COBBLE HILL DR (S) is a short local segment in Ward 3, and the answer includes sources metadata.",
     "expected_tool_use": [],
-    "description": "Call search_data."
+    "description": "Reasoner should produce a concise final response using provided retrieved context."
+  },
+  {
+    "name": "reasoner_comparison_query",
+    "query": "Compare the condition of AGES DR and WELLINGTON ST.",
+    "reference": "WELLINGTON ST is in better condition than AGES DR, with source citations provided.",
+    "expected_tool_use": [],
+    "description": "Reasoner should produce comparison reasoning from upstream context."
   }
 ]

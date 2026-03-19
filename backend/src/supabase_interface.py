@@ -7,11 +7,13 @@ _supabase_client = None
 
 SUPPORTED_EXTENSIONS = {".pdf", ".xlsx", ".csv"}
 
+
 def _require_env(var_name: str) -> str:
     value = os.getenv(var_name)
     if not value:
         raise RuntimeError(f"Missing required environment variable: {var_name}")
     return value
+
 
 def get_supabase_client() -> Client:
     global _supabase_client
@@ -23,8 +25,9 @@ def get_supabase_client() -> Client:
     _supabase_client = create_client(supabase_url, supabase_key)
     return _supabase_client
 
+
 def download_supabase_file(storage_location: str, bucket="documents"):
-    file_path = file_path = storage_location.strip().lstrip("/")
+    file_path = storage_location.strip().lstrip("/")
     extension = Path(file_path).suffix.lower()
     if extension not in SUPPORTED_EXTENSIONS:
         raise ValueError(
@@ -32,9 +35,23 @@ def download_supabase_file(storage_location: str, bucket="documents"):
             f"Supported: {sorted(SUPPORTED_EXTENSIONS)}"
         )
 
-    file_bytes = get_supabase_client().storage.from_(bucket).download(file_path)
+    client = get_supabase_client()
+
+    file_bytes = client.storage.from_(bucket).download(file_path)
     with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
         tmp_file.write(file_bytes)
         temp_path = tmp_file.name
 
-    return temp_path, bucket, file_path
+    response = (
+        client.table("documents")
+        .select("last_updated")
+        .eq("storage_path", file_path)
+        .eq("storage_bucket", bucket)
+        .limit(1)
+        .execute()
+    )
+
+    metadata = response.data[0] if response.data else None
+    last_updated = metadata.get("last_updated") if metadata else None
+
+    return temp_path, bucket, file_path, last_updated

@@ -43,6 +43,7 @@ const ResultsArea = ({
   const [answerFeedback, setAnswerFeedback] = useState<"like" | "dislike" | null>(null);
   const [selectedSourceSupabase, setSelectedSourceSupabase] = useState<string | null>(null);
 
+<<<<<<< 160-adding-dislikelike-button
   useEffect(() => {
     const loadFeedback = async () => {
       setAnswerFeedback(null);
@@ -106,6 +107,24 @@ const ResultsArea = ({
 
     if (error) {
       console.error("Error saving feedback:", error);
+=======
+  const getArgumentEntries = (argumentDetail?: string): Array<{ key: string; value: string }> | null => {
+    if (!argumentDetail) return null;
+
+    try {
+      const parsed = JSON.parse(argumentDetail);
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return null;
+      }
+
+      return Object.entries(parsed).map(([key, value]) => ({
+        key,
+        value: typeof value === "string" ? value : JSON.stringify(value),
+      }));
+    } catch {
+      return null;
+>>>>>>> main
     }
   };
 
@@ -121,6 +140,49 @@ const ResultsArea = ({
 
     setSelectedSourceSupabase(data.signedUrl);
   };
+<<<<<<< 160-adding-dislikelike-button
+=======
+
+  const renderArguments = (argumentDetail: string) => {
+    const entries = getArgumentEntries(argumentDetail);
+
+    if (!entries || entries.length === 0) {
+      return (
+        <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+          <span className="font-medium">Arguments:</span>
+          <div className="mt-1 rounded-md p-2 text-xs text-muted-foreground whitespace-pre-wrap break-words">
+            {argumentDetail}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+        <span className="font-medium">Arguments:</span>
+        <div className="mt-1 space-y-1 rounded-md p-2 text-xs text-muted-foreground">
+          {entries.map((entry) => (
+            <div key={entry.key} className="whitespace-pre-wrap break-words">
+              <span className="font-medium text-foreground">{entry.key}:</span>{" "}
+              <span>{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderResponse = (responseDetail: string) => (
+    <details className="mt-2 text-sm text-muted-foreground">
+      <summary className="cursor-pointer select-none font-medium">
+        Response
+      </summary>
+      <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted p-2 text-xs text-muted-foreground">
+        {responseDetail}
+      </pre>
+    </details>
+  );
+>>>>>>> main
 
   return (
     <div className="mt-8">
@@ -257,8 +319,10 @@ const ResultsArea = ({
                   <StatusPill status={s.status} />
                   <div className="min-w-0">
                     <div className="font-medium">{s.title}</div>
-                    {s.detail && (
-                      <div className="mt-1 text-sm text-muted-foreground">
+                    {s.argumentDetail && renderArguments(s.argumentDetail)}
+                    {s.responseDetail && renderResponse(s.responseDetail)}
+                    {!s.argumentDetail && !s.responseDetail && s.detail && (
+                      <div className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
                         {s.detail}
                       </div>
                     )}
