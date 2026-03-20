@@ -8,8 +8,17 @@ from langchain_core.documents import Document
 import json
 import asyncio
 import uuid
+from src.events_interface import make_event
 from src.ai_api_selector import get_agent_model, get_agent_ctx_window_size
 import pymupdf4llm
+from typing import TypedDict, Literal
+
+
+class VectorizePdfResult(TypedDict):
+    type: Literal["result"]
+    documents: list[Document]
+    ids: list[str]
+
 
 _INSTRUCTIONS = """
 You are a document processing assistant for asset management reports. 
@@ -194,7 +203,6 @@ async def vectorize_pdf(filepath: str):
 
     if not filepath.endswith(".pdf"):
         raise ValueError("File is not a PDF")
-        return
 
     query = pymupdf4llm.to_markdown(filepath)
 
@@ -220,6 +228,14 @@ async def vectorize_pdf(filepath: str):
             chunk = json.loads(response)
             knowledge_objects.append(chunk)
             attempts = 0
+
+            yield make_event(
+                "chunking",
+                message=f"Chunking ({chunk_number}/{num_chunks})",
+                chunks_created=chunk_number,
+                chunks_to_create=num_chunks,
+            )
+
         except json.JSONDecodeError as e:
             # print(f"JSON decode error for chunk {chunk}: {e}")
             if attempts < 2:
@@ -239,7 +255,11 @@ async def vectorize_pdf(filepath: str):
         ids.append(_id)
         documents.append(doc)
 
-    return documents, ids
+    yield {
+        "type": "result",
+        "documents": documents,
+        "ids": ids,
+    }
 
 
 if __name__ == "__main__":

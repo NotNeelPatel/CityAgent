@@ -3,16 +3,18 @@ import { fetchData } from "@/lib/client"
 import { toast } from "sonner"
 
 type VectorizeEvent = {
-  type: "loading" | "success" | "error"
+  type: "loading" | "chunking" | "embedding" | "success" | "error"
   message?: string
   file_path?: string
+  chunks_created?: number
+  chunks_to_create?: number
   chunks_embedded?: number
   total_chunks?: number
 }
 
 export const vectorizeToast = (
   id: string,
-  state: "loading" | "success" | "error",
+  state: "loading" | "chunking" | "embedding" | "success" | "error",
   fileName: string,
   message: string,
   percentage: number
@@ -35,7 +37,6 @@ export const vectorizeToast = (
       return toast.error(`Vectorization failed for ${fileName}: ${message}`, { id })
     case "success":
       return toast(content, { id, duration: 5000 })
-    case "loading":
     default:
       return toast(content, { id, duration: Infinity })
   }
@@ -118,12 +119,19 @@ const streamVectorizeFile = async (
 
   const handleEvents = (events: VectorizeEvent[]) => {
     for (const event of events) {
+      let percentage = 0
+      if (event.type === "chunking" && event.chunks_to_create) {
+        percentage = getPercentage(event.chunks_created, event.chunks_to_create)
+      } else {
+        percentage = getPercentage(event.chunks_embedded, event.total_chunks)
+      }
+
       vectorizeToast(
         toastId,
         event.type,
         fileName,
         event.message ?? "",
-        getPercentage(event.chunks_embedded, event.total_chunks)
+        percentage
       )
 
       if (event.type === "success") {
