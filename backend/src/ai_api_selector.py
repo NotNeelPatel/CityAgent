@@ -26,7 +26,7 @@ def get_agent_model() -> LiteLlm:
         ai_api = LiteLlm(model="azure/gpt-oss-120b")
     elif AI_API_PROVIDER == AIProvider.OLLAMA.value:
         os.environ["OLLAMA_API_BASE"] = os.getenv("OLLAMA_API_BASE")
-        ai_api = LiteLlm(model="ollama_chat/gpt-oss:20b")
+        ai_api = LiteLlm(model="ollama_chat/gpt-oss:20b", temperature=0.3)
     elif AI_API_PROVIDER == AIProvider.OPENAI.value:
         ai_api = LiteLlm(
             model="openai/gpt-oss:latest",
