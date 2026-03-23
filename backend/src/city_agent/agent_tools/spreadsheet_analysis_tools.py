@@ -63,6 +63,14 @@ def _column_not_found_error(filename: str, column_name: str, tool_name: str) -> 
     )
 
 
+def _sheet_not_found_error(filename: str, sheet_name: str, tool_name: str) -> str:
+    return _tool_error(
+        f"Sheet '{sheet_name}' not found in file '{filename}'.",
+        tool_name=tool_name,
+        code=ErrorCode.READ_FAILURE.value,
+    )
+
+
 def _get_column(
     df: pd.DataFrame, filename: str, column_name: str, tool_name: str
 ) -> Tuple[Optional[pd.Series], Optional[str]]:
@@ -71,14 +79,20 @@ def _get_column(
     return df[column_name], None
 
 
-def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+def _get_spreadsheet(filename: str, sheet_name: Optional[str] = None, target_column: Optional[str] = None, get_info: bool = False) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     """
     Helper function to read a spreadsheet file (CSV or XLSX) into a pandas DataFrame.
     Args:
         filename (str): The name of the spreadsheet file to read.
+        sheet_name (Optional[str]): The name of the sheet to read. If None, reads the first sheet. Only applicable for XLSX files.
+        target_column (Optional[str]): The name of the column to filter for. Used for identifying the specific sheet
+        get_info (bool): For the get_spreadsheet_info tool to explain if there are multiple sheets
     Returns:
         Tuple[Optional[pd.DataFrame], Optional[str]]: DataFrame on success, error text on failure.
     """
+    if isinstance(sheet_name, str):
+        sheet_name = sheet_name.strip() or None
+
     if not filename.endswith(".csv") and not filename.endswith(".xlsx"):
         return None, _tool_error(
             f"Unsupported file type for file '{filename}'. Only .csv and .xlsx files are supported.",
@@ -92,7 +106,33 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
         if db_file_info[0].endswith(".csv"):
             return pd.read_csv(db_file_info[0], encoding="cp1252"), None
         if db_file_info[0].endswith(".xlsx"):
-            return pd.read_excel(db_file_info[0]), None
+            xls = pd.ExcelFile(db_file_info[0])
+            if sheet_name and sheet_name not in xls.sheet_names:
+                return None, _sheet_not_found_error(filename, sheet_name, "spreadsheet")
+            if get_info:
+                # Attach workbook-level info while returning a standard (df, error) tuple.
+                sheet_rows = {sheet: len(xls.parse(sheet)) for sheet in xls.sheet_names}
+                selected_sheet = sheet_name or xls.sheet_names[0]
+                selected_df = xls.parse(selected_sheet)
+                selected_df.attrs["sheet_info"] = {
+                    "sheet_names": sheet_rows,
+                    "selected_sheet": selected_sheet,
+                }
+                return selected_df, None
+            if sheet_name:
+                return xls.parse(sheet_name), None
+            if target_column:
+                # If a target column is specified, we need to find which sheet it is in.
+                for workbook_sheet_name in xls.sheet_names:
+                    df = xls.parse(workbook_sheet_name)
+                    if target_column in df.columns:
+                        return df, None
+                return None, _tool_error(
+                    f"Column '{target_column}' not found in any sheet of file '{filename}'.",
+                    tool_name="spreadsheet",
+                    code=ErrorCode.COLUMN_NOT_FOUND.value,
+                )
+            return xls.parse(xls.sheet_names[0]), None
         return None, _tool_error(
             f"Downloaded file '{filename}' is not a supported spreadsheet type.",
             tool_name="spreadsheet",
@@ -112,7 +152,7 @@ def _get_spreadsheet(filename: str) -> Tuple[Optional[pd.DataFrame], Optional[st
         )
 
 
-def get_spreadsheet_info_impl(filename: str) -> str:
+def get_spreadsheet_info_impl(filename: str, sheet_name: Optional[str] = None) -> str:
     """
     Tool for retrieving basic information about a spreadsheet
     Args:
@@ -121,19 +161,23 @@ def get_spreadsheet_info_impl(filename: str) -> str:
     Returns:
         str: A string representation of the head and first 5 rows of the spreadsheet.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(filename, sheet_name=sheet_name, get_info=True)
     if error:
         return error
+    additional_info = df.attrs.get("sheet_info") if hasattr(df, "attrs") else None
     return _tool_success(
         "get_spreadsheet_info",
         {
             "filename": filename,
+            "additional_info": additional_info,
             "preview": df.head().to_string(),
         },
     )
 
 
-def get_mean_impl(filename: str, column_name: str) -> str:
+def get_mean_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for calculating the mean of a specified column in a given spreadsheet.
     Args:
@@ -142,7 +186,9 @@ def get_mean_impl(filename: str, column_name: str) -> str:
     Returns:
         str: The mean value of the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_mean")
@@ -158,7 +204,12 @@ def get_mean_impl(filename: str, column_name: str) -> str:
     )
 
 
-def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
+def filter_values_impl(
+    filename: str,
+    columns: list,
+    keyword: str,
+    sheet_name: Optional[str] = None,
+) -> str:
     """
     Tool for retrieving specific information from a specified column in a given spreadsheet based on a keyword.
     Removes unnecessary columns
@@ -169,7 +220,11 @@ def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
     Returns:
         str: A string representation of the rows that match the keyword in the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename,
+        sheet_name=sheet_name,
+        target_column=columns[0] if columns else None,
+    )
     if error:
         return error
     missing_columns = [column for column in columns if column not in df.columns]
@@ -226,7 +281,9 @@ def filter_values_impl(filename: str, columns: list, keyword: str) -> str:
     )
 
 
-def get_unique_values_impl(filename: str, column_name: str) -> str:
+def get_unique_values_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for retrieving unique values from a specified column in a given spreadsheet.
     Args:
@@ -235,7 +292,9 @@ def get_unique_values_impl(filename: str, column_name: str) -> str:
     Returns:
         str: A string representation of the unique values in the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_unique_values")
@@ -264,7 +323,9 @@ def get_unique_values_impl(filename: str, column_name: str) -> str:
     )
 
 
-def count_values_impl(filename: str, column_name: str) -> str:
+def count_values_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for counting occurrences of each unique value in a specified column of a given spreadsheet.
     Args:
@@ -273,7 +334,9 @@ def count_values_impl(filename: str, column_name: str) -> str:
     Returns:
         str: A string representation of the count of each unique value in the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "count_values")
@@ -290,7 +353,9 @@ def count_values_impl(filename: str, column_name: str) -> str:
     )
 
 
-def get_min_in_column_impl(filename: str, column_name: str) -> str:
+def get_min_in_column_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for calculating the minimum value of a specified column in a given spreadsheet.
     Args:
@@ -299,7 +364,9 @@ def get_min_in_column_impl(filename: str, column_name: str) -> str:
     Returns:
         str: The minimum value of the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_min_in_column")
@@ -315,7 +382,9 @@ def get_min_in_column_impl(filename: str, column_name: str) -> str:
     )
 
 
-def get_max_in_column_impl(filename: str, column_name: str) -> str:
+def get_max_in_column_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for calculating the maximum value of a specified column in a given spreadsheet.
     Args:
@@ -324,7 +393,9 @@ def get_max_in_column_impl(filename: str, column_name: str) -> str:
     Returns:
         str: The maximum value of the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_max_in_column")
@@ -340,7 +411,9 @@ def get_max_in_column_impl(filename: str, column_name: str) -> str:
     )
 
 
-def get_sum_in_column_impl(filename: str, column_name: str) -> str:
+def get_sum_in_column_impl(
+    filename: str, column_name: str, sheet_name: Optional[str] = None
+) -> str:
     """
     Tool for calculating the sum of a specified column in a given spreadsheet.
     Args:
@@ -349,7 +422,9 @@ def get_sum_in_column_impl(filename: str, column_name: str) -> str:
     Returns:
         str: The sum of the specified column.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_sum_in_column")
@@ -370,6 +445,7 @@ def get_sum_of_filtered_values_impl(
     column_name: str,
     keyword: str,
     filter_column: Optional[str] = None,
+    sheet_name: Optional[str] = None,
 ) -> str:
     """
     Tool for calculating the sum of values in a specified column after filtering rows by keyword.
@@ -382,7 +458,9 @@ def get_sum_of_filtered_values_impl(
     Returns:
         str: The sum of the values in the specified column for rows that match the keyword.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "get_sum_of_filtered_values")
@@ -446,7 +524,11 @@ def get_sum_of_filtered_values_impl(
 
 
 def filter_values_in_range_impl(
-    filename: str, column_name: str, min_value: float, max_value: float
+    filename: str,
+    column_name: str,
+    min_value: float,
+    max_value: float,
+    sheet_name: Optional[str] = None,
 ) -> str:
     """
     Tool for filtering rows in a specified column that fall within a given numeric range in a spreadsheet.
@@ -458,7 +540,9 @@ def filter_values_in_range_impl(
     Returns:
         str: A string representation of the rows that match the filter criteria.
     """
-    df, error = _get_spreadsheet(filename)
+    df, error = _get_spreadsheet(
+        filename, sheet_name=sheet_name, target_column=column_name
+    )
     if error:
         return error
     column, error = _get_column(df, filename, column_name, "filter_values_in_range")

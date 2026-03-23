@@ -79,36 +79,90 @@ async def _run_tool(tool_name: str, tool_func: Callable[..., Any], *args: Any) -
 
 
 # Convert synchronous spreadsheet analysis tools to asynchronous versions using asyncio.to_thread
-async def get_spreadsheet_info(filename: str) -> str:
-    return await _run_tool("get_spreadsheet_info", get_spreadsheet_info_impl, filename)
+async def get_spreadsheet_info(filename: str, sheet_name: str = "") -> str:
+    return await _run_tool(
+        "get_spreadsheet_info",
+        get_spreadsheet_info_impl,
+        filename,
+        sheet_name,
+    )
 
 
-async def get_mean(filename: str, column_name: str) -> str:
-    return await _run_tool("get_mean", get_mean_impl, filename, column_name)
+async def get_mean(filename: str, column_name: str, sheet_name: str = "") -> str:
+    return await _run_tool(
+        "get_mean", get_mean_impl, filename, column_name, sheet_name
+    )
 
 
-async def filter_values(filename: str, columns: list, keyword: str) -> str:
-    return await _run_tool("filter_values", filter_values_impl, filename, columns, keyword)
+async def filter_values(
+    filename: str, columns: list, keyword: str, sheet_name: str = ""
+) -> str:
+    return await _run_tool(
+        "filter_values",
+        filter_values_impl,
+        filename,
+        columns,
+        keyword,
+        sheet_name,
+    )
 
 
-async def get_unique_values(filename: str, column_name: str) -> str:
-    return await _run_tool("get_unique_values", get_unique_values_impl, filename, column_name)
+async def get_unique_values(
+    filename: str, column_name: str, sheet_name: str = ""
+) -> str:
+    return await _run_tool(
+        "get_unique_values",
+        get_unique_values_impl,
+        filename,
+        column_name,
+        sheet_name,
+    )
 
 
-async def count_values(filename: str, column_name: str) -> str:
-    return await _run_tool("count_values", count_values_impl, filename, column_name)
+async def count_values(filename: str, column_name: str, sheet_name: str = "") -> str:
+    return await _run_tool(
+        "count_values",
+        count_values_impl,
+        filename,
+        column_name,
+        sheet_name,
+    )
 
 
-async def get_min_in_column(filename: str, column_name: str) -> str:
-    return await _run_tool("get_min_in_column", get_min_in_column_impl, filename, column_name)
+async def get_min_in_column(
+    filename: str, column_name: str, sheet_name: str = ""
+) -> str:
+    return await _run_tool(
+        "get_min_in_column",
+        get_min_in_column_impl,
+        filename,
+        column_name,
+        sheet_name,
+    )
 
 
-async def get_max_in_column(filename: str, column_name: str) -> str:
-    return await _run_tool("get_max_in_column", get_max_in_column_impl, filename, column_name)
+async def get_max_in_column(
+    filename: str, column_name: str, sheet_name: str = ""
+) -> str:
+    return await _run_tool(
+        "get_max_in_column",
+        get_max_in_column_impl,
+        filename,
+        column_name,
+        sheet_name,
+    )
 
 
-async def get_sum_in_column(filename: str, column_name: str) -> str:
-    return await _run_tool("get_sum_in_column", get_sum_in_column_impl, filename, column_name)
+async def get_sum_in_column(
+    filename: str, column_name: str, sheet_name: str = ""
+) -> str:
+    return await _run_tool(
+        "get_sum_in_column",
+        get_sum_in_column_impl,
+        filename,
+        column_name,
+        sheet_name,
+    )
 
 
 async def get_sum_of_filtered_values(
@@ -116,6 +170,7 @@ async def get_sum_of_filtered_values(
     column_name: str,
     keyword: str,
     filter_column: str = "",
+    sheet_name: str = "",
 ) -> str:
     resolved_filter_column = filter_column.strip() or None
     return await _run_tool(
@@ -125,11 +180,16 @@ async def get_sum_of_filtered_values(
         column_name,
         keyword,
         resolved_filter_column,
+        sheet_name,
     )
 
 
 async def filter_values_in_range(
-    filename: str, column_name: str, min_value: float, max_value: float
+    filename: str,
+    column_name: str,
+    min_value: float,
+    max_value: float,
+    sheet_name: str = "",
 ) -> str:
     return await _run_tool(
         "filter_values_in_range",
@@ -138,6 +198,7 @@ async def filter_values_in_range(
         column_name,
         min_value,
         max_value,
+        sheet_name,
     )
 
 
@@ -330,15 +391,16 @@ data_analyst = LlmAgent(
     * You may only use the specialized spreadsheet tools on files ending in .csv or .xlsx.
 
     TOOL REFERENCE (SPREADSHEETS ONLY):
-    * get_spreadsheet_info(filename): Returns headers/first 5 rows.
-    * get_mean(filename, column_name): Numeric average only.
-    * get_unique_values(filename, column_name): Returns up to 20 unique items.
-    * count_values(filename, column_name): Frequency of values in a column.
-    * get_min_in_column / get_max_in_column: Finds numeric extremes.
-    * get_sum_in_column(filename, column_name): Sums all values in a numeric column.
-    * filter_values(filename, columns, keyword): 'columns' MUST be a list.
-    * filter_values_in_range(filename, column_name, min_value, max_value): Requires numeric floats.
-    * get_sum_of_filtered_values(filename, column_name, keyword, filter_column=""): Sums values in column_name after filtering by keyword.
+    * get_spreadsheet_info(filename, sheet_name=""): Returns headers/first 5 rows.
+    * get_mean(filename, column_name, sheet_name=""): Numeric average only.
+    * get_unique_values(filename, column_name, sheet_name=""): Returns up to 20 unique items.
+    * count_values(filename, column_name, sheet_name=""): Frequency of values in a column.
+    * get_min_in_column(filename, column_name, sheet_name="") / get_max_in_column(filename, column_name, sheet_name=""): Finds numeric extremes.
+    * get_sum_in_column(filename, column_name, sheet_name=""): Sums all values in a numeric column.
+    * filter_values(filename, columns, keyword, sheet_name=""): 'columns' MUST be a list.
+    * filter_values_in_range(filename, column_name, min_value, max_value, sheet_name=""): Requires numeric floats.
+    * get_sum_of_filtered_values(filename, column_name, keyword, filter_column="", sheet_name=""): Sums values in column_name after filtering by keyword.
+    * sheet_name guidance: for .xlsx files, set sheet_name to target a specific sheet; for .csv files, sheet_name is ignored.
 
     OUTPUT REQUIREMENT:
     All final responses MUST be structured JSON with keys: status, tool, data, error.
