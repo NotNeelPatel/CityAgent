@@ -55,3 +55,26 @@ def download_supabase_file(storage_location: str, bucket="documents"):
     last_updated = metadata.get("last_updated") if metadata else None
 
     return temp_path, bucket, file_path, last_updated
+
+
+def list_supabase_documents(bucket: str = "documents"):
+    """Return all indexed documents for a bucket from the documents table."""
+    client = get_supabase_client()
+    response = (
+        client.table("documents")
+        .select("storage_path,storage_bucket,last_updated")
+        .eq("storage_bucket", bucket)
+        .order("storage_path")
+        .execute()
+    )
+
+    documents = response.data or []
+    documents_list = [
+        {
+            "filename": item.get("storage_path"),
+            "last_updated": item.get("last_updated"),
+        }
+        for item in documents
+        if item.get("storage_path")
+    ]
+    return documents_list 

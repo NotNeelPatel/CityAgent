@@ -5,6 +5,7 @@ import pandas as pd
 from src.supabase_interface import download_supabase_file
 from city_agent.error_codes import ErrorCode
 
+
 def _normalize_for_json(value):
     """Convert pandas/numpy/NaN values into JSON-safe Python primitives."""
     if isinstance(value, dict):
@@ -24,6 +25,15 @@ def _normalize_for_json(value):
     return value
 
 
+def _format_rows_for_output(df: pd.DataFrame) -> pd.DataFrame:
+    """Present rows using spreadsheet-style numbering (header row = 1).
+    This fixes the off by 2 error seen in results"""
+    formatted_df = df.copy()
+    formatted_df.index = formatted_df.index + 2
+    formatted_df.index.name = "row"
+    return formatted_df
+
+
 def _tool_success(tool_name: str, data: dict) -> str:
     """Return a structured, non-throwing success payload."""
     payload = {
@@ -38,7 +48,11 @@ def _tool_success(tool_name: str, data: dict) -> str:
     )
 
 
-def _tool_error(message: str, tool_name: str = "unknown", code: str = ErrorCode.TOOL_EXECUTION_ERROR.value) -> str:
+def _tool_error(
+    message: str,
+    tool_name: str = "unknown",
+    code: str = ErrorCode.TOOL_EXECUTION_ERROR.value,
+) -> str:
     """Return a structured, non-throwing error payload."""
     payload = {
         "status": "error",
@@ -79,7 +93,12 @@ def _get_column(
     return df[column_name], None
 
 
-def _get_spreadsheet(filename: str, sheet_name: Optional[str] = None, target_column: Optional[str] = None, get_info: bool = False) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
+def _get_spreadsheet(
+    filename: str,
+    sheet_name: Optional[str] = None,
+    target_column: Optional[str] = None,
+    get_info: bool = False,
+) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
     """
     Helper function to read a spreadsheet file (CSV or XLSX) into a pandas DataFrame.
     Args:
@@ -165,12 +184,13 @@ def get_spreadsheet_info_impl(filename: str, sheet_name: Optional[str] = None) -
     if error:
         return error
     additional_info = df.attrs.get("sheet_info") if hasattr(df, "attrs") else None
+    preview_df = _format_rows_for_output(df.head())
     return _tool_success(
         "get_spreadsheet_info",
         {
             "filename": filename,
             "additional_info": additional_info,
-            "preview": df.head().to_string(),
+            "preview": preview_df.to_string(),
         },
     )
 
@@ -237,9 +257,11 @@ def filter_values_impl(
 
     specific_info_df = df[columns]
     # Use vectorized matching across selected columns instead of row-wise apply.
-    mask = specific_info_df.astype(str).apply(
-        lambda col: col.str.contains(keyword, case=False, na=False, regex=False)
-    ).any(axis=1)
+    mask = (
+        specific_info_df.astype(str)
+        .apply(lambda col: col.str.contains(keyword, case=False, na=False, regex=False))
+        .any(axis=1)
+    )
     specific_info_df = specific_info_df[mask]
 
     if len(specific_info_df) == 0:
@@ -255,7 +277,9 @@ def filter_values_impl(
             },
         )
     if specific_info_df.size > 200:
-        reduced_df = specific_info_df.head(min(10, len(specific_info_df)))
+        reduced_df = _format_rows_for_output(
+            specific_info_df.head(min(10, len(specific_info_df)))
+        )
         return _tool_success(
             "filter_values",
             {
@@ -268,6 +292,7 @@ def filter_values_impl(
                 "message": "Use more specific keywords or fewer columns to narrow down results.",
             },
         )
+    specific_info_df = _format_rows_for_output(specific_info_df)
     return _tool_success(
         "filter_values",
         {
@@ -466,7 +491,7 @@ def get_sum_of_filtered_values_impl(
     column, error = _get_column(df, filename, column_name, "get_sum_of_filtered_values")
     if error:
         return error
-    
+
     if filter_column:
         filter_series, error = _get_column(
             df, filename, filter_column, "get_sum_of_filtered_values"
@@ -479,9 +504,13 @@ def get_sum_of_filtered_values_impl(
         matched_on = filter_column
     else:
         # Backward-compatible fallback for existing 3-argument calls.
-        mask = df.astype(str).apply(
-            lambda col: col.str.contains(keyword, case=False, na=False, regex=False)
-        ).any(axis=1)
+        mask = (
+            df.astype(str)
+            .apply(
+                lambda col: col.str.contains(keyword, case=False, na=False, regex=False)
+            )
+            .any(axis=1)
+        )
         matched_on = "all_columns"
     filtered_df = df[mask]
 
@@ -498,7 +527,7 @@ def get_sum_of_filtered_values_impl(
                 "sum": 0,
             },
         )
-    
+
     numeric_values = pd.to_numeric(filtered_df[column_name], errors="coerce")
     numeric_match_count = int(numeric_values.notna().sum())
     if numeric_match_count == 0 and len(filtered_df) > 0:
@@ -563,7 +592,9 @@ def filter_values_in_range_impl(
             },
         )
     if filtered_df.size > 200:
-        reduced_df = filtered_df.head(min(10, len(filtered_df)))
+        reduced_df = _format_rows_for_output(
+            filtered_df.head(min(10, len(filtered_df)))
+        )
         return _tool_success(
             "filter_values_in_range",
             {
@@ -577,6 +608,7 @@ def filter_values_in_range_impl(
                 "message": "Use narrower range to reduce results.",
             },
         )
+    filtered_df = _format_rows_for_output(filtered_df)
     return _tool_success(
         "filter_values_in_range",
         {
