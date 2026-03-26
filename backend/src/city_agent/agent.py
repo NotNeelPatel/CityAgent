@@ -10,6 +10,7 @@ from google.adk.events import Event
 import asyncio
 from src.rag_pipeline.vector import query_retriever
 from src.ai_api_selector import get_agent_model
+from src.supabase_interface import list_supabase_documents
 from city_agent.agent_tools.spreadsheet_analysis_tools import (
     get_spreadsheet_info_impl,
     get_mean_impl,
@@ -22,6 +23,10 @@ from city_agent.agent_tools.spreadsheet_analysis_tools import (
     get_sum_in_column_impl,
     get_sum_of_filtered_values_impl,
     purge_cached_files,
+)
+from city_agent.agent_tools.pdf_analysis_tools import (
+    get_pdf_info_impl,
+    extract_pdf_tables_impl,
 )
 from city_agent.error_codes import ErrorCode
 
@@ -202,6 +207,19 @@ async def filter_values_in_range(
     )
 
 
+async def get_pdf_info(filename: str) -> str:
+    return await _run_tool("get_pdf_info", get_pdf_info_impl, filename)
+
+
+async def extract_pdf_tables(filename: str, page_num: int) -> str:
+    return await _run_tool(
+        "extract_pdf_tables",
+        extract_pdf_tables_impl,
+        filename,
+        page_num,
+    )
+
+
 async def search_data(query: str) -> str:
     """
     Offload the (potentially) blocking retriever call to a thread so the
@@ -231,6 +249,19 @@ async def search_data(query: str) -> str:
         {
             "query": query,
             "result": relevant_data,
+        },
+    )
+
+
+async def list_all_documents(bucket: str = "documents") -> str:
+    documents = await _run_tool("list_all_documents", list_supabase_documents, bucket)
+    if _is_tool_error(documents):
+        return documents
+    return _tool_success(
+        "list_all_documents",
+        {
+            "count": len(documents),
+            "documents": documents,
         },
     )
 
@@ -328,6 +359,10 @@ reasoner_agent = LlmAgent(
     search (e.g., "I found the general road maintenance files, but to get you the
     exact cost, could you clarify if you are looking for a specific year or a
     particular street?").
+    * Evidence Specificity (CRITICAL): Explicitly mention the specific output
+    rows, headers, columns, and/or pages that support your answer.
+    * Table Rendering: If relevant tabular data is available, you may include
+    concise Markdown tables in the response to present key evidence clearly.
 
     NUMERIC VALIDATION RULES:
     * If the question asks for a total, sum, or numeric result:
@@ -362,14 +397,15 @@ data_analyst = LlmAgent(
     name="DataAnalyst",
     model=ai_api,
     instruction="""
-    You are the CityAgent Data Analyst, an expert in querying and analyzing City of Ottawa assets. Your primary directive is accuracy and resilience. City datasets often contain inconsistent naming conventions, abbreviations, and acronyms. You must anticipate these discrepancies and navigate them proactively.
+    You are the CityAgent Data Analyst, an expert in querying and analyzing City of Ottawa PDFS and spreadsheets. Your primary directive is accuracy and resilience. City datasets often contain inconsistent naming conventions, abbreviations, and acronyms. You must anticipate these discrepancies and navigate them proactively.
 
     STRICT TOOL PROTOCOL & WORKFLOW:
 
     1. Discovery & General Search:
-    * ALWAYS begin with 'search_data'.
+    * ALWAYS begin with 'search_data'. This can yield context about file names and metadata of PDFs and spreadsheets.
     * Formulate broad search queries. Do not over-constrain the initial search.
     * If the first search yields 0 results, strip your query down to the single most vital keyword and try again before giving up.
+    * If relevant documents are still not found, call `list_all_documents` to get the full document inventory and pick candidate files by name/topic before retrying tool calls.
 
     2. Proactive Schema Inspection (CRITICAL - LOOK BEFORE YOU LEAP):
     * NEVER guess a column name for computation tools (like get_mean or filter_values) unless you are 100% certain of the exact string.
@@ -388,7 +424,8 @@ data_analyst = LlmAgent(
     5. Tool Constraints:
     * NO REGEX. The 'keyword' argument is a simple string.
     * All tools are case-insensitive.
-    * You may only use the specialized spreadsheet tools on files ending in .csv or .xlsx.
+    * You may only use spreadsheet tools on files ending in .csv or .xlsx.
+    * You may only use PDF tools on files ending in .pdf.
 
     TOOL REFERENCE (SPREADSHEETS ONLY):
     * get_spreadsheet_info(filename, sheet_name=""): Returns headers/first 5 rows.
@@ -402,9 +439,17 @@ data_analyst = LlmAgent(
     * get_sum_of_filtered_values(filename, column_name, keyword, filter_column="", sheet_name=""): Sums values in column_name after filtering by keyword.
     * sheet_name guidance: for .xlsx files, set sheet_name to target a specific sheet; for .csv files, sheet_name is ignored.
 
+    TOOL REFERENCE (PDF):
+    * get_pdf_info(filename): Returns page_count and pages_with_tables. Use this BEFORE picking a page for table extraction.
+    * extract_pdf_tables(filename, page_num): Extracts table rows from a specific 1-indexed page.
+
+    TOOL REFERENCE (DISCOVERY):
+    * list_all_documents(bucket="documents"): Returns every indexed document path and last_updated metadata from Supabase.
+
     OUTPUT REQUIREMENT:
     All final responses MUST be structured JSON with keys: status, tool, data, error.
     * If status="success": populate the 'data' object. Include filename and 'last_updated' from metadata.
+    * In successful analytical output, explicitly mention the specific relevant rows, headers, columns, and/or pages used.
     * If status="error": follow error handling below.
     * NO AGENT SPEAK: Output ONLY the requested JSON or tool call. Do not explain your workflow.
 
@@ -424,6 +469,9 @@ data_analyst = LlmAgent(
         filter_values_in_range,
         get_sum_in_column,
         get_sum_of_filtered_values,
+        get_pdf_info,
+        extract_pdf_tables,
+        list_all_documents,
     ],
 )
 
@@ -444,11 +492,16 @@ orchestrator_agent = LlmAgent(
     OPERATIONAL PROTOCOL:
     1. Assess Relevance: Determine if the query is about Ottawa infrastructure,
     roads, parks, or municipal assets.
-    2. Formulate a Search Plan: Identify what specific points or
-    documents are missing to fulfill the request.
-    3. Delegate: Invoke the data_analyst to perform the actual data retrieval
+    2. Intent-to-Keyword Translation (CRITICAL): Identify what the user is
+    actually asking for, then derive a list of likely asset-management
+    keywords, synonyms, acronyms, and entity variants that the data_analyst
+    should use for search and filtering.
+    3. Formulate a Search Plan: Identify what specific points or
+    documents are missing to fulfill the request, and include the derived
+    keyword set in your plan.
+    4. Delegate: Invoke the data_analyst to perform the actual data retrieval
     and technical analysis using its available tools.
-    4. Pass the user's original intent and your refined plan to the sub-agent.
+    5. Pass the user's original intent and your refined plan to the sub-agent.
     """,
     sub_agents=[data_analyst],
 )

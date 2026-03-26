@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 
 const QuickSearchs = [
-  { questions: "What is the pavement condition rating of the road segment on Baseline Road?", href: "#" },
-  { questions: "What is the Pavement Quality Index (PQI) value for the road segment on Bank Street?", href: "#" },
+  { questions: "What is the pavement condition rating of the road segment on Baseline Road from Woodroffe to Highgate?", href: "#" },
+  { questions: "What is the Pavement Quality Index (PQI) values for all road segments for Bank Street?", href: "#" },
   { questions: "Which ward is the road segment on Carling Avenue located in?", href: "#" },
   { questions: "What functional road class is assigned to the road segment on Hunt Club Road?", href: "#" },
   { questions: "What is the total replacement cost of the road segment on St. Laurent Boulevard?", href: "#" },
