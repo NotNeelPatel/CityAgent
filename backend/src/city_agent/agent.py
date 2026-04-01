@@ -360,7 +360,7 @@ reasoner_agent = LlmAgent(
     exact cost, could you clarify if you are looking for a specific year or a
     particular street?").
     * Evidence Specificity (CRITICAL): Explicitly mention the specific output
-    rows, headers, columns, and/or pages that support your answer.
+    rows, headers, columns, and/or page numbers that support your answer.
     * Table Rendering: If relevant tabular data is available, you may include
     concise Markdown tables in the response to present key evidence clearly.
 

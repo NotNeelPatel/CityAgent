@@ -137,7 +137,7 @@ def _get_pdf(filename: str) -> Tuple[Optional[dict], Optional[str]]:
 
 
 def get_pdf_info_impl(filename: str) -> str:
-	"""Return basic information about a PDF."""
+	"""Return basic information about a PDF including table headers and captions."""
 	pdf_ctx, error = _get_pdf(filename)
 	if error:
 		return error
@@ -150,22 +150,53 @@ def get_pdf_info_impl(filename: str) -> str:
 		cached_counts = (
 			cached_entry.get("table_counts_by_page") if cached_entry else None
 		)
-		if isinstance(cached_counts, dict):
+		cached_samples = (
+			cached_entry.get("table_content_samples") if cached_entry else None
+		)
+		if isinstance(cached_counts, dict) and isinstance(cached_samples, dict):
 			table_counts_by_page = dict(cached_counts)
 			pages_with_tables = sorted(int(page) for page in table_counts_by_page.keys())
+			table_content_samples = dict(cached_samples)
 		else:
 			pages_with_tables = []
 			table_counts_by_page = {}
+			table_content_samples = {}
 			for page_idx in range(page_count):
 				page = document.load_page(page_idx)
 				table_finder = page.find_tables()
-				table_count = len(table_finder.tables) if table_finder else 0
+				tables = list(table_finder.tables) if table_finder else []
+				table_count = len(tables)
 				if table_count > 0:
 					page_num = page_idx + 1
 					pages_with_tables.append(page_num)
 					table_counts_by_page[str(page_num)] = table_count
+
+					page_samples = []
+					for table_idx, table in enumerate(tables, start=1):
+						# Keep small, JSON-safe previews so the LLM can choose the right page.
+						try:
+							contents = table.to_pandas().head(2)
+							headers = [str(col) for col in list(contents.columns)]
+							rows = contents.fillna("").astype(str).values.tolist()
+						except Exception:
+							extracted = table.extract() or []
+							headers = [str(col) for col in (extracted[0] if extracted else [])]
+							rows = []
+							for row in extracted[1:3]:
+								rows.append([str(cell) if cell is not None else "" for cell in row])
+
+						page_samples.append(
+							{
+								"table_index": table_idx,
+								"headers": headers,
+								"rows": rows,
+							}
+						)
+
+					table_content_samples[str(page_num)] = page_samples
 			if cached_entry is not None:
 				cached_entry["table_counts_by_page"] = dict(table_counts_by_page)
+				cached_entry["table_content_samples"] = dict(table_content_samples)
 	finally:
 		document.close()
 
@@ -177,6 +208,7 @@ def get_pdf_info_impl(filename: str) -> str:
 			"pages_with_tables": pages_with_tables,
 			"pages_with_tables_count": len(pages_with_tables),
 			"table_counts_by_page": table_counts_by_page,
+			"table_content_samples": table_content_samples,
 		},
 	)
 
