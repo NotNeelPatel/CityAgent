@@ -12,6 +12,10 @@ Municipal data is often scattered across various internal systems, making it dif
 * **Session History**: The application saves users' previous queries and responses, allowing them to easily revisit past searches.
 * **Administrative Dashboard**: Authorized personnel can manage the system's knowledge base by uploading new files and deleting outdated documents.
 
+## Video Demo
+
+You can watch this [quick demo](https://youtu.be/XiBouvPlMwU) to get an overview of the project.
+
 ## Technical Architecture
 
 CityAgent follows a modular, layered client-server architecture designed for scalability and maintainability.
