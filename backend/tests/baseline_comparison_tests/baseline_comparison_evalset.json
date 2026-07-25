@@ -1,0 +1,66 @@
+[
+  {
+    "name": "bc1_specific_road_pqi_lookup",
+    "query": "What is the exact PQI of FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S)?",
+    "reference": "The PQI for FERGUS CR between COBBLE HILL DR (N) and COBBLE HILL DR (S) is 85.2.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "BC1: Un-augmented chatbot cannot know specific Ottawa segment PQI; CityAgent RAG provides grounded numeric lookup."
+  },
+  {
+    "name": "bc2_road_condition_comparison",
+    "query": "Is AGES DR generally in better or worse condition than WELLINGTON ST?",
+    "reference": "WELLINGTON ST (PQI 78.5) is in better condition than AGES DR (PQI 42.1).",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "BC2: Head-to-head comparison requiring multi-document/row evidence retrieval."
+  },
+  {
+    "name": "bc3_ward_specific_asset_enumeration",
+    "query": "Which road segments in sample_roads.csv are located in Ward 3?",
+    "reference": "The road segments in Ward 3 are FERGUS CR (PQI 85.2) and AGES DR (PQI 42.1).",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "BC3: Ward asset enumeration grounded in indexed dataset."
+  },
+  {
+    "name": "bc4_nonexistent_ward_refusal",
+    "query": "Do you have data for Ward 99?",
+    "reference": "I don't have any records for Ward 99 in the provided dataset.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "BC4: Generic chatbot may hallucinate details about Ward 99; CityAgent refuses cleanly."
+  }
+]

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,6 +15,10 @@ def _is_transient_eval_failure(exc: Exception) -> bool:
     )
 
 
+@pytest.mark.skipif(
+    os.getenv("LIVE_LLM") != "1",
+    reason="Live LLM tests skipped by default to prevent API costs. Set LIVE_LLM=1 to run.",
+)
 @pytest.mark.asyncio
 async def test_data_analyst_logic():
     fixture_csv = (
