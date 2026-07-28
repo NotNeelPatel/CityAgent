@@ -9,19 +9,15 @@ SRC_DIR = BACKEND_DIR / "src"
 sys.path.insert(0, str(BACKEND_DIR))
 sys.path.insert(0, str(SRC_DIR))
 
-# Fix event loop issues with litellm and pytest-asyncio
-@pytest.fixture(scope="session")
-def event_loop_policy():
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    return asyncio.get_event_loop_policy()
-
-
-@pytest.fixture(scope="session")
-def event_loop(event_loop_policy):
-    loop = event_loop_policy.new_event_loop()
-    yield loop
-    loop.close()
+# Disable litellm background logging queue to prevent event loop mismatch errors in asyncio tests
+try:
+    import litellm
+    litellm.telemetry = False
+    litellm.turn_off_message_logging = True
+    if hasattr(litellm, "logging_worker"):
+        litellm.logging_worker = None
+except Exception:
+    pass
 
 
 # Configure pytest-asyncio
@@ -44,3 +40,29 @@ def reset_city_agent_runtime_state():
     except Exception:
         # Some test modules do not import/run CityAgent; keep fixture non-blocking.
         yield
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Write a clean summary of all failed and errored tests at the end of test_run.log."""
+    import logging
+
+    logger = logging.getLogger("pytest_summary")
+    failed_reports = terminalreporter.stats.get("failed", [])
+    error_reports = terminalreporter.stats.get("error", [])
+    reports = failed_reports + error_reports
+
+    if not reports:
+        logger.info("=========================================================================")
+        logger.info("                  ALL TESTS PASSED SUCCESSFULLY                          ")
+        logger.info("=========================================================================")
+        return
+
+    logger.error("=========================================================================")
+    logger.error("                  TEST FAILURES & ERRORS SUMMARY                         ")
+    logger.error("=========================================================================")
+    for rep in reports:
+        logger.error(f"FAIL/ERROR: {rep.nodeid}")
+        if hasattr(rep, "longreprtext") and rep.longreprtext:
+            for line in rep.longreprtext.splitlines():
+                logger.error(f"  {line}")
+    logger.error("=========================================================================")

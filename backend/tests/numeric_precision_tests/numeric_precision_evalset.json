@@ -1,0 +1,66 @@
+[
+  {
+    "name": "np1_aggregation_average_pqi",
+    "query": "Using spreadsheet tools, calculate the mean PQI across roads in sample_roads.csv.",
+    "reference": "The mean PQI across roads in sample_roads.csv is 68.6.",
+    "expected_tool_use": [
+      {
+        "tool_name": "get_mean",
+        "tool_input": {}
+      }
+    ],
+    "description": "NP1: Verify exact numeric mean calculation using get_mean tool (85.2 + 42.1 + 78.5)/3 = 68.6."
+  },
+  {
+    "name": "np1_aggregation_min_pqi",
+    "query": "Using spreadsheet tools on sample_roads.csv, find the minimum PQI in the PQI column.",
+    "reference": "The minimum PQI in sample_roads.csv is 42.1 (for AGES DR).",
+    "expected_tool_use": [
+      {
+        "tool_name": "get_min_in_column",
+        "tool_input": {}
+      }
+    ],
+    "description": "NP1: Verify exact numeric min value using get_min_in_column tool."
+  },
+  {
+    "name": "np1_aggregation_max_pqi",
+    "query": "Using spreadsheet tools on sample_roads.csv, find the maximum PQI in the PQI column.",
+    "reference": "The maximum PQI in sample_roads.csv is 85.2 (for FERGUS CR).",
+    "expected_tool_use": [
+      {
+        "tool_name": "get_max_in_column",
+        "tool_input": {}
+      }
+    ],
+    "description": "NP1: Verify exact numeric max value using get_max_in_column tool."
+  },
+  {
+    "name": "np2_pqi_threshold_filter_regression",
+    "query": "Using spreadsheet tools on sample_roads.csv, filter and list all roads with PQI between 40 and 80.",
+    "reference": "The roads with PQI between 40 and 80 are AGES DR (42.1) and WELLINGTON ST (78.5).",
+    "expected_tool_use": [
+      {
+        "tool_name": "filter_values_in_range",
+        "tool_input": {}
+      }
+    ],
+    "description": "NP2: Regression test verifying range filtering excludes FERGUS CR (85.2) and correctly captures AGES DR and WELLINGTON ST."
+  },
+  {
+    "name": "np3_schema_inspection_before_mean",
+    "query": "Check the spreadsheet headers of sample_roads.csv using get_spreadsheet_info before calculating the mean of PQI.",
+    "reference": "The headers were inspected and the mean PQI was calculated as 68.6.",
+    "expected_tool_use": [
+      {
+        "tool_name": "get_spreadsheet_info",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "get_mean",
+        "tool_input": {}
+      }
+    ],
+    "description": "NP3: Enforces schema inspection protocol prior to numeric calculation."
+  }
+]

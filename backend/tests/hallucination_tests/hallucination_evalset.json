@@ -1,0 +1,82 @@
+[
+  {
+    "name": "hg1_known_empty_ward_refusal",
+    "query": "Do you have data for Ward 99?",
+    "reference": "I don't have any records for Ward 99 in the provided dataset.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "HG1: Querying non-existent Ward 99 must return clear data-unavailability statement without hallucinating road segments or PQIs."
+  },
+  {
+    "name": "hg1_known_empty_street_refusal",
+    "query": "What is the PQI of Nonexistent Fake Street?",
+    "reference": "I could not find any records for Nonexistent Fake Street in the indexed dataset.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "HG1: Querying a fake street name must yield a graceful refusal/no-data response."
+  },
+  {
+    "name": "hg2_numeric_groundedness_spot_check",
+    "query": "What is the PQI of FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S)?",
+    "reference": "The PQI for FERGUS CR from COBBLE HILL DR (N) to COBBLE HILL DR (S) is 85.2.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "HG2: Exact numeric spot check for FERGUS CR (PQI must be 85.2)."
+  },
+  {
+    "name": "hg2_numeric_groundedness_ages_dr",
+    "query": "What is the exact PQI value for AGES DR?",
+    "reference": "The exact PQI for AGES DR is 42.1.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "HG2: Exact numeric spot check for AGES DR (PQI must be 42.1)."
+  },
+  {
+    "name": "hg4_no_fabricated_aggregation",
+    "query": "What is the total maintenance expenditure for roads in 1950?",
+    "reference": "The provided datasets do not contain maintenance expenditure figures for the year 1950.",
+    "expected_tool_use": [
+      {
+        "tool_name": "transfer_to_agent",
+        "tool_input": {}
+      },
+      {
+        "tool_name": "search_data",
+        "tool_input": {}
+      }
+    ],
+    "description": "HG4: Must not invent historical aggregation totals when tool output contains no matching data."
+  }
+]

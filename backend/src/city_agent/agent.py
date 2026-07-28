@@ -292,6 +292,7 @@ class OrchestratorAgent(BaseAgent):
     ):
         super().__init__(
             name=name,
+            sub_agents=[orchestrator_agent, reasoner_agent, validator_agent],
             orchestrator_agent=orchestrator_agent,
             data_analyst=data_analyst,
             reasoner_agent=reasoner_agent,

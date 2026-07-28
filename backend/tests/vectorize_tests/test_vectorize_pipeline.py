@@ -137,7 +137,8 @@ class TestVectorizePdf:
     async def test_vectorize_pdf_raises_for_non_pdf(self):
         """vectorize_pdf raises ValueError for non-.pdf paths."""
         with pytest.raises(ValueError, match="not a PDF"):
-            await vectorize_pdf("/path/to/file.txt")
+            async for _ in vectorize_pdf("/path/to/file.txt"):
+                pass
 
     @pytest.mark.asyncio
     async def test_vectorize_pdf_produces_documents_when_mocked(self):
@@ -154,12 +155,16 @@ class TestVectorizePdf:
             pdf_path = tmp.name
 
         try:
+            docs, ids = [], []
             with patch("src.rag_pipeline.vectorize_pdf.pymupdf4llm.to_markdown", return_value=mock_markdown), patch(
                 "src.rag_pipeline.vectorize_pdf.call_agent",
                 new_callable=AsyncMock,
                 return_value=mock_agent_response,
             ), patch("src.rag_pipeline.vectorize_pdf.get_agent_ctx_window_size", return_value=4096):
-                docs, ids = await vectorize_pdf(pdf_path)
+                async for event in vectorize_pdf(pdf_path):
+                    if event.get("type") == "result":
+                        docs = event["documents"]
+                        ids = event["ids"]
 
             assert len(docs) >= 1
             assert len(ids) >= 1
